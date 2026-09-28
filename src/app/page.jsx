@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import SocialIcons from "./components/SocialIcons";
 import Reveal from "./components/Reveal";
 import ChatFab from "./components/ChatFab";
+import Footer from "./components/Footer";
 
 const PROPUESTA_MAILTO =
   "mailto:contacto@elmetacho.com?subject=Propuesta%20para%20El%20Metacho";
@@ -364,9 +365,7 @@ export default function Home() {
           </Reveal>
         </section>
 
-        <footer className="border-t border-stone-900/10 py-10 text-center text-xs uppercase tracking-[0.3em] text-stone-400">
-          © {new Date().getFullYear()} El Metacho
-        </footer>
+        <Footer />
       </div>
     </main>
   );
