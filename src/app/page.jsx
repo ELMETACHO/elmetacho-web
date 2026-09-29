@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "./components/Navbar";
 import SocialIcons from "./components/SocialIcons";
@@ -135,6 +136,12 @@ export default function Home() {
                 >
                   Quiero trabajar contigo
                 </motion.a>
+                <Link
+                  href="/fidelizacion"
+                  className="rounded-full border border-[#f4634a]/40 px-7 py-3 text-sm font-bold uppercase tracking-wide text-[#f4634a] transition hover:bg-[#f4634a] hover:text-white"
+                >
+                  Conoce el sistema de fidelización
+                </Link>
                 <SocialIcons />
               </div>
             </Reveal>
