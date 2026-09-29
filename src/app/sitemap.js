@@ -7,6 +7,12 @@ export default function sitemap() {
       priority: 1,
     },
     {
+      url: "https://elmetacho.com/fidelizacion",
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: "https://elmetacho.com/privacidad",
       lastModified: new Date(),
       changeFrequency: "yearly",
