@@ -89,3 +89,9 @@ test("la guía EDITOR existe y lleva a la preventa del editor", async () => {
   assert.equal(g.productoRelacionado, "editor-automatico");
   assert.ok(g.secciones.length >= 3);
 });
+
+test("hay al menos una novedad publicada y todas tienen fuente https", async () => {
+  const c = await import("./index.js");
+  assert.ok(c.novedades.length >= 1);
+  for (const n of c.novedades) assert.match(n.fuente.url, /^https:\/\//);
+});
