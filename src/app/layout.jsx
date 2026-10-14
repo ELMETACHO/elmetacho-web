@@ -53,10 +53,6 @@ export const metadata = {
     description,
     images: ["/images/foto1.png"],
   },
-  icons: {
-    icon: "/icon.svg",
-    apple: "/apple-icon.png",
-  },
 };
 
 export default function RootLayout({ children }) {
