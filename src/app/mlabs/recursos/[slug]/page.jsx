@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MlabsHeader, MlabsFooter } from "../../MlabsMarco";
 import FormularioLead from "../../FormularioLead";
-import { guias, guiaPorSlug, productoPorSlug } from "../../contenido/index.js";
+import { guias, guiaPorSlug, productoPorSlug, publicoPorSlug } from "../../contenido/index.js";
 import TarjetaProducto from "../../componentes/TarjetaProducto";
 import Bloque from "../../componentes/Bloque";
 import Desbloqueo from "../../componentes/Desbloqueo";
@@ -56,6 +56,13 @@ export default async function Guia({ params }) {
 
         <p className="mt-3 text-sm text-stone-500">
           {g.tiempo} min · Actualizada el <time dateTime={g.actualizado}>{fecha(g.actualizado)}</time>
+        </p>
+        <p className="mt-2 flex flex-wrap gap-x-4 text-sm font-semibold">
+          {g.publicos.map((s) => (
+            <Link key={s} href={`/para/${s}`} className="text-stone-500 underline hover:text-rojo">
+              {publicoPorSlug(s).nombre}
+            </Link>
+          ))}
         </p>
 
         <div className="mt-10 space-y-10">
