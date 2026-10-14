@@ -1,6 +1,6 @@
 # MLABS · Parte A: catálogo, guías gratis y preventas
 
-Fecha: 2026-10-15 · Estado: borrador para revisión del dueño
+Fecha: 2026-10-15 · Estado: aprobado por el dueño (2026-10-15) · Plan: `docs/plans/2026-10-15-mlabs-parte-a-catalogo.md`
 
 ## 1. Propósito
 

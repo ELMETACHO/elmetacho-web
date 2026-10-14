@@ -17,4 +17,4 @@
 
 ## Resumen de sesiones
 - **2026-10-14:** portada partida, nuevo look (rojo de los videos), MLABS en subdominio, guías CLAUDE/RESEÑA/RECICLA/COMPETENCIA, leads en Redis + Telegram, SEO (JSON-LD, sitemap, robots, llms.txt), pagos con Bold en `/pagar` (compra de prueba aprobada).
-- **2026-10-15:** investigación (viabilidad de productos instalables, conversión, SEO, retención). Spec de la Parte A escrito, pendiente de revisión del dueño.
+- **2026-10-15:** investigación (viabilidad de productos instalables, conversión, SEO, retención). Spec de la Parte A aprobado tal cual. Plan escrito en `docs/plans/2026-10-15-mlabs-parte-a-catalogo.md` (11 tareas; el flujo de punta a punta queda listo en la tarea 4). Pendientes del dueño: precios y fechas de los dos productos, decidir si Sellame es producto (los guiones de RESEÑA lo nombran), guion 36 sin fuente (no entra como novedad), activar Web Analytics en Vercel.
