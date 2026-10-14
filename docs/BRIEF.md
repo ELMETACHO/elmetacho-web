@@ -5,7 +5,7 @@
 - **mlabs.elmetacho.com:** agencia + "Platzi propio" para emprendedores, creadores, agencias, developers e independientes. Guías gratis (a cambio de correo), novedades de IA y productos instalables de pago.
 
 ## Hoja de ruta (cada parte con spec → plan → pruebas)
-- **A.** Catálogo con buscador, guías gratis con desbloqueo por correo, novedades, preventas. Spec: `docs/superpowers/specs/2026-10-15-mlabs-parte-a-catalogo-design.md`.
+- **A. (publicada el 2026-10-14, PR #3)** Catálogo con buscador, guías gratis con desbloqueo por correo, novedades, preventas. Spec: `docs/superpowers/specs/2026-10-15-mlabs-parte-a-catalogo-design.md`.
 - **B.** Venta y entrega automática: webhook de Bold → correo con descarga y licencia (Resend), términos de venta, derecho de retracto, factura electrónica.
 - **C.** Producto: Creador de carruseles con Claude (plugin de Claude Code + beta de 3–5 personas).
 - **D.** Producto: Editor automático de video con Claude (plugin + "doctor" de instalación + beta).
@@ -23,3 +23,6 @@
   - Avisos para la sesión de VIDEOS: el guion `lab-2026-10-15-27` dice que el editor detecta cuando miras a otro lado (no lo hace: solo texto y audio); el `lab-2026-10-15-34` sugiere que el agente de Gemini ya está en el Gmail de todos (está en vista previa privada para Business/Enterprise).
   - Rendimiento: CLS 0. LCP móvil: RESEÑA 2,42 s; EDITOR 2,71 s e inicio 3,70 s pasan la meta de 2,5 s. La causa es la fuente Archivo y ya ocurría en `main`; arreglarlo es una decisión de diseño.
   - Seguridad: `npm audit` marca `next` 16.2.12 con alertas críticas (incluida `next/og`, que usa `apple-icon.js`); se arregla subiendo a 16.4.1, en una rama aparte.
+- **2026-10-14 (publicación):** se fusionaron Next 16.4.1 por seguridad (PR #1), el arreglo del ícono de Apple (PR #2) y la Parte A (PR #3). Todo está en vivo y revisado en mlabs.elmetacho.com.
+  - Corrección encontrada en la prueba: `/api/lead` no leía `KV_REDIS_URL`, así que antes los leads solo llegaban a Telegram y no quedaban en Redis. Ya se arregló y se verificó: en Redis quedaron los dos leads de prueba («PRUEBA»), que hay que borrar.
+  - Sigue: las decisiones pendientes del dueño (ver arriba), corregir en la Sala los guiones 27 y 34, y la Parte B (cobro con Bold y entrega por correo), que empieza con lluvia de ideas y spec.
