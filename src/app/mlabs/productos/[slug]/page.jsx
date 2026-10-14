@@ -45,7 +45,7 @@ export default async function Producto({ params }) {
   return (
     <main className="min-h-screen bg-white text-stone-950">
       <MlabsHeader />
-      <article className="mx-auto max-w-2xl px-4 pb-16 pt-24 sm:px-8 sm:pt-32">
+      <article className="mx-auto max-w-2xl px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
         {p.estado === "preventa" && <p className="text-sm font-bold uppercase tracking-[0.3em] text-rojo">Preventa</p>}
         <h1 className="titular-ancho mt-3 text-4xl sm:text-6xl">{p.nombre}</h1>
         <p className="mt-4 text-xl leading-8 text-stone-700">{p.promesa}</p>

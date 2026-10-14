@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { MLABS_WHATSAPP } from "../MlabsMarco";
+import { MLABS_WHATSAPP } from "../enlaces.js";
 import { enviarLead } from "../lib/enviarLead.js";
 import {
   almacenSeguro, estaDesbloqueado, marcarDesbloqueado, trasFallo, guardarPendiente, tomarPendiente,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MLABS_WHATSAPP } from "../MlabsMarco";
+import { MLABS_WHATSAPP } from "../enlaces.js";
 
 const SCRIPT = "https://checkout.bold.co/library/boldPaymentButton.js";
 

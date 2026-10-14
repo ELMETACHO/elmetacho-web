@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MLABS_WHATSAPP } from "./MlabsMarco";
+import { MLABS_WHATSAPP } from "./enlaces.js";
 import { enviarLead } from "./lib/enviarLead.js";
 
 // Formulario de contacto de MLABS: guarda el lead en nuestra base de datos (/api/lead) y avisa por Telegram.

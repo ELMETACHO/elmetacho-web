@@ -12,7 +12,7 @@ export default function Recursos() {
   return (
     <main className="min-h-screen bg-white text-stone-950">
       <MlabsHeader />
-      <div className="mx-auto max-w-3xl px-4 pb-16 pt-24 sm:px-8 sm:pt-32">
+      <div className="mx-auto max-w-3xl px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
         <h1 className="titular-ancho text-5xl sm:text-7xl">Guías gratis</h1>
         <p className="mt-4 text-lg leading-8 text-gris">Busca la palabra que comentaste en el video y abre tu guía.</p>
         <div className="mt-8 grid gap-3">

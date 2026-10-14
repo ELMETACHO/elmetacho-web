@@ -7,7 +7,7 @@ export default function ResultadoPago() {
   return (
     <main className="min-h-screen bg-white text-black">
       <MlabsHeader />
-      <section className="papel-cuad min-h-[80svh] px-4 pb-16 pt-24 sm:px-8 sm:pt-32">
+      <section className="papel-cuad min-h-[80svh] px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
         <div className="mx-auto max-w-md">
           <Resultado />
         </div>

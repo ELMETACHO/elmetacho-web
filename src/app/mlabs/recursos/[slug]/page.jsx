@@ -6,7 +6,6 @@ import { guias, guiaPorSlug, productoPorSlug } from "../../contenido/index.js";
 import TarjetaProducto from "../../componentes/TarjetaProducto";
 import Bloque from "../../componentes/Bloque";
 import Desbloqueo from "../../componentes/Desbloqueo";
-import { ESTILO_DESBLOQUEADO } from "../../lib/desbloqueo.js";
 
 export function generateStaticParams() {
   return guias.map((g) => ({ slug: g.slug }));
@@ -47,7 +46,7 @@ export default async function Guia({ params }) {
   return (
     <main className="min-h-screen bg-white text-stone-950">
       <MlabsHeader />
-      <article className="mx-auto max-w-2xl px-4 pb-16 pt-24 sm:px-8 sm:pt-32">
+      <article className="mx-auto max-w-2xl px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
         <Link href="/recursos" className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-500 hover:text-[var(--color-rojo)]">
           ← Guías gratis
         </Link>
@@ -66,14 +65,11 @@ export default async function Guia({ params }) {
         </div>
 
         {g.secciones.length > libres && (
-          <>
-            <script dangerouslySetInnerHTML={{ __html: ESTILO_DESBLOQUEADO }} />
-            <Desbloqueo slug={slug}>
-              {g.secciones.slice(libres).map((s) => (
-                <Seccion key={s.titulo} s={s} />
-              ))}
-            </Desbloqueo>
-          </>
+          <Desbloqueo slug={slug}>
+            {g.secciones.slice(libres).map((s) => (
+              <Seccion key={s.titulo} s={s} />
+            ))}
+          </Desbloqueo>
         )}
 
         {g.productoRelacionado && <TarjetaProducto producto={productoPorSlug(g.productoRelacionado)} />}

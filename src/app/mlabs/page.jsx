@@ -74,7 +74,7 @@ export default function Mlabs() {
       <MlabsHeader />
 
       {/* PORTADA */}
-      <section className="papel-cuad px-4 pb-14 pt-24 sm:px-8 sm:pb-24 sm:pt-32">
+      <section className="papel-cuad px-4 pb-14 pt-40 sm:px-8 sm:pb-24 sm:pt-44">
         <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.25fr_0.75fr] md:items-end">
           <div>
             <h1 className="titular-ancho text-[13vw] md:text-[6.4vw] xl:text-[6rem]">Tu marca publica todos los días.</h1>

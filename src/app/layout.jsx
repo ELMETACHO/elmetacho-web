@@ -1,5 +1,7 @@
 import { Anton, Archivo } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
+import { ESTILO_DESBLOQUEADO } from "./mlabs/lib/desbloqueo.js";
 
 // Anton = carteles de El Metacho; Archivo (con eje de ancho) = textos y titulares expandidos de MLABS
 const anton = Anton({ weight: "400", subsets: ["latin"], variable: "--font-anton", display: "swap" });
@@ -64,6 +66,8 @@ export default function RootLayout({ children }) {
     <html lang="es" className={`h-full scroll-smooth antialiased ${anton.variable} ${archivo.variable}`}>
       <body className="min-h-full bg-white font-[family-name:var(--font-archivo)] text-black">
         {children}
+        {/* Guías de MLABS: si ya dejó su correo, muestra el contenido antes de pintar (sin parpadeo) */}
+        <Script id="mlabs-desbloqueo" strategy="beforeInteractive">{ESTILO_DESBLOQUEADO}</Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
