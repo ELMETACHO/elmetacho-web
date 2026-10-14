@@ -3,6 +3,7 @@
 // (si TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID existen).
 // No hay que pagar un servicio de correos: los datos quedan en nuestra base y se pueden exportar cuando se quiera.
 import { neon } from "@neondatabase/serverless";
+import { createClient } from "redis";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,20 @@ export async function POST(req) {
       guardado = r.ok;
     } catch (e) {
       console.error("lead redis", e);
+    }
+  }
+  // Redis por conexión directa (Redis Cloud entrega solo una URL redis://…): KV_URL / REDIS_URL / STORAGE_URL
+  const redisTcp = process.env.KV_URL || process.env.REDIS_URL || process.env.STORAGE_URL;
+  if (!guardado && redisTcp) {
+    const cliente = createClient({ url: redisTcp });
+    try {
+      await cliente.connect();
+      await cliente.lPush("mlabs:leads", JSON.stringify({ ...lead, creado: new Date().toISOString() }));
+      guardado = true;
+    } catch (e) {
+      console.error("lead redis tcp", e);
+    } finally {
+      cliente.quit().catch(() => {});
     }
   }
   if (!guardado && process.env.DATABASE_URL) {
