@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MLABS_WHATSAPP } from "../../MlabsMarco";
+import { MLABS_WHATSAPP } from "../../enlaces.js";
 
 const TEXTO = {
   APPROVED: { titulo: "Pago aprobado", detalle: "Gracias. Ya nos llegó el aviso y te escribimos por WhatsApp para arrancar." },

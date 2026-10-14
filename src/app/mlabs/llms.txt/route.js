@@ -1,5 +1,5 @@
-// llms.txt: resumen en texto plano para buscadores con IA (ChatGPT, Perplexity, Claude…)
-import { listaGuias } from "../recursos/guias";
+// llms.txt: resumen en texto plano para buscadores con IA (ChatGPT, Perplexity, Claude…). Se arma solo desde el contenido.
+import { guias, productos, publicos, novedadesRecientes } from "../contenido/index.js";
 
 export const dynamic = "force-static";
 
@@ -12,11 +12,21 @@ export function GET() {
 Contacto: WhatsApp +57 320 264 6716 · contacto@elmetacho.com
 
 ## Páginas
-- [Inicio](${base}/): servicios, cómo trabajamos y contacto
+- [Inicio](${base}/): guías gratis, productos y servicios de la agencia
 - [Guías gratis](${base}/recursos): material de los videos de Metacho Labs
+- [Novedades de IA](${base}/novedades): lo nuevo de la semana, con fuente oficial
 
 ## Guías
-${listaGuias.map((g) => `- [${g.titulo}](${base}/recursos/${g.slug}): ${g.resumen}`).join("\n")}
+${guias.map((g) => `- [${g.titulo}](${base}/recursos/${g.slug}): ${g.resumen}`).join("\n")}
+
+## Productos (preventa)
+${productos.map((p) => `- [${p.nombre}](${base}/productos/${p.slug}): ${p.promesa}`).join("\n")}
+
+## Por público
+${publicos.map((p) => `- [${p.titulo}](${base}/para/${p.slug}): ${p.intro}`).join("\n")}
+
+## Novedades recientes
+${novedadesRecientes.slice(0, 10).map((n) => `- ${n.titulo} (${n.fecha}): ${n.queEs} Fuente: ${n.fuente.url}`).join("\n")}
 `;
   return new Response(txt, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }

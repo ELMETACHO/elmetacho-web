@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MlabsHeader, MlabsFooter, MLABS_WHATSAPP } from "./MlabsMarco";
 import FormularioLead from "./FormularioLead";
-import { listaGuias } from "./recursos/guias";
+import CatalogoInicio from "./componentes/CatalogoInicio";
 
 const URL = "https://mlabs.elmetacho.com";
 
@@ -72,12 +72,13 @@ export default function Mlabs() {
   return (
     <main className="min-h-screen bg-white text-black">
       <MlabsHeader />
+      <CatalogoInicio />
 
-      {/* PORTADA */}
-      <section className="papel-cuad px-4 pb-14 pt-24 sm:px-8 sm:pb-24 sm:pt-32">
+      {/* AGENCIA */}
+      <section id="agencia" className="papel-cuad border-t border-black/10 px-4 pb-14 pt-14 sm:px-8 sm:pb-24 sm:pt-24">
         <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.25fr_0.75fr] md:items-end">
           <div>
-            <h1 className="titular-ancho text-[13vw] md:text-[6.4vw] xl:text-[6rem]">Tu marca publica todos los días.</h1>
+            <h2 className="titular-ancho text-[13vw] md:text-[6.4vw] xl:text-[6rem]">Tu marca publica todos los días.</h2>
             <p className="mt-6 max-w-xl text-lg leading-8 text-gris">
               Sin que tú grabes todos los días. Montamos para tu negocio los sistemas de IA con los que producimos nuestras propias cuentas: videos, edición, mensajes automáticos y fidelización.
             </p>
@@ -90,7 +91,7 @@ export default function Mlabs() {
               </Link>
             </div>
           </div>
-          <video src="/videos/gps.mp4" poster="/videos/gps.jpg" autoPlay muted loop playsInline aria-label="Ejemplo de video de Metacho Tips hecho con el sistema de MLABS" className="mx-auto w-60 rounded-[2rem] border-[6px] border-black shadow-[0_30px_70px_rgba(0,0,0,0.28)] sm:w-72" />
+          <video src="/videos/gps.mp4" poster="/videos/gps.jpg" autoPlay muted loop playsInline preload="none" aria-label="Ejemplo de video de Metacho Tips hecho con el sistema de MLABS" className="mx-auto w-60 rounded-[2rem] border-[6px] border-black shadow-[0_30px_70px_rgba(0,0,0,0.28)] sm:w-72" />
         </div>
       </section>
 
@@ -174,24 +175,6 @@ export default function Mlabs() {
             </p>
           </div>
           <FormularioLead origen="mlabs-inicio" boton="Quiero mi propuesta" />
-        </div>
-      </section>
-
-      {/* GUÍAS */}
-      <section className="border-t border-black/10 px-4 py-16 sm:px-8 sm:py-24">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="titular-ancho text-5xl sm:text-7xl">Guías gratis</h2>
-          <p className="mt-4 max-w-xl text-lg leading-8 text-gris">El material que prometo al final de cada video de Metacho Labs.</p>
-          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-            {listaGuias.map((g) => (
-              <li key={g.slug}>
-                <Link href={`/recursos/${g.slug}`} className="flex h-full flex-col rounded-[1.25rem] border-2 border-black p-5 transition hover:bg-black hover:text-white">
-                  <span className="text-sm font-bold text-rojo">Comenta {g.palabra}</span>
-                  <span className="mt-1 text-xl font-black leading-7">{g.titulo}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 

@@ -11,7 +11,7 @@ export default function Pagar() {
   return (
     <main className="min-h-screen bg-white text-black">
       <MlabsHeader />
-      <section className="papel-cuad min-h-[80svh] px-4 pb-16 pt-24 sm:px-8 sm:pt-32">
+      <section className="papel-cuad min-h-[80svh] px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
         <div className="mx-auto max-w-md">
           <h1 className="titular-ancho text-5xl sm:text-6xl">Pagar</h1>
           <p className="mt-4 text-lg leading-8 text-gris">Escribe el monto que te cotizamos por WhatsApp y qué estás pagando.</p>

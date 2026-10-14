@@ -1,9 +1,10 @@
 import Link from "next/link";
+import Buscador from "./componentes/Buscador";
+import { indiceBusqueda } from "./contenido/index.js";
 
 // Marco común de MLABS (mlabs.elmetacho.com). Los enlaces internos son relativos a la raíz del subdominio
 // ("/", "/recursos"), que next.config.mjs reescribe a /mlabs/… cuando el host es mlabs.*
-export const MLABS_WHATSAPP = "https://wa.me/573202646716?text=Hola%20MLABS%2C%20quiero%20montar%20un%20sistema%20para%20mi%20marca";
-export const MLABS_MAILTO = "mailto:contacto@elmetacho.com?subject=Quiero%20trabajar%20con%20MLABS";
+export { MLABS_WHATSAPP, MLABS_MAILTO } from "./enlaces.js";
 
 export function MlabsHeader() {
   return (
@@ -16,11 +17,17 @@ export function MlabsHeader() {
           <Link href="/recursos" className="rounded-full px-3 py-2 text-sm font-semibold hover:text-rojo">
             Guías gratis
           </Link>
+          <Link href="/novedades" className="hidden rounded-full px-3 py-2 text-sm font-semibold hover:text-rojo sm:inline">
+            Novedades
+          </Link>
           <Link href="/#contacto" className="rounded-full bg-rojo px-4 py-2.5 text-sm font-bold text-white">
             Cotizar
           </Link>
         </div>
       </nav>
+      <div className="mx-auto max-w-7xl px-4 pb-3 sm:px-8">
+        <Buscador indice={indiceBusqueda} />
+      </div>
     </header>
   );
 }
