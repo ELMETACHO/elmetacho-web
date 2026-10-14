@@ -62,7 +62,7 @@ export default function SocialIcons({ className = "" }) {
           <motion.span
             variants={{ rest: { scale: 0.85, opacity: 0 }, hover: { scale: 1.15, opacity: 1 } }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="absolute inset-0 rounded-full border-2 border-[#f4634a]"
+            className="absolute inset-0 rounded-full border-2 border-[#E10600]"
           />
           <motion.span
             variants={{ rest: { x: "-120%" }, hover: { x: "120%" } }}
@@ -70,7 +70,7 @@ export default function SocialIcons({ className = "" }) {
             className="pointer-events-none absolute inset-y-0 left-0 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/70 to-transparent"
           />
           <motion.span
-            variants={{ rest: { scale: 1, color: "#57534e" }, hover: { scale: 1.1, color: "#f4634a" } }}
+            variants={{ rest: { scale: 1, color: "#57534e" }, hover: { scale: 1.1, color: "#E10600" } }}
             transition={{ duration: 0.25 }}
             className="relative z-10 h-5 w-5"
           >

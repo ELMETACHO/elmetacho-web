@@ -43,7 +43,7 @@ export default function ChatFab() {
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="w-[calc(100vw-3rem)] max-w-sm rounded-[1.75rem] border border-stone-900/10 bg-white p-6 shadow-[0_20px_60px_rgba(28,25,23,0.2)]"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#f4634a]">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#E10600]">
               Preguntas frecuentes
             </p>
             <h3 className="mt-2 text-lg font-bold tracking-tight text-stone-900">
@@ -63,7 +63,7 @@ export default function ChatFab() {
               <p className="text-sm text-stone-600">¿Tienes otra pregunta? Escríbenos.</p>
               <a
                 href={PROPUESTA_MAILTO}
-                className="mt-3 inline-flex rounded-full bg-[#f4634a] px-5 py-2.5 text-xs font-bold uppercase tracking-wide text-white transition hover:scale-105"
+                className="mt-3 inline-flex rounded-full bg-[#E10600] px-5 py-2.5 text-xs font-bold uppercase tracking-wide text-white transition hover:scale-105"
               >
                 ¿Quieres trabajar conmigo?
               </a>
@@ -78,7 +78,7 @@ export default function ChatFab() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.94 }}
         aria-label={open ? "Cerrar preguntas frecuentes" : "Abrir preguntas frecuentes"}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f4634a] text-white shadow-[0_10px_30px_rgba(244,99,74,0.4)]"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E10600] text-white shadow-[0_10px_30px_rgba(225,6,0,0.4)]"
       >
         {open ? (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6">

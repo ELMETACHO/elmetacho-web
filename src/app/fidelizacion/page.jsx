@@ -10,7 +10,7 @@ export const metadata = {
   description:
     "Plataforma SaaS de fidelización de clientes para pequeños negocios en Colombia: puntos, canjes y avisos dentro de la conversación de WhatsApp del negocio. Desarrollado y operado por EL METACHO S.A.S.",
   alternates: {
-    canonical: "https://elmetacho.com/fidelizacion",
+    canonical: "https://www.elmetacho.com/fidelizacion",
   },
 };
 
@@ -51,7 +51,7 @@ const negocios = ["Barberías", "Spas", "Panaderías", "Restaurantes"];
 export default function Fidelizacion() {
   return (
     <main className="relative min-h-screen bg-[#faf3e9] text-stone-900">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(244,99,74,0.12),_transparent_35%)] blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(225,6,0,0.12),_transparent_35%)] blur-3xl" />
 
       <Navbar />
 
@@ -60,7 +60,7 @@ export default function Fidelizacion() {
         <section className="py-24 sm:py-28 lg:py-32">
           <div className="max-w-3xl space-y-8">
             <Reveal>
-              <span className="inline-flex rounded-full border border-[#f4634a]/30 bg-[#f4634a]/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-[#f4634a]">
+              <span className="inline-flex rounded-full border border-[#E10600]/30 bg-[#E10600]/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-[#E10600]">
                 SaaS · Fidelización
               </span>
             </Reveal>
@@ -68,7 +68,7 @@ export default function Fidelizacion() {
             <Reveal delay={0.1}>
               <h1 className="text-5xl font-black leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
                 Sistema de Fidelización por{" "}
-                <span className="text-[#f4634a]">WhatsApp</span>
+                <span className="text-[#E10600]">WhatsApp</span>
               </h1>
             </Reveal>
 
@@ -96,7 +96,7 @@ export default function Fidelizacion() {
             <Reveal delay={0.35}>
               <a
                 href={CONTACTO_MAILTO}
-                className="inline-flex rounded-full bg-[#f4634a] px-7 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(244,99,74,0.35)] transition hover:scale-105"
+                className="inline-flex rounded-full bg-[#E10600] px-7 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(225,6,0,0.35)] transition hover:scale-105"
               >
                 Quiero la fidelización para mi negocio
               </a>
@@ -107,7 +107,7 @@ export default function Fidelizacion() {
         {/* QUÉ PUEDEN HACER LOS CLIENTES */}
         <section className="border-t border-stone-900/10 py-24 sm:py-28 lg:py-32">
           <Reveal>
-            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[#f4634a]">
+            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[#E10600]">
               Para tus clientes
             </p>
             <h2 className="mt-5 max-w-2xl text-4xl font-black tracking-tight sm:text-5xl">
@@ -119,7 +119,7 @@ export default function Fidelizacion() {
             {funciones.map((f, i) => (
               <Reveal key={f.title} delay={i * 0.1}>
                 <div className="h-full rounded-[1.75rem] border border-stone-900/10 bg-white p-8 shadow-[0_20px_60px_rgba(28,25,23,0.08)]">
-                  <span className="text-3xl font-black text-[#f4634a]/25">0{i + 1}</span>
+                  <span className="text-3xl font-black text-[#E10600]/25">0{i + 1}</span>
                   <h3 className="mt-4 text-xl font-bold tracking-tight">{f.title}</h3>
                   <p className="mt-3 text-sm leading-7 text-stone-600">{f.description}</p>
                 </div>
@@ -132,7 +132,7 @@ export default function Fidelizacion() {
         <section className="border-t border-stone-900/10 py-24 sm:py-28 lg:py-32">
           <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <Reveal>
-              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[#f4634a]">
+              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[#E10600]">
                 Cómo funciona
               </p>
               <h2 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl">
@@ -149,7 +149,7 @@ export default function Fidelizacion() {
                 <Reveal key={p.title} delay={i * 0.08}>
                   <div className="rounded-[1.75rem] border border-stone-900/10 bg-white p-7 shadow-[0_20px_60px_rgba(28,25,23,0.08)]">
                     <div className="flex gap-4">
-                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#f4634a]" />
+                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#E10600]" />
                       <div>
                         <h3 className="text-lg font-bold tracking-tight">{p.title}</h3>
                         <p className="mt-2 text-sm leading-7 text-stone-600">{p.description}</p>
@@ -167,7 +167,7 @@ export default function Fidelizacion() {
           <Reveal>
             <div className="flex flex-col items-start gap-8 rounded-[2rem] border border-stone-900/10 bg-white p-10 shadow-[0_20px_80px_rgba(28,25,23,0.1)] sm:p-14">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[#f4634a]">
+                <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[#E10600]">
                   Desarrollado y operado por EL METACHO S.A.S.
                 </p>
                 <h2 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl">
@@ -175,7 +175,7 @@ export default function Fidelizacion() {
                 </h2>
                 <p className="mt-6 max-w-xl text-lg leading-8 text-stone-600">
                   Escríbenos a{" "}
-                  <a href="mailto:contacto@elmetacho.com" className="font-bold text-[#f4634a] hover:underline">
+                  <a href="mailto:contacto@elmetacho.com" className="font-bold text-[#E10600] hover:underline">
                     contacto@elmetacho.com
                   </a>{" "}
                   y te contamos cómo activar el programa de fidelización por WhatsApp.
@@ -183,7 +183,7 @@ export default function Fidelizacion() {
               </div>
               <a
                 href={CONTACTO_MAILTO}
-                className="rounded-full bg-[#f4634a] px-7 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(244,99,74,0.35)] transition hover:scale-105"
+                className="rounded-full bg-[#E10600] px-7 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-[0_10px_30px_rgba(225,6,0,0.35)] transition hover:scale-105"
               >
                 Escribir a contacto
               </a>

@@ -6,7 +6,7 @@ export const metadata = {
   description:
     "Política de Privacidad de EL METACHO S.A.S.: tratamiento de datos personales conforme a la Ley 1581 de 2012 (Habeas Data, Colombia).",
   alternates: {
-    canonical: "https://elmetacho.com/privacidad",
+    canonical: "https://www.elmetacho.com/privacidad",
   },
 };
 
@@ -24,7 +24,7 @@ function List({ items }) {
     <ul className="space-y-3">
       {items.map((item) => (
         <li key={item} className="flex gap-4">
-          <span className="mt-3 h-2 w-2 shrink-0 rounded-full bg-[#f4634a]" />
+          <span className="mt-3 h-2 w-2 shrink-0 rounded-full bg-[#E10600]" />
           <span>{item}</span>
         </li>
       ))}
@@ -35,15 +35,15 @@ function List({ items }) {
 export default function Privacidad() {
   return (
     <main className="relative min-h-screen bg-[#faf3e9] text-stone-900">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(244,99,74,0.12),_transparent_35%)] blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(225,6,0,0.12),_transparent_35%)] blur-3xl" />
 
       <header className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-8 lg:px-12">
         <Link href="/" className="text-lg font-black tracking-tight text-stone-900">
-          El <span className="text-[#f4634a]">Metacho</span>
+          El <span className="text-[#E10600]">Metacho</span>
         </Link>
         <Link
           href="/"
-          className="text-sm font-medium uppercase tracking-[0.15em] text-stone-600 transition hover:text-[#f4634a]"
+          className="text-sm font-medium uppercase tracking-[0.15em] text-stone-600 transition hover:text-[#E10600]"
         >
           Volver al inicio
         </Link>
@@ -51,7 +51,7 @@ export default function Privacidad() {
 
       <div className="relative mx-auto max-w-3xl px-6 sm:px-8 lg:px-12">
         <article className="py-16 sm:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[#f4634a]">Legal</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[#E10600]">Legal</p>
           <h1 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl">
             Política de Privacidad — EL METACHO S.A.S.
           </h1>
@@ -68,7 +68,7 @@ export default function Privacidad() {
               </p>
               <p>
                 Contacto:{" "}
-                <a href="mailto:contacto@elmetacho.com" className="text-[#f4634a] hover:underline">
+                <a href="mailto:contacto@elmetacho.com" className="text-[#E10600] hover:underline">
                   contacto@elmetacho.com
                 </a>
               </p>
@@ -128,7 +128,7 @@ export default function Privacidad() {
                 Para ejercer estos derechos, escríbenos a{" "}
                 <a
                   href="mailto:contacto@elmetacho.com"
-                  className="font-bold text-[#f4634a] hover:underline"
+                  className="font-bold text-[#E10600] hover:underline"
                 >
                   contacto@elmetacho.com
                 </a>
@@ -154,7 +154,7 @@ export default function Privacidad() {
 
             <div className="mt-6 rounded-[1.75rem] border border-stone-900/10 bg-white p-8 text-base leading-8 text-stone-600 shadow-[0_20px_60px_rgba(28,25,23,0.08)]">
               Si tienes preguntas sobre esta política, contáctanos en{" "}
-              <a href="mailto:contacto@elmetacho.com" className="text-[#f4634a] hover:underline">
+              <a href="mailto:contacto@elmetacho.com" className="text-[#E10600] hover:underline">
                 contacto@elmetacho.com
               </a>
               .

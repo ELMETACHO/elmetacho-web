@@ -4,6 +4,6 @@ export default function robots() {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://elmetacho.com/sitemap.xml",
+    sitemap: "https://www.elmetacho.com/sitemap.xml",
   };
 }
