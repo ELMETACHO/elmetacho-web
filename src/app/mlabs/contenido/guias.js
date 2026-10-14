@@ -181,4 +181,182 @@ export const guias = [
       ] },
     ],
   },
+
+  {
+    slug: "ficha",
+    palabra: "FICHA",
+    titulo: "Descripciones de producto que venden, en un minuto",
+    resumen: "Le pasas a la IA la foto del producto y tres datos, y te devuelve un título con lo que la gente busca, un beneficio en una línea y la lista de detalles. Todo con el mismo tono de tu marca.",
+    tipo: "prompt",
+    publicos: ["emprendedores", "marcas"],
+    tiempo: 3,
+    actualizado: "2026-10-15",
+    secciones: [
+      { titulo: "La frase que lo cambia todo", bloques: [
+        { p: "Pídele a la IA que escriba «para alguien que no puede tocar el producto». Con eso deja de decir «excelente calidad» y empieza a decir cosas que se pueden comprobar." },
+        { tabla: [
+          ["Excelente calidad", "Tela gruesa que no transparenta"],
+          ["Diseño moderno", "Cierre metálico y bolsillo interno para el celular"],
+          ["Cómodo", "Elástico en la cintura: no aprieta al sentarte"],
+        ] },
+      ] },
+      { titulo: "El prompt para una ficha", bloques: [
+        { prompt: "Te paso la foto de un producto de mi tienda [nombre de la tienda], que vende [qué vendes] a [a quién].\nDatos reales: material [material], medida [medida], precio [precio].\n\nEscribe para alguien que no puede tocar el producto:\n1. Un título de máximo 60 caracteres con las palabras que la gente buscaría.\n2. Un beneficio en una sola línea.\n3. Una lista de 4 a 6 detalles concretos que se puedan comprobar.\n\nReglas:\n- Usa solo los datos que te di y lo que se ve en la foto. Si te falta un dato, pregúntamelo en vez de inventarlo.\n- Nada de «excelente calidad», «el mejor» ni frases de vendedor.\n- Tono: [cercano / elegante / divertido]. Habla de tú." },
+      ] },
+      { titulo: "Para cincuenta productos de una vez", bloques: [
+        { p: "Arma una tabla con una fila por producto (nombre, material, medida, precio) y pídele que te la devuelva con tres columnas nuevas: título, beneficio y detalles. Así todas las fichas quedan con el mismo tono." },
+        { prompt: "Te paso una tabla con los productos de mi tienda. Devuélveme la misma tabla con tres columnas nuevas: «título» (máximo 60 caracteres), «beneficio» (una línea) y «detalles» (4 a 6, separados por punto y coma).\nEscribe para alguien que no puede tocar el producto. Usa solo los datos de la tabla: si falta algo, deja la celda con «FALTA DATO».\n\nTabla:\n[pega aquí]" },
+        { ojo: "Revisa medidas y precios antes de publicar: la IA a veces inventa un dato que suena bien." },
+      ] },
+    ],
+  },
+
+  {
+    slug: "calendario",
+    palabra: "CALENDARIO",
+    titulo: "Un mes de contenido en diez minutos",
+    resumen: "Le das a la IA qué vendes, a quién y las preguntas que más te hacen, y te devuelve un mes de ideas en una tabla con fecha, tema, gancho y formato.",
+    tipo: "prompt",
+    publicos: ["creadores", "marcas"],
+    tiempo: 4,
+    actualizado: "2026-10-15",
+    secciones: [
+      { titulo: "Los cuatro tipos de publicación", bloques: [
+        { lista: [
+          "Enseñar: algo útil que la gente pueda aplicar hoy.",
+          "Detrás de cámaras: cómo haces lo que vendes.",
+          "Resolver una objeción: la duda que frena la compra.",
+          "Vender: el producto, el precio y cómo comprarlo.",
+        ] },
+        { p: "La regla: nunca dos del mismo tipo seguidas. Así no cansas a nadie con ventas ni te quedas solo enseñando." },
+      ] },
+      { titulo: "El prompt del calendario", bloques: [
+        { prompt: "Vendo [qué vendes] a [a quién]. Las cinco preguntas que más me hacen son:\n1. [pregunta]\n2. [pregunta]\n3. [pregunta]\n4. [pregunta]\n5. [pregunta]\n\nArma un calendario de contenido para [mes], con [número] publicaciones por semana.\nUsa cuatro tipos: enseñar, detrás de cámaras, resolver una objeción y vender. Nunca pongas dos del mismo tipo seguidas.\nDeja libres dos días por semana para tendencias del momento.\n\nDevuélvelo en una tabla con: fecha, tipo, tema, gancho (la primera frase del video) y formato (reel, carrusel o historia)." },
+      ] },
+      { titulo: "Cómo dejarlo a tu medida", bloques: [
+        { lista: [
+          "Tacha las ideas que no te suenan y pídele: «cambia la fila 3 y la 7 por otras del mismo tipo».",
+          "Pídele que convierta cada pregunta de tus clientes en al menos un video.",
+          "El lunes ya sabes qué grabas toda la semana.",
+        ] },
+        { ojo: "Un calendario no reemplaza las tendencias del día. Por eso deja los dos espacios libres por semana." },
+      ] },
+    ],
+  },
+
+  {
+    slug: "cliente",
+    palabra: "CLIENTE",
+    titulo: "Descubre de qué se quejan tus clientes",
+    resumen: "Tus chats de WhatsApp y tus DMs ya te dicen qué mejorar. La IA encuentra las dudas que más se repiten y en qué momento de la compra aparecen.",
+    tipo: "prompt",
+    publicos: ["emprendedores", "marcas"],
+    tiempo: 4,
+    actualizado: "2026-10-15",
+    secciones: [
+      { titulo: "Paso 1 · Junta los mensajes, sin datos personales", bloques: [
+        { p: "Exporta los chats de WhatsApp (en las opciones del chat busca «Exportar chat» y elige sin archivos) o copia los DMs de un mes. Antes de pasárselos a la IA, borra nombres, teléfonos, direcciones y correos." },
+        { ojo: "Nunca subas datos personales de tus clientes a una IA. Si no tienes tiempo de limpiarlos, copia solo el texto de las preguntas." },
+      ] },
+      { titulo: "Paso 2 · El prompt", bloques: [
+        { prompt: "Te paso mensajes de clientes de mi negocio de [qué vendes], sin datos personales.\n\n1. ¿Cuáles son las cinco dudas o quejas que más se repiten? Dime cuántas veces aparece cada una y pon un ejemplo textual.\n2. ¿En qué momento de la compra aparece cada una: antes de comprar, al pagar, en el envío o después de recibir?\n3. Para cada una propón: un cambio en la descripción del producto, una idea de video que la responda y una respuesta rápida para WhatsApp (máximo 2 frases, de tú).\n\nMensajes:\n«[pega aquí]»" },
+      ] },
+      { titulo: "Qué hacer con el resultado", bloques: [
+        { lista: [
+          "Cambia la descripción del producto para responder la duda antes de que te la hagan.",
+          "Graba un video corto con cada duda: es contenido que ya sabes que interesa.",
+          "Guarda las respuestas rápidas en WhatsApp Business para contestar en segundos.",
+        ] },
+        { p: "Casi siempre sale algo que no esperabas, como el envío o la talla. Puedes vender más sin conseguir un solo seguidor nuevo." },
+      ] },
+    ],
+  },
+
+  {
+    slug: "dicta",
+    palabra: "DICTA",
+    titulo: "Dicta tus ideas y conviértelas en publicaciones",
+    resumen: "Graba una nota de voz desordenada, como te salga, y pídele a la IA que la convierta en una publicación que conserve tus frases y tus ejemplos.",
+    tipo: "guia",
+    publicos: ["creadores", "emprendedores"],
+    tiempo: 3,
+    actualizado: "2026-10-15",
+    secciones: [
+      { titulo: "La regla que hace que suene a ti", bloques: [
+        { p: "Si no se lo dices, la IA te devuelve un texto bonito que no suena a ti. La instrucción clave es: «conserva mis frases y mis ejemplos, y solo ordena»." },
+      ] },
+      { titulo: "Paso 1 · Graba y transcribe", bloques: [
+        { lista: [
+          "Graba una nota de voz cuando te llegue la idea: manejando, caminando, donde sea.",
+          "Habla como le contarías la idea a un amigo. No importa que sea desordenado.",
+          "Pásala a texto con el dictado del teclado de tu celular o con la transcripción automática de tu app de notas de voz.",
+        ] },
+      ] },
+      { titulo: "Paso 2 · El prompt", bloques: [
+        { prompt: "Te paso la transcripción de una nota de voz mía. Conviértela en una publicación para [Instagram / LinkedIn / mi lista de correo].\n\nReglas:\n- Conserva mis frases y mis ejemplos. Solo ordena, quita repeticiones y corrige lo que se entienda mal.\n- No agregues datos ni ejemplos que yo no dije.\n- Máximo [número] palabras.\n\nAdemás dame tres ganchos distintos para la primera línea, para que yo escoja.\n\nTranscripción:\n«[pega aquí]»" },
+        { ojo: "Revisa los datos: cuando hablas rápido, la transcripción confunde números y nombres." },
+      ] },
+    ],
+  },
+
+  {
+    slug: "formula",
+    palabra: "FORMULA",
+    titulo: "Fórmulas de Excel sin saber Excel",
+    resumen: "Le explicas a la IA qué hay en cada columna y qué quieres ver, y te devuelve la fórmula explicada. Aquí están el prompt y las diez fórmulas que más uso para ventas e inventario.",
+    tipo: "prompt",
+    publicos: ["emprendedores", "ia-y-developers"],
+    tiempo: 5,
+    actualizado: "2026-10-15",
+    secciones: [
+      { titulo: "El prompt", bloques: [
+        { prompt: "Tengo una hoja de Excel [en español / en inglés]. En la columna A está [qué hay], en la B [qué hay] y en la C [qué hay]. Los datos van de la fila 2 a la [última fila].\n\nQuiero ver: [qué quieres calcular, por ejemplo «el total por mes de cada producto»].\n\nDame la fórmula lista para pegar, dime en qué celda va y explícame qué hace cada parte, en palabras sencillas." },
+        { p: "Si la fórmula da error, pégale el error tal cual y pídele que la corrija." },
+      ] },
+      { titulo: "Las diez que más uso", bloques: [
+        { p: "Están con los nombres de Excel en español y punto y coma como separador. Si tu Excel está en inglés, pídele a la IA que te las traduzca." },
+        { lista: [
+          "Total de ventas: =SUMA(C2:C500)",
+          "Total de un producto: =SUMAR.SI(B2:B500;\"Camiseta\";C2:C500)",
+          "Total de un producto en un mes: =SUMAR.SI.CONJUNTO(C2:C500;B2:B500;\"Camiseta\";A2:A500;\">=\"&FECHA(2026;10;1);A2:A500;\"<\"&FECHA(2026;11;1))",
+          "Cuántas ventas tuvo un producto: =CONTAR.SI(B2:B500;\"Camiseta\")",
+          "Venta promedio: =PROMEDIO(C2:C500)",
+          "Traer el precio desde otra hoja: =BUSCARX(B2;Precios!A:A;Precios!B:B;\"No existe\")",
+          "Avisar cuando hay que pedir inventario: =SI(D2<5;\"Pedir\";\"OK\")",
+          "Evitar errores en una división: =SI.ERROR(C2/D2;0)",
+          "Nombre del mes de una fecha: =TEXTO(A2;\"mmmm\")",
+          "Lista de productos sin repetir: =UNICOS(B2:B500)",
+        ] },
+        { ojo: "BUSCARX y UNICOS solo existen en Excel 365 y Excel 2021 o más nuevo. Si tienes una versión anterior, pídele a la IA la alternativa." },
+      ] },
+      { titulo: "Antes de confiar en el total", bloques: [
+        { ojo: "Prueba cada fórmula con tres filas cuyo resultado ya conozcas. Si da lo que esperabas, ahí sí cópiala a toda la columna." },
+      ] },
+    ],
+  },
+
+  {
+    slug: "precio",
+    palabra: "PRECIO",
+    titulo: "Usa la IA para pensar tu precio, no para decidirlo",
+    resumen: "Le pasas a la IA tus costos, tu tiempo y lo que cobra la competencia, y te ayuda a armar tres opciones de precio y a responder las objeciones. El número final lo pones tú.",
+    tipo: "guia",
+    publicos: ["emprendedores"],
+    tiempo: 4,
+    actualizado: "2026-10-15",
+    secciones: [
+      { titulo: "Por qué no dejarle la decisión a la IA", bloques: [
+        { p: "La IA no conoce tu ciudad, a tu cliente ni lo que vale tu trabajo para él. Úsala para ordenar números y pensar opciones, no para que te diga cuánto cobrar." },
+        { p: "Cobrar barato no es una estrategia: es un miedo. Tener tus números claros es lo que te deja sostener el precio." },
+      ] },
+      { titulo: "Paso 1 · Tres precios", bloques: [
+        { prompt: "Vendo [qué vendes] a [a quién] en [ciudad o país].\nMis costos por unidad o por proyecto son: [lista de costos].\nMe toma [tiempo] hacerlo.\nLa competencia cobra entre [precio] y [precio].\n\n1. Calcula mi costo total, incluyendo mi tiempo a [lo que quieres ganar por hora].\n2. Propón tres opciones: básica, completa y premium. Para cada una dime qué incluye, qué no incluye y un precio sugerido con su margen.\n3. Explícame tus supuestos para que yo los corrija." },
+      ] },
+      { titulo: "Paso 2 · Las objeciones", bloques: [
+        { prompt: "Con estas tres opciones de precio, dime las cinco objeciones más probables de un cliente (por ejemplo «está caro») y cómo responder cada una en máximo dos frases, sin bajar el precio. Habla de tú y con tono [cercano / profesional]." },
+        { p: "Tener las respuestas listas es lo que evita que bajes el precio apenas alguien dice «está caro»." },
+        { ojo: "Revisa cada cálculo con tu calculadora. El número final, y si lo bajas o no, lo decides tú." },
+      ] },
+    ],
+  },
 ];

@@ -95,3 +95,10 @@ test("hay al menos una novedad publicada y todas tienen fuente https", async () 
   assert.ok(c.novedades.length >= 1);
   for (const n of c.novedades) assert.match(n.fuente.url, /^https:\/\//);
 });
+
+test("están las guías del contenido inicial del spec", async () => {
+  const c = await import("./index.js");
+  const palabras = c.guias.map((g) => g.palabra);
+  for (const p of ["CLAUDE", "RESEÑA", "RECICLA", "COMPETENCIA", "EDITOR", "FICHA", "CALENDARIO", "CLIENTE", "DICTA", "FORMULA", "PRECIO"])
+    assert.ok(palabras.includes(p), `falta ${p}`);
+});
