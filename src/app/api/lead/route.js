@@ -4,6 +4,7 @@
 // No hay que pagar un servicio de correos: los datos quedan en nuestra base y se pueden exportar cuando se quiera.
 import { neon } from "@neondatabase/serverless";
 import { createClient } from "redis";
+import { urlRedisDirecta } from "./config.js";
 
 export const runtime = "nodejs";
 
@@ -44,8 +45,8 @@ export async function POST(req) {
       console.error("lead redis", e);
     }
   }
-  // Redis por conexión directa (Redis Cloud entrega solo una URL redis://…): KV_URL / REDIS_URL / STORAGE_URL
-  const redisTcp = process.env.KV_URL || process.env.REDIS_URL || process.env.STORAGE_URL;
+  // Redis por conexión directa (redis://…): KV_REDIS_URL (integración de Vercel), KV_URL, REDIS_URL o STORAGE_URL
+  const redisTcp = urlRedisDirecta(process.env);
   if (!guardado && redisTcp) {
     const cliente = createClient({ url: redisTcp });
     try {
