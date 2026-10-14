@@ -1,5 +1,4 @@
 import { Anton, Archivo } from "next/font/google";
-import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ESTILO_DESBLOQUEADO } from "./mlabs/lib/desbloqueo.js";
@@ -65,10 +64,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`h-full scroll-smooth antialiased ${anton.variable} ${archivo.variable}`}>
+      <head>
+        {/* Guías de MLABS: si ya dejó su correo, muestra el contenido antes de pintar (sin parpadeo del formulario) */}
+        <script dangerouslySetInnerHTML={{ __html: ESTILO_DESBLOQUEADO }} />
+      </head>
       <body className="min-h-full bg-white font-[family-name:var(--font-archivo)] text-black">
         {children}
-        {/* Guías de MLABS: si ya dejó su correo, muestra el contenido antes de pintar (sin parpadeo) */}
-        <Script id="mlabs-desbloqueo" strategy="beforeInteractive">{ESTILO_DESBLOQUEADO}</Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

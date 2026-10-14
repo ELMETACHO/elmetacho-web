@@ -19,3 +19,6 @@ export const indiceBusqueda = crearIndice([
   ...guias.map((g) => ({ ...g, href: `/recursos/${g.slug}` })),
   ...productos.map((p) => ({ href: `/productos/${p.slug}`, titulo: p.nombre, tipo: "producto", resumen: p.promesa })),
 ]);
+
+// Solo lo que muestra una tarjeta: el catálogo es componente de cliente y no debe cargar el texto completo de las guías.
+export const tarjetasGuias = guias.map(({ slug, tipo, tiempo, palabra, titulo, resumen, publicos }) => ({ slug, tipo, tiempo, palabra, titulo, resumen, publicos }));

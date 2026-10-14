@@ -102,3 +102,12 @@ test("están las guías del contenido inicial del spec", async () => {
   for (const p of ["CLAUDE", "RESEÑA", "RECICLA", "COMPETENCIA", "EDITOR", "FICHA", "CALENDARIO", "CLIENTE", "DICTA", "FORMULA", "PRECIO"])
     assert.ok(palabras.includes(p), `falta ${p}`);
 });
+
+test("las tarjetas del catálogo no llevan el contenido completo de las guías", async () => {
+  const c = await import("./index.js");
+  assert.equal(c.tarjetasGuias.length, c.guias.length);
+  for (const t of c.tarjetasGuias) {
+    assert.equal(t.secciones, undefined, `la tarjeta ${t.slug} trae secciones`);
+    for (const campo of ["slug", "tipo", "tiempo", "palabra", "titulo", "resumen", "publicos"]) assert.ok(t[campo], `${t.slug} sin ${campo}`);
+  }
+});
