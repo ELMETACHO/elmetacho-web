@@ -1,5 +1,6 @@
 import { Anton, Archivo } from "next/font/google";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ESTILO_DESBLOQUEADO } from "./mlabs/lib/desbloqueo.js";
 
@@ -90,6 +91,7 @@ export default function RootLayout({ children }) {
             }),
           }}
         />
+        <Analytics />
       </body>
     </html>
   );

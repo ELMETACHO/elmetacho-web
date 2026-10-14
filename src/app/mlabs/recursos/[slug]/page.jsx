@@ -24,9 +24,9 @@ export async function generateMetadata({ params }) {
 
 const fecha = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
 
-function Seccion({ s }) {
+function Seccion({ s, n }) {
   return (
-    <section>
+    <section id={`paso-${n}`} className="scroll-mt-44">
       <h2 className="text-2xl font-black tracking-tight sm:text-3xl">{s.titulo}</h2>
       <div className="mt-4 space-y-4">
         {s.bloques.map((b, i) => (
@@ -42,6 +42,27 @@ export default async function Guia({ params }) {
   const g = guiaPorSlug(slug);
   if (!g) notFound();
   const libres = g.seccionesLibres ?? 1;
+  const url = `https://mlabs.elmetacho.com/recursos/${slug}`;
+  const articulo = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: g.titulo,
+    description: g.resumen,
+    inLanguage: "es",
+    datePublished: g.actualizado,
+    dateModified: g.actualizado,
+    mainEntityOfPage: url,
+    author: { "@type": "Person", name: "El Metacho", url: "https://www.elmetacho.com" },
+    publisher: { "@type": "Organization", name: "MLABS", url: "https://mlabs.elmetacho.com" },
+  };
+  const howto = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: g.titulo,
+    description: g.resumen,
+    totalTime: `PT${g.tiempo}M`,
+    step: g.secciones.map((s, i) => ({ "@type": "HowToStep", position: i + 1, name: s.titulo, url: `${url}#paso-${i + 1}` })),
+  };
 
   return (
     <main className="min-h-screen bg-white text-stone-950">
@@ -66,15 +87,15 @@ export default async function Guia({ params }) {
         </p>
 
         <div className="mt-10 space-y-10">
-          {g.secciones.slice(0, libres).map((s) => (
-            <Seccion key={s.titulo} s={s} />
+          {g.secciones.slice(0, libres).map((s, i) => (
+            <Seccion key={s.titulo} s={s} n={i + 1} />
           ))}
         </div>
 
         {g.secciones.length > libres && (
           <Desbloqueo slug={slug}>
-            {g.secciones.slice(libres).map((s) => (
-              <Seccion key={s.titulo} s={s} />
+            {g.secciones.slice(libres).map((s, i) => (
+              <Seccion key={s.titulo} s={s} n={i + libres + 1} />
             ))}
           </Desbloqueo>
         )}
@@ -91,16 +112,7 @@ export default async function Guia({ params }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Article",
-              headline: g.titulo,
-              description: g.resumen,
-              inLanguage: "es",
-              mainEntityOfPage: `https://mlabs.elmetacho.com/recursos/${slug}`,
-              author: { "@type": "Person", name: "El Metacho", url: "https://www.elmetacho.com" },
-              publisher: { "@type": "Organization", name: "MLABS", url: "https://mlabs.elmetacho.com" },
-            }),
+            __html: JSON.stringify(g.howto ? [articulo, howto] : articulo),
           }}
         />
       </article>
