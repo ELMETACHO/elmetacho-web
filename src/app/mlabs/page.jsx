@@ -166,6 +166,12 @@ export default function Mlabs() {
             <a href={MLABS_WHATSAPP} className="mt-6 inline-block font-bold text-rojo underline underline-offset-4">
               Prefiero escribir ya por WhatsApp
             </a>
+            <p className="mt-8 rounded-[1.25rem] border-2 border-black p-5 text-lg leading-7">
+              ¿Ya tienes tu cotización?{" "}
+              <Link href="/pagar" className="font-bold text-rojo underline underline-offset-4">
+                Paga aquí con tarjeta o PSE
+              </Link>
+            </p>
           </div>
           <FormularioLead origen="mlabs-inicio" boton="Quiero mi propuesta" />
         </div>
