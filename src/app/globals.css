@@ -72,3 +72,6 @@ select {
     scroll-behavior: auto !important;
   }
 }
+
+/* Guías de MLABS: secciones que se ven solo después de dejar el correo (siguen en el HTML para los buscadores) */
+.contenido-bloqueado { display: none; }

@@ -2,10 +2,16 @@
 
 import { useState } from "react";
 import { MLABS_WHATSAPP } from "./MlabsMarco";
+import { enviarLead } from "./lib/enviarLead.js";
 
 // Formulario de contacto de MLABS: guarda el lead en nuestra base de datos (/api/lead) y avisa por Telegram.
 // origen = de dónde vino (inicio, guía de RESEÑA, etc.) para saber qué convierte.
-export default function FormularioLead({ origen = "mlabs", boton = "Enviar", pedirMensaje = true }) {
+export default function FormularioLead({
+  origen = "mlabs",
+  boton = "Enviar",
+  pedirMensaje = true,
+  mensajeOk = "Te escribimos por WhatsApp en menos de un día hábil. Si es urgente, escríbenos tú ahora.",
+}) {
   const [estado, setEstado] = useState("listo"); // listo | enviando | ok | error
   const [error, setError] = useState("");
 
@@ -15,9 +21,7 @@ export default function FormularioLead({ origen = "mlabs", boton = "Enviar", ped
     setEstado("enviando");
     setError("");
     try {
-      const r = await fetch("/api/lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...datos, origen }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "No pudimos guardar tus datos.");
+      await enviarLead({ ...datos, origen });
       setEstado("ok");
     } catch (e) {
       setError(e.message);
@@ -29,7 +33,7 @@ export default function FormularioLead({ origen = "mlabs", boton = "Enviar", ped
     return (
       <div className="rounded-[1.5rem] bg-black p-6 text-white sm:p-8" role="status">
         <p className="text-2xl font-black">Recibido.</p>
-        <p className="mt-2 leading-7 text-white/80">Te escribimos por WhatsApp en menos de un día hábil. Si es urgente, escríbenos tú ahora.</p>
+        <p className="mt-2 leading-7 text-white/80">{mensajeOk}</p>
         <a href={MLABS_WHATSAPP} className="mt-5 inline-block rounded-full bg-rojo px-6 py-3 font-bold">
           Abrir WhatsApp
         </a>
