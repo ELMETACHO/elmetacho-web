@@ -1,5 +1,6 @@
-// Recibe los leads de MLABS (formulario y guías). Los guarda en nuestra base de datos (Postgres, si DATABASE_URL
-// existe) y avisa al bot central de Telegram (si TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID existen).
+// Recibe los leads de MLABS (formulario y guías). Los guarda en el Redis de la cuenta (lista "mlabs:leads", aparte de
+// las claves de Mystery Cuadros) o en Postgres si existe DATABASE_URL, y avisa al bot central de Telegram
+// (si TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID existen).
 // No hay que pagar un servicio de correos: los datos quedan en nuestra base y se pueden exportar cuando se quiera.
 import { neon } from "@neondatabase/serverless";
 
@@ -28,7 +29,21 @@ export async function POST(req) {
 
   let guardado = false;
   let avisado = false;
-  if (process.env.DATABASE_URL) {
+  const redisUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const redisToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (redisUrl && redisToken) {
+    try {
+      const r = await fetch(redisUrl, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${redisToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify(["LPUSH", "mlabs:leads", JSON.stringify({ ...lead, creado: new Date().toISOString() })]),
+      });
+      guardado = r.ok;
+    } catch (e) {
+      console.error("lead redis", e);
+    }
+  }
+  if (!guardado && process.env.DATABASE_URL) {
     try {
       const sql = neon(process.env.DATABASE_URL);
       await sql`create table if not exists leads (id serial primary key, creado timestamptz default now(), nombre text, telefono text, correo text, mensaje text, origen text)`;
