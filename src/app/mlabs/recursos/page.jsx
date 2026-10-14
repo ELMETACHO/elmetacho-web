@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MlabsHeader, MlabsFooter } from "../MlabsMarco";
-import { listaGuias } from "./guias";
+import { guias } from "../contenido/index.js";
 
 export const metadata = {
   title: { absolute: "Guías gratis · MLABS by El Metacho" },
@@ -16,7 +16,7 @@ export default function Recursos() {
         <h1 className="titular-ancho text-5xl sm:text-7xl">Guías gratis</h1>
         <p className="mt-4 text-lg leading-8 text-gris">Busca la palabra que comentaste en el video y abre tu guía.</p>
         <div className="mt-8 grid gap-3">
-          {listaGuias.map((g) => (
+          {guias.map((g) => (
             <Link key={g.slug} href={`/recursos/${g.slug}`} className="flex items-center justify-between gap-4 rounded-[1.25rem] border-2 border-black p-5 transition hover:bg-black hover:text-white">
               <span>
                 <span className="text-sm font-bold text-rojo">Comenta {g.palabra}</span>

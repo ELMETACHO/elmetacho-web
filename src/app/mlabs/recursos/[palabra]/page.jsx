@@ -2,16 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MlabsHeader, MlabsFooter } from "../../MlabsMarco";
 import FormularioLead from "../../FormularioLead";
-import { guias, listaGuias } from "../guias";
+import { guias, guiaPorSlug } from "../../contenido/index.js";
 import Copiar from "./Copiar";
 
 export function generateStaticParams() {
-  return listaGuias.map((g) => ({ palabra: g.slug }));
+  return guias.map((g) => ({ palabra: g.slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { palabra } = await params;
-  const g = guias[palabra];
+  const g = guiaPorSlug(palabra);
   if (!g) return {};
   return {
     title: { absolute: `${g.titulo} · MLABS by El Metacho` },
@@ -66,7 +66,7 @@ function Bloque({ b }) {
 
 export default async function Guia({ params }) {
   const { palabra } = await params;
-  const g = guias[palabra];
+  const g = guiaPorSlug(palabra);
   if (!g) notFound();
 
   return (

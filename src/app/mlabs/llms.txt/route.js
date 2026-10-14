@@ -1,5 +1,5 @@
 // llms.txt: resumen en texto plano para buscadores con IA (ChatGPT, Perplexity, Claude…)
-import { listaGuias } from "../recursos/guias";
+import { guias } from "../contenido/index.js";
 
 export const dynamic = "force-static";
 
@@ -16,7 +16,7 @@ Contacto: WhatsApp +57 320 264 6716 · contacto@elmetacho.com
 - [Guías gratis](${base}/recursos): material de los videos de Metacho Labs
 
 ## Guías
-${listaGuias.map((g) => `- [${g.titulo}](${base}/recursos/${g.slug}): ${g.resumen}`).join("\n")}
+${guias.map((g) => `- [${g.titulo}](${base}/recursos/${g.slug}): ${g.resumen}`).join("\n")}
 `;
   return new Response(txt, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }

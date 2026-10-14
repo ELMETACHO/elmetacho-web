@@ -1,10 +1,15 @@
-// Material gratis de cada video de Metacho Labs. La clave es la palabra que la gente comenta (en minúsculas, sin tildes).
+// Guías gratis de MLABS (material de los videos de Metacho Labs). Forma y reglas: contenido/validar.js.
 // Bloques: { p }, { lista: [] }, { prompt }, { tabla: [[mal, bien], …] }, { ojo }.
-export const guias = {
-  claude: {
+export const guias = [
+  {
+    slug: "claude",
     palabra: "CLAUDE",
     titulo: "Guía rápida: Claude Dashboards",
     resumen: "Le haces una pregunta a Claude sobre tu negocio y te arma un tablero con gráficas que se conecta a tus datos y se actualiza solo.",
+    tipo: "guia",
+    publicos: ["emprendedores", "marcas", "ia-y-developers"],
+    tiempo: 4,
+    actualizado: "2026-10-14",
     secciones: [
       { titulo: "Antes de empezar", bloques: [
         { lista: [
@@ -40,10 +45,15 @@ export const guias = {
     ],
   },
 
-  resena: {
+  {
+    slug: "resena",
     palabra: "RESEÑA",
     titulo: "Cómo responder reseñas sin sonar a robot",
     resumen: "Usa la IA para el primer borrador de cada respuesta, con tres reglas que la hacen sonar humana. La respuesta final la decides tú.",
+    tipo: "prompt",
+    publicos: ["emprendedores", "marcas"],
+    tiempo: 3,
+    actualizado: "2026-10-14",
     secciones: [
       { titulo: "Las tres reglas", bloques: [
         { lista: [
@@ -64,10 +74,17 @@ export const guias = {
     ],
   },
 
-  recicla: {
+  {
+    slug: "recicla",
     palabra: "RECICLA",
     titulo: "Un video, siete piezas de contenido",
     resumen: "Grabas una vez y de ese video salen siete publicaciones distintas. La clave: una sola idea por pieza.",
+    tipo: "prompt",
+    publicos: ["creadores", "marcas"],
+    tiempo: 5,
+    actualizado: "2026-10-14",
+    productoRelacionado: "creador-de-carruseles",
+    howto: true,
     secciones: [
       { titulo: "Las siete piezas", bloques: [
         { lista: [
@@ -91,10 +108,16 @@ export const guias = {
     ],
   },
 
-  competencia: {
+  {
+    slug: "competencia",
     palabra: "COMPETENCIA",
     titulo: "Analiza a tu competencia por sus comentarios",
     resumen: "Los comentarios de las publicaciones de tu competencia son investigación de mercado gratis. La IA los agrupa y te dice qué hacer con ellos.",
+    tipo: "prompt",
+    publicos: ["emprendedores", "marcas", "creadores"],
+    tiempo: 5,
+    actualizado: "2026-10-14",
+    howto: true,
     secciones: [
       { titulo: "Paso 1 · Junta los comentarios", bloques: [
         { p: "Entra a las 3 a 5 publicaciones más vistas de tu competencia y copia los comentarios (con 100 a 300 basta). Pégalos en un documento, uno por línea." },
@@ -112,6 +135,4 @@ export const guias = {
       ] },
     ],
   },
-};
-
-export const listaGuias = Object.entries(guias).map(([slug, g]) => ({ slug, ...g }));
+];

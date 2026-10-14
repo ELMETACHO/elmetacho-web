@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MlabsHeader, MlabsFooter, MLABS_WHATSAPP } from "./MlabsMarco";
 import FormularioLead from "./FormularioLead";
-import { listaGuias } from "./recursos/guias";
+import { guias } from "./contenido/index.js";
 
 const URL = "https://mlabs.elmetacho.com";
 
@@ -183,7 +183,7 @@ export default function Mlabs() {
           <h2 className="titular-ancho text-5xl sm:text-7xl">Guías gratis</h2>
           <p className="mt-4 max-w-xl text-lg leading-8 text-gris">El material que prometo al final de cada video de Metacho Labs.</p>
           <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-            {listaGuias.map((g) => (
+            {guias.map((g) => (
               <li key={g.slug}>
                 <Link href={`/recursos/${g.slug}`} className="flex h-full flex-col rounded-[1.25rem] border-2 border-black p-5 transition hover:bg-black hover:text-white">
                   <span className="text-sm font-bold text-rojo">Comenta {g.palabra}</span>
