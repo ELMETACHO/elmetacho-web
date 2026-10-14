@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MlabsHeader, MlabsFooter } from "../../MlabsMarco";
 import FormularioLead from "../../FormularioLead";
-import { guias, guiaPorSlug } from "../../contenido/index.js";
+import { guias, guiaPorSlug, productoPorSlug } from "../../contenido/index.js";
+import TarjetaProducto from "../../componentes/TarjetaProducto";
 import Bloque from "../../componentes/Bloque";
 import Desbloqueo from "../../componentes/Desbloqueo";
 import { ESTILO_DESBLOQUEADO } from "../../lib/desbloqueo.js";
@@ -74,6 +75,8 @@ export default async function Guia({ params }) {
             </Desbloqueo>
           </>
         )}
+
+        {g.productoRelacionado && <TarjetaProducto producto={productoPorSlug(g.productoRelacionado)} />}
 
         <div className="mt-14 rounded-[1.75rem] bg-black p-6 text-white sm:p-10">
           <p className="text-2xl font-black sm:text-3xl">¿Prefieres que lo montemos por ti?</p>

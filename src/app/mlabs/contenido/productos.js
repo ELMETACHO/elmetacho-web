@@ -29,7 +29,6 @@ export const productos = [
     precio: null,
     moneda: "COP",
     fechaEstimada: null,
-    video: "labs",
     faq: [
       { q: "¿Ya lo puedo comprar?", a: "Todavía no. Estamos en preventa: apartas tu cupo gratis y te avisamos primero cuando abra, con el precio de lanzamiento." },
       { q: "¿Apartar el cupo me obliga a comprar?", a: "No. Solo te avisamos. Decides cuando veas el precio y la fecha." },
