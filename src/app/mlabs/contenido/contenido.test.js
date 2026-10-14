@@ -80,3 +80,12 @@ test("el contenido real del sitio es válido", async () => {
   assert.ok(c.guias.length >= 4);
   assert.equal(c.guiaPorSlug("resena").palabra, "RESEÑA");
 });
+
+test("la guía EDITOR existe y lleva a la preventa del editor", async () => {
+  const c = await import("./index.js");
+  const g = c.guiaPorSlug("editor");
+  assert.ok(g, "falta la guía editor");
+  assert.equal(g.palabra, "EDITOR");
+  assert.equal(g.productoRelacionado, "editor-automatico");
+  assert.ok(g.secciones.length >= 3);
+});
