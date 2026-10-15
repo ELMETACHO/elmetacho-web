@@ -5,45 +5,38 @@ export const guias = [
     slug: "editor",
     palabra: "EDITOR",
     titulo: "Cómo Claude edita mis videos",
-    resumen: "Grabo a cámara con errores y silencios, suelto el archivo en una carpeta y un sistema que armé con Claude lo limpia, le pone subtítulos, música y animaciones. Aquí te cuento cómo funciona y cómo empezar hoy.",
+    resumen: "Grabo a cámara, con errores y silencios, y en minutos tengo el video listo para publicar: limpio, con subtítulos, música y animaciones. Aquí te cuento qué hace y qué cambió en mi forma de trabajar.",
     tipo: "guia",
     publicos: ["creadores", "ia-y-developers"],
-    tiempo: 4,
+    tiempo: 3,
     actualizado: "2026-10-15",
     productoRelacionado: "editor-automatico",
     secciones: [
-      { titulo: "Qué hace el sistema", bloques: [
-        { p: "Antes me demoraba unas dos horas editando un video de un minuto. Ahora grabo, dejo el archivo en una carpeta y el sistema hace el trabajo pesado:" },
+      { titulo: "Qué hace", bloques: [
+        { p: "Antes me demoraba unas dos horas editando un video de un minuto. Ahora grabo y el video sale listo para publicar:" },
         { lista: [
-          "Escucha la grabación y la pasa a texto, palabra por palabra y con sus tiempos.",
-          "Busca las frases que repetí y se queda con la última toma.",
-          "Quita silencios, muletillas y falsos comienzos, pero deja un respiro para que no suene robótico.",
-          "Reencuadra a vertical, pone subtítulos palabra por palabra, música y animaciones donde el guion lo pide.",
+          "Quita los errores, las repeticiones y los silencios.",
+          "Pone subtítulos y música.",
+          "Agrega textos en pantalla y animaciones.",
+          "Lo entrega en vertical, listo para Reels, TikTok y Shorts.",
         ] },
-        { ojo: "No reemplaza tu criterio: reviso cada video antes de publicarlo. Y si grabas con ruido, el corte sale peor." },
+        { ojo: "No reemplaza tu criterio: reviso cada video antes de publicarlo." },
       ] },
-      { titulo: "Las piezas por dentro", bloques: [
-        { lista: [
-          "Claude Code: escribe y ajusta las reglas de edición conmigo, en español.",
-          "Transcripción con tiempos por palabra (faster-whisper): es lo que permite cortar sin partir palabras.",
-          "ffmpeg: detecta los silencios en el audio y hace los cortes.",
-          "Un guion con marcas: [TEXTO] para lo que sale escrito en pantalla y [ANIM] para los momentos con animación.",
-          "Una mezcla de audio con la voz al frente y la música que baja cuando hablo.",
-        ] },
-        { p: "Lo que más mejoró el resultado no fue la herramienta: fue escribirle a Claude qué NO hacer. Nada de cortes en mitad de una palabra, nada de silencios eternos, nada de errores que se quedan." },
+      { titulo: "Lo que más me cambió", bloques: [
+        { p: "No fue solo ahorrar tiempo. Cada video sale igual de cuidado, aunque yo esté cansado, y el tiempo que antes se me iba editando ahora lo uso en grabar más." },
+        { p: "También grabo más tranquilo: si me equivoco, no tengo que empezar de cero." },
       ] },
-      { titulo: "Cómo grabar para que se edite solo", bloques: [
+      { titulo: "Cómo grabar para que salga mejor", bloques: [
         { lista: [
-          "Si te equivocas, haz una pausa y repite la frase completa. El sistema se queda con la última.",
           "Graba en un lugar sin eco ni ruido de fondo: el audio limpio es lo que más ayuda.",
-          "Una idea por frase. Las frases cortas se cortan y se subtitulan mejor.",
-          "Deja un segundo de silencio al principio y al final.",
+          "Si te equivocas, no pares: haz una pausa y repite la frase completa.",
+          "Una idea por frase. Las frases cortas se entienden y se subtitulan mejor.",
+          "Busca luz de frente, por ejemplo mirando hacia una ventana.",
         ] },
       ] },
-      { titulo: "Empieza hoy, sin instalar nada", bloques: [
-        { p: "Pasa tu video a texto (con la transcripción automática de tu editor o la de tu celular) y pégale el resultado a Claude con este prompt. Te devuelve la lista de cortes para hacerlos tú en CapCut o en el editor que uses." },
-        { prompt: "Te paso la transcripción de un video mío grabado a cámara, con tiempos.\n\nDame la lista de cortes para dejarlo limpio:\n1. Si repetí una frase, quédate con la última toma y marca las anteriores para borrar.\n2. Marca muletillas («eh», «este», «o sea») y falsos comienzos.\n3. Marca los silencios de más de medio segundo, pero deja un respiro corto entre ideas.\n4. Nunca cortes en mitad de una palabra.\n\nRespóndeme con una tabla: desde (mm:ss), hasta (mm:ss), qué se borra y por qué.\nAl final, dame el texto final del video ya limpio.\n\nTranscripción:\n«[pega aquí]»" },
-        { ojo: "Necesitas una suscripción de Claude para el sistema completo. Este prompt sí funciona en el plan gratis, pero los cortes los haces tú." },
+      { titulo: "¿Lo quieres en tu computador?", bloques: [
+        { p: "Estamos preparando el editor para que lo instales en tu computador. La configuración y la instalación son parte del producto, y te acompañamos paso a paso." },
+        { p: "Aparta tu cupo abajo y te avisamos primero cuando abra, con el precio de lanzamiento." },
       ] },
     ],
   },

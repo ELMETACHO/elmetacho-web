@@ -22,6 +22,6 @@ export const publicos = [
     slug: "ia-y-developers",
     nombre: "IA y developers",
     titulo: "Claude y automatizaciones para quien quiere ir más allá",
-    intro: "Guías técnicas de Claude, Claude Code y automatizaciones para agencias, developers e independientes.",
+    intro: "Guías de Claude y de automatizaciones con IA para agencias, developers e independientes.",
   },
 ];

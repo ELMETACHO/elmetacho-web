@@ -19,10 +19,9 @@ export const productos = [
       "Acceso a la beta y a las mejoras de la primera versión.",
     ],
     requisitos: [
-      "Claude Pro o superior (usa Claude Code).",
+      "Suscripción de Claude Pro o superior.",
       "Computador con Windows. En Mac todavía lo estamos probando.",
-      "Python, ffmpeg y Node.js: la instalación guiada te los deja listos.",
-      "No necesitas tarjeta de video, pero con una NVIDIA la transcripción va más rápido.",
+      "Nosotros te guiamos en la instalación, paso a paso.",
     ],
     estado: "preventa",
     precioLanzamiento: null,

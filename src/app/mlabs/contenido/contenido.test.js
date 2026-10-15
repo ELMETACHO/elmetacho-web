@@ -111,3 +111,19 @@ test("las tarjetas del catálogo no llevan el contenido completo de las guías",
     for (const campo of ["slug", "tipo", "tiempo", "palabra", "titulo", "resumen", "publicos"]) assert.ok(t[campo], `${t.slug} sin ${campo}`);
   }
 });
+
+test("lo gratis no revela los programas ni el método de los productos", async () => {
+  const c = await import("./index.js");
+  const prohibidas = /ffmpeg|whisper|python|node\.?js|hyperframes|nvidia|claude code|tarjeta de video|\[TEXTO\]|\[ANIM\]/i;
+  const textos = [
+    ...c.guias.map((g) => [`guía ${g.slug}`, JSON.stringify(g)]),
+    ...c.productos.map((p) => [`producto ${p.slug}`, JSON.stringify(p)]),
+    ...c.publicos.map((p) => [`público ${p.slug}`, JSON.stringify(p)]),
+  ];
+  for (const [donde, texto] of textos) {
+    const m = texto.match(prohibidas);
+    assert.equal(m, null, `${donde} menciona «${m?.[0]}»`);
+  }
+  const editor = c.guiaPorSlug("editor");
+  assert.ok(!editor.secciones.some((s) => s.bloques.some((b) => b.prompt)), "la guía EDITOR no debe regalar el prompt de edición");
+});
