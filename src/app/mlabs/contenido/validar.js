@@ -7,7 +7,7 @@ const BLOQUES = ["p", "lista", "prompt", "tabla", "ojo"];
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
-export function validarContenido({ guias, productos, novedades, publicos }) {
+export function validarContenido({ guias, productos, novedades, publicos, ediciones = [], palabraNovedades = "" }) {
   const e = [];
   const slugs = (lista) => new Set(lista.map((x) => x.slug));
   const slugsPublicos = slugs(publicos);
@@ -24,7 +24,9 @@ export function validarContenido({ guias, productos, novedades, publicos }) {
   };
   repetidos(guias, "guía");
   repetidos(productos, "producto");
-  repetidos(novedades, "novedad");
+  // Las novedades de las ediciones semanales se validan igual que las sueltas (y sus slugs no se pueden repetir).
+  const todasLasNovedades = [...novedades, ...ediciones.flatMap((ed) => [ed.destacado, ...(ed.novedades ?? [])].filter(Boolean))];
+  repetidos(todasLasNovedades, "novedad");
   repetidos(publicos, "público");
 
   const faltan = (obj, id, campos) => {
@@ -34,7 +36,7 @@ export function validarContenido({ guias, productos, novedades, publicos }) {
     if (!Array.isArray(obj[campo]) || obj[campo].length === 0) e.push(`${id}: falta ${campo}`);
   };
 
-  const palabras = new Set();
+  const palabras = new Set(palabraNovedades ? [normalizar(palabraNovedades)] : []);
   for (const g of guias) {
     const id = `guía ${g.slug}`;
     faltan(g, id, ["palabra", "titulo", "resumen"]);
@@ -68,12 +70,27 @@ export function validarContenido({ guias, productos, novedades, publicos }) {
     if (!Array.isArray(p.faq)) e.push(`${id}: faq debe ser una lista`);
   }
 
-  for (const n of novedades) {
+  const fuenteValida = (f) => Boolean(f?.nombre) && /^https:\/\/\S+$/.test(f?.url ?? "");
+  for (const n of todasLasNovedades) {
     const id = `novedad ${n.slug}`;
     faltan(n, id, ["titulo", "queEs", "paraQueTeSirve"]);
     if (!FECHA.test(n.fecha ?? "")) e.push(`${id}: fecha debe ser AAAA-MM-DD`);
-    if (!n.fuente?.nombre || !/^https:\/\/\S+$/.test(n.fuente?.url ?? "")) e.push(`${id}: falta fuente con nombre y URL https`);
+    if (!fuenteValida(n.fuente)) e.push(`${id}: falta fuente con nombre y URL https`);
     if (n.guiaRelacionada && !slugsGuias.has(n.guiaRelacionada)) e.push(`${id}: guía relacionada inexistente ${n.guiaRelacionada}`);
+    if (n.aclaracion && (!n.aclaracion.texto || !fuenteValida(n.aclaracion.fuente)))
+      e.push(`${id}: la aclaración necesita texto y fuente con nombre y URL https`);
+    for (const c of n.cursos ?? []) if (!c.nombre || !c.paraQuien) e.push(`${id}: cada curso necesita nombre y paraQuien`);
+  }
+
+  const vistas = new Set();
+  for (const ed of ediciones) {
+    const id = `edición ${ed.slug}`;
+    if (vistas.has(ed.slug)) e.push(`edición repetida: ${ed.slug}`);
+    vistas.add(ed.slug);
+    if (!FECHA.test(ed.fecha ?? "") || ed.slug !== ed.fecha) e.push(`${id}: el slug de la edición debe ser su fecha AAAA-MM-DD`);
+    faltan(ed, id, ["titulo", "intro", "destacado"]);
+    if (!Array.isArray(ed.novedades)) e.push(`${id}: novedades debe ser una lista`);
+    for (const g of ed.guiasRelacionadas ?? []) if (!slugsGuias.has(g)) e.push(`${id}: guía relacionada inexistente ${g}`);
   }
 
   for (const p of publicos) faltan(p, `público ${p.slug}`, ["nombre", "titulo", "intro"]);

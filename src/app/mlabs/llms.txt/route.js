@@ -26,7 +26,7 @@ ${productos.map((p) => `- [${p.nombre}](${base}/productos/${p.slug}): ${p.promes
 ${publicos.map((p) => `- [${p.titulo}](${base}/para/${p.slug}): ${p.intro}`).join("\n")}
 
 ## Novedades recientes
-${novedadesRecientes.slice(0, 10).map((n) => `- ${n.titulo} (${n.fecha}): ${n.queEs} Fuente: ${n.fuente.url}`).join("\n")}
+${novedadesRecientes.slice(0, 10).map((n) => `- ${n.titulo} (${n.fecha}): ${n.queEs}${n.aclaracion ? ` Ojo: ${n.aclaracion.texto}` : ""} Fuente: ${n.fuente.url}`).join("\n")}
 `;
   return new Response(txt, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }

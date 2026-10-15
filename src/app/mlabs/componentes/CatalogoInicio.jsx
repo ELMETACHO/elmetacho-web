@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Buscador from "./Buscador";
 import TarjetaContenido from "./TarjetaContenido";
-import { guias, productos, publicos, novedadesRecientes, indiceBusqueda } from "../contenido/index.js";
+import { guias, productos, publicos, novedadesRecientes, indiceBusqueda, enlaceNovedad } from "../contenido/index.js";
 
 // Parte de arriba del inicio de MLABS: buscador, accesos por público, guías destacadas, productos y novedades.
 export default function CatalogoInicio() {
@@ -52,7 +52,7 @@ export default function CatalogoInicio() {
             <ul className="mt-4 space-y-2">
               {novedadesRecientes.slice(0, 3).map((n) => (
                 <li key={n.slug}>
-                  <Link href={`/novedades#${n.slug}`} className="font-bold underline">
+                  <Link href={enlaceNovedad(n)} className="font-bold underline">
                     {n.titulo}
                   </Link>
                 </li>
