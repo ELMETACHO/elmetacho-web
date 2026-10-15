@@ -1,5 +1,5 @@
 // Sitemap de mlabs.elmetacho.com (el subdominio reescribe /sitemap.xml a esta ruta)
-import { guias, productos, publicos, novedadesRecientes } from "../contenido/index.js";
+import { guias, productos, publicos, edicionesRecientes } from "../contenido/index.js";
 
 export const dynamic = "force-static";
 
@@ -8,7 +8,8 @@ export function GET() {
   const urls = [
     { u: "" },
     { u: "/recursos" },
-    { u: "/novedades", f: novedadesRecientes[0]?.fecha },
+    { u: "/novedades", f: edicionesRecientes[0]?.fecha },
+    ...edicionesRecientes.slice(1).map((e) => ({ u: `/novedades/${e.slug}`, f: e.fecha })),
     ...guias.map((g) => ({ u: `/recursos/${g.slug}`, f: g.actualizado })),
     ...productos.map((p) => ({ u: `/productos/${p.slug}` })),
     ...publicos.map((p) => ({ u: `/para/${p.slug}` })),

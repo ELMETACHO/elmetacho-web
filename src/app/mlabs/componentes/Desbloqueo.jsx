@@ -14,7 +14,14 @@ const suscribir = (cb) => {
 
 // Formulario de correo + secciones bloqueadas de una guía. Las secciones siempre están en el HTML;
 // solo se ocultan con la clase .contenido-bloqueado hasta que la persona deja su correo.
-export default function Desbloqueo({ slug, children }) {
+export default function Desbloqueo({
+  slug,
+  origen = `guia-${slug}`,
+  titulo = "Desbloquea la guía completa",
+  texto = "Déjanos tu correo y la ves completa ahora mismo, gratis.",
+  boton = "Ver la guía completa",
+  children,
+}) {
   const guardado = useSyncExternalStore(suscribir, () => estaDesbloqueado(almacenSeguro()), () => false);
   const [recien, setRecien] = useState(false);
   const [fallos, setFallos] = useState(0);
@@ -35,7 +42,7 @@ export default function Desbloqueo({ slug, children }) {
 
   const enviar = async (ev) => {
     ev.preventDefault();
-    const datos = { ...Object.fromEntries(new FormData(ev.currentTarget)), origen: `guia-${slug}` };
+    const datos = { ...Object.fromEntries(new FormData(ev.currentTarget)), origen };
     setEstado("enviando");
     setError("");
     try {
@@ -59,8 +66,8 @@ export default function Desbloqueo({ slug, children }) {
     <>
       {!libre && (
         <form onSubmit={enviar} className="formulario-desbloqueo mt-10 space-y-3 rounded-[1.75rem] border-2 border-black p-5 sm:p-8">
-          <p className="text-2xl font-black">Desbloquea la guía completa</p>
-          <p className="leading-7 text-gris">Déjanos tu correo y la ves completa ahora mismo, gratis.</p>
+          <p className="text-2xl font-black">{titulo}</p>
+          <p className="leading-7 text-gris">{texto}</p>
           <label className="block">
             <span className="mb-1 block text-sm font-semibold">Nombre</span>
             <input name="nombre" required autoComplete="name" className={campo} />
@@ -88,7 +95,7 @@ export default function Desbloqueo({ slug, children }) {
             </p>
           )}
           <button type="submit" disabled={estado === "enviando"} className="w-full rounded-full bg-rojo px-6 py-4 text-base font-bold text-white disabled:opacity-60">
-            {estado === "enviando" ? "Abriendo…" : "Ver la guía completa"}
+            {estado === "enviando" ? "Abriendo…" : boton}
           </button>
         </form>
       )}
