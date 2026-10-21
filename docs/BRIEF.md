@@ -5,7 +5,7 @@
 - **mlabs.elmetacho.com:** agencia + "Platzi propio" para emprendedores, creadores, agencias, developers e independientes. Guías gratis (a cambio de correo), novedades de IA y productos instalables de pago.
 
 ## Hoja de ruta (cada parte con spec → plan → pruebas)
-- **A.** Catálogo con buscador, guías gratis con desbloqueo por correo, novedades, preventas. Spec: `docs/superpowers/specs/2026-10-15-mlabs-parte-a-catalogo-design.md`.
+- **A. (publicada el 2026-10-14, PR #3)** Catálogo con buscador, guías gratis con desbloqueo por correo, novedades, preventas. Spec: `docs/superpowers/specs/2026-10-15-mlabs-parte-a-catalogo-design.md`.
 - **B.** Venta y entrega automática: webhook de Bold → correo con descarga y licencia (Resend), términos de venta, derecho de retracto, factura electrónica.
 - **C.** Producto: Creador de carruseles con Claude (plugin de Claude Code + beta de 3–5 personas).
 - **D.** Producto: Editor automático de video con Claude (plugin + "doctor" de instalación + beta).
@@ -14,6 +14,30 @@
 - Sin login por ahora: la entrega de productos será por correo.
 - DMs de Instagram con ManyChat (plan Essential) mientras Meta revisa la app M LABS (solo tiene caso de uso de WhatsApp; la verificación de acceso de El Metacho S.A.S. está en revisión desde el 28 de septiembre de 2026).
 - Pagos con Bold (Cuenta Bold, persona natural); varios negocios con la misma cédula.
+- **Lo gratis no revela el método (2026-10-15):** las guías y las páginas de producto cuentan qué hace y qué resultado da, nunca con qué programas ni cómo. La configuración es para quien compra. Una prueba en `contenido.test.js` falla si aparecen ffmpeg, whisper, Python, Node.js, HyperFrames, NVIDIA, Claude Code o las marcas del guion en guías, productos o públicos.
+- **Regla de verdad en el contenido:** ninguna novedad sin fuente https (el build falla). Precios y fechas de los productos los pone el dueño; mientras estén en `null`, la preventa dice «Lo anunciamos primero a quienes aparten su cupo».
+- Las preventas no muestran video hasta tener un clip real del producto (`labs.mp4` es el de videos animados, no el del editor).
+- La cuenta de Vercel es **Pro**, no Hobby, así que Web Analytics admite eventos personalizados. Hoy los correos por guía se cuentan con el campo `origen` de cada lead en Redis; se puede agregar `track()` después.
+
+## Cómo funciona (para la próxima sesión)
+- **Contenido:** `src/app/mlabs/contenido/` (guías, productos, novedades, públicos). `index.js` valida todo al importarse; si algo está mal, `npm run build` falla con la lista de errores. La lógica pura va en `src/app/mlabs/lib/` y se prueba con `npm test` (`node:test`, sin librerías).
+- **Desbloqueo por correo:** sin correo se ven el resumen y la primera sección (`seccionesLibres`). El resto viene en el HTML (bueno para SEO), oculto con `.contenido-bloqueado`. Un `<script>` plano en el `<head>` del layout raíz lo muestra antes de pintar si la persona ya dejó el correo (CLS 0). Si `/api/lead` falla, el primer intento muestra el error y el segundo desbloquea igual, con el lead pendiente en el navegador para reintentarlo.
+- **Orígenes de los leads** (lista `mlabs:leads` en Redis + aviso a Telegram): `guia-<slug>`, `preventa-<slug>`, `instalar-<slug>` (CTA «Lo instalamos por ti»), `novedades-AAAA-MM-DD`, `mlabs-inicio`.
+- **Componentes de cliente:** no pueden importar `contenido/index.js` ni `MlabsMarco.jsx`, porque meterían todo el contenido en el JS que baja el teléfono. Los enlaces de contacto están en `src/app/mlabs/enlaces.js`, y al catálogo se le pasa `tarjetasGuias`, que no lleva el texto de las guías.
+- **Vista previa de un PR en Vercel:** está protegida (pide iniciar sesión en Vercel) y no usa el subdominio. Las páginas de MLABS se abren con `/mlabs` adelante (p. ej. `…vercel.app/mlabs/recursos/resena`), y ahí los enlaces internos dan 404. Las variables tienen que estar marcadas también para **Preview**.
+- **Pasos para publicar** (además de la regla 5): `npm test`, `npx eslint --ignore-pattern ".claude/**"` (ver aprendizajes), `npm run build`, probar los leads en la vista previa, fusionar y revisar la URL en vivo.
+
+## Aprendizajes técnicos
+- **`next/script` con `strategy="beforeInteractive"` no corre antes de pintar en el App Router:** solo apila el código y lo ejecuta antes de hidratar. Para algo que deba correr antes de pintar, usar un `<script dangerouslySetInnerHTML>` plano en el `<head>` del layout raíz. Si el `<script>` va dentro de un componente de página, React da error al navegar dentro del sitio.
+- **`/api/lead` no leía `KV_REDIS_URL`**, que es el nombre que pone la integración de Redis de Vercel. Hasta el 2026-10-14 los leads solo llegaban a Telegram y no quedaban en Redis. Quedó arreglado en `src/app/api/lead/config.js`, con prueba.
+- **Lo que llega al teléfono:** si a un componente de cliente se le pasa `guias` completo, todo el texto de las guías termina en el HTML. Hay que pasarle solo los campos de la tarjeta.
+- **Velocidad:** el LCP de MLABS es un texto que se repinta cuando carga la fuente Archivo (variable, 88 KB). En Lighthouse móvil, en local: guía RESEÑA 2,42 s, EDITOR 2,71 s, inicio 3,70 s (el inicio de `main` antes de la Parte A: 3,43 s). Bajarlo pide decidir sobre la fuente (`display: optional` o una más liviana).
+- **ESLint** también revisa `.claude/worktrees/*/.next` (builds de otras sesiones) y falla. Usar `npx eslint --ignore-pattern ".claude/**"` o borrar esa carpeta. En Vercel no pasa.
+- **Windows:**
+  - Turbopack no acepta `node_modules` enlazado con junction; hay que correr `npm ci` en la copia.
+  - En un heredoc de bash, `\\n` dentro de código Python puede terminar como un salto de línea real; mejor usar la herramienta de edición.
+  - El Python de Windows no entiende rutas `/c/...`.
+- **Guías:** todo lo que se diga de las herramientas del dueño se verifica en su código. Por ejemplo, `limpiar_v7.py` solo usa texto y audio; no detecta hacia dónde mira la persona.
 
 ## Resumen de sesiones
 - **2026-10-14:** portada partida, nuevo look (rojo de los videos), MLABS en subdominio, guías CLAUDE/RESEÑA/RECICLA/COMPETENCIA, leads en Redis + Telegram, SEO (JSON-LD, sitemap, robots, llms.txt), pagos con Bold en `/pagar` (compra de prueba aprobada).
@@ -27,3 +51,37 @@
   - Publicado: PR #5 fusionado y en vivo en https://mlabs.elmetacho.com/novedades (archivo: /novedades/2026-10-15).
   - Pendiente del dueño: crear la regla NOVEDADES en ManyChat con el texto del doc; volver a verificar con Google si publica planes y fecha del agente de Gemini.
   - Aviso: `npm run lint` marca 34 errores que vienen de `.claude/worktrees/priceless-hellman-4dca31/.next` (build viejo de otra sesión), no del código; borrar esa carpeta o ignorarla en ESLint.
+- **2026-10-14/15 (publicación de la Parte A y confidencialidad):**
+  - Publicado y revisado en vivo:
+    - PR #1: Next 16.4.1, que cierra 3 alertas críticas (una de ellas en `next/og`).
+    - PR #2: ícono de Apple.
+    - PR #3: Parte A.
+    - PR #4: guía EDITOR y producto sin programas ni método.
+  - Leads verificados de punta a punta en la vista previa: llegaron `guia-resena` y `preventa-editor-automatico` a Telegram y a Redis. Para lograrlo se agregó `TELEGRAM_BOT_TOKEN` a Preview en Vercel y se arregló la lectura de `KV_REDIS_URL`.
+  - Revisión final de la Parte A con un revisor aparte: 0 críticos. Quedaron arreglados el script de desbloqueo que corría tarde y el catálogo que mandaba el texto de las guías al teléfono.
+  - Fuera del repo: se liberaron ~47 GB en C: (versiones viejas de CapCut y el zip de Applio). Las voces, scripts y salidas de `metacho-voz-tts` quedaron en `D:\METACHO CLAUDE\metacho-voz-tts`, sin sus entornos de Python.
+  - Pendiente del dueño:
+    - Borrar los dos leads «PRUEBA» de `mlabs:leads`.
+    - Definir precios y fechas de las preventas.
+    - Activar Web Analytics (Proyecto → Analytics → Enable).
+    - Conseguir un clip real del editor.
+    - Revisar los textos de las 7 guías nuevas.
+    - Decidir qué pasa con Sellame.
+    - Crear la regla NOVEDADES en ManyChat (ya documentada).
+    - Verificar el sitio en Search Console y Bing.
+  - Para la sesión de VIDEOS:
+    - Los guiones de EDITOR (`lab-2026-10-15-25/26/27`) explican el método y prometen «la guía de cómo lo armé». Hay que ajustarlos a la regla de confidencialidad (p. ej. «Comenta EDITOR y te mando cómo funciona»).
+    - El guion 27 además dice que el editor detecta hacia dónde mira la persona, y no es cierto.
+  - Por decidir: si la guía RECICLA, que regala el prompt de las siete piezas (incluido el carrusel), también pasa a una versión superficial.
+  - Mejoras menores anotadas, sin hacer:
+    - El error de red sale en inglés («Failed to fetch»).
+    - El lead pendiente se borra antes de reenviarlo, así que puede perderse o duplicarse, y un error 4xx se reintenta siempre.
+    - El lead pendiente queda en localStorage sin cifrar; conviene mencionarlo en la política de privacidad.
+    - El JSON-LD no escapa «<».
+    - Las tarjetas muestran la palabra clave y no los públicos.
+    - `/recursos/RESENA` da 404 (podría redirigir a la guía).
+    - El 404 de MLABS y las páginas de MLABS usan el título, el `og:title` y el `og:image` de El Metacho.
+    - El inicio tiene dos buscadores.
+    - `npm test` muestra el aviso `MODULE_TYPELESS_PACKAGE_JSON`.
+  - Sigue: la Parte B (cobro con Bold y entrega automática por correo), empezando por lluvia de ideas y spec.
+  - Ramas que ya se fusionaron y se pueden borrar: `spec/mlabs-parte-a`, `feat/mlabs-parte-a`, `fix/next-seguridad`, `fix/apple-icon` y `fix/guias-confidenciales`. La rama `docs/brief-parte-a-publicada` quedó reemplazada por esta entrada.
