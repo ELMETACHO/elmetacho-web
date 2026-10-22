@@ -3,17 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import EditorTramos from "./EditorTramos.jsx";
-import { extension, mover } from "../../lib/editor.js";
+import { extSegura, mover } from "../../lib/editor.js";
 import { ESTILOS } from "../../lib/pedido.js";
 
 const MAX_PANTALLAZOS = 40;
 const boton = "rounded bg-[#E10600] p-4 text-lg font-bold text-white disabled:opacity-40";
-
-// Extensión que acepta el servidor (2 a 5 caracteres a-z0-9); si no sirve, una segura según el tipo.
-function extSegura(nombre, tipo) {
-  const e = extension(nombre);
-  return /^\.[a-z0-9]{2,5}$/.test(e) && e !== ".bin" ? e : tipo === "video" ? ".mp4" : ".jpg";
-}
 
 // Lee duración y tamaño en píxeles de un video local.
 function leerMeta(url) {
@@ -70,12 +64,18 @@ export default function NuevoPedido() {
   const [trabajos, setTrabajos] = useState({}); // clave -> { pct, error, reintentar }
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(false);
+  const [ocupado, setOcupado] = useState(0); // handlers de archivos en curso (incluye el guardado, no solo la subida)
+  const [ocupOrig, setOcupOrig] = useState(false);
+  const [ocupGancho, setOcupGancho] = useState(false);
 
   const idRef = useRef(null);
   const videoRef = useRef(null);
   const cola = useRef(Promise.resolve());
   const pantsRef = useRef([]);
   const contador = useRef(0);
+  const origenGuardado = useRef(false); // el original ya está en el servidor, con su duración
+  const tramosRef = useRef([]);
+  const urlOrig = useRef(null);
 
   useEffect(() => {
     let vivo = true;
@@ -88,10 +88,24 @@ export default function NuevoPedido() {
         setId(d.id);
       })
       .catch(() => vivo && setErrorGlobal("No se pudo crear el pedido. Recarga la página."));
+    const pantsActuales = pantsRef;
+    const urlActual = urlOrig;
     return () => {
       vivo = false;
+      if (urlActual.current) URL.revokeObjectURL(urlActual.current);
+      pantsActuales.current.forEach((p) => URL.revokeObjectURL(p.url));
     };
   }, []);
+
+  // Cuenta handlers en curso para bloquear "Enviar pedido" hasta que todo quede guardado.
+  async function conOcupado(fn) {
+    setOcupado((n) => n + 1);
+    try {
+      return await fn();
+    } finally {
+      setOcupado((n) => n - 1);
+    }
+  }
 
   // PATCH en fila (el servidor lee y escribe el pedido completo: de a uno evita pisarse).
   function patch(cuerpo) {
@@ -144,27 +158,43 @@ export default function NuevoPedido() {
     e.target.value = "";
     if (!file || !idRef.current) return;
     setErrorGlobal("");
-    const url = URL.createObjectURL(file);
-    let meta;
-    try {
-      meta = await leerMeta(url);
-    } catch (err) {
-      return setErrorGlobal(err.message);
-    }
-    setOriginal({ url, nombre: file.name, ...meta, subido: false });
-    setTramos([]); // otra duración: hay que marcar de nuevo
-    try {
-      const f = await subir("original", file, `original${extSegura(file.name, "video")}`);
-      await patch({ original: { ...f, duracion: meta.duracion, ancho: meta.ancho, alto: meta.alto } });
-      setOriginal((o) => o && { ...o, subido: true });
-    } catch (err) {
-      setErrorGlobal(err.message);
-    }
+    setOcupOrig(true);
+    await conOcupado(async () => {
+      const url = URL.createObjectURL(file);
+      try {
+        let meta;
+        try {
+          meta = await leerMeta(url);
+        } catch (err) {
+          URL.revokeObjectURL(url);
+          return setErrorGlobal(err.message);
+        }
+        if (urlOrig.current) URL.revokeObjectURL(urlOrig.current);
+        urlOrig.current = url;
+        origenGuardado.current = false;
+        tramosRef.current = [];
+        setTramos([]); // otra duración: hay que marcar de nuevo
+        setOriginal({ url, nombre: file.name, ...meta, subido: false });
+        try {
+          const f = await subir("original", file, `original${extSegura(file.name, "video")}`);
+          await patch({ original: { ...f, duracion: meta.duracion, ancho: meta.ancho, alto: meta.alto } });
+          origenGuardado.current = true;
+          setOriginal((o) => o && { ...o, subido: true });
+          // Tramos marcados mientras subía: ahora sí se validan contra la duración.
+          if (tramosRef.current.length) await patch({ tramos: tramosRef.current });
+        } catch (err) {
+          setErrorGlobal(err.message);
+        }
+      } finally {
+        setOcupOrig(false);
+      }
+    });
   }
 
   function cambioTramos(nuevos) {
+    tramosRef.current = nuevos;
     setTramos(nuevos);
-    if (nuevos.length === 0) return; // el servidor exige al menos uno: se guarda al marcar el siguiente
+    if (nuevos.length === 0 || !origenGuardado.current) return; // sin original guardado se envían tras guardarlo
     patch({ tramos: nuevos }).catch((err) => setErrorGlobal(err.message));
   }
 
@@ -175,23 +205,30 @@ export default function NuevoPedido() {
     setErrorGlobal("");
     setAvisoGancho("");
     setGancho(null);
-    const url = URL.createObjectURL(file);
-    let meta;
-    try {
-      meta = await leerMeta(url);
-    } catch (err) {
-      return setErrorGlobal(err.message);
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-    if (Math.min(meta.ancho, meta.alto) < 1080) setAvisoGancho("Tu gancho no está en 1080p");
-    try {
-      const f = await subir("gancho", file, `gancho${extSegura(file.name, "video")}`);
-      await patch({ gancho: { ...f, duracion: meta.duracion, ancho: meta.ancho, alto: meta.alto } });
-      setGancho({ nombre: file.name });
-    } catch (err) {
-      setErrorGlobal(err.message);
-    }
+    setOcupGancho(true);
+    await conOcupado(async () => {
+      try {
+        const url = URL.createObjectURL(file);
+        let meta;
+        try {
+          meta = await leerMeta(url);
+        } catch (err) {
+          return setErrorGlobal(err.message);
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+        if (Math.min(meta.ancho, meta.alto) < 1080) setAvisoGancho("Tu gancho no está en 1080p");
+        try {
+          const f = await subir("gancho", file, `gancho${extSegura(file.name, "video")}`);
+          await patch({ gancho: { ...f, duracion: meta.duracion, ancho: meta.ancho, alto: meta.alto } });
+          setGancho({ nombre: file.name });
+        } catch (err) {
+          setErrorGlobal(err.message);
+        }
+      } finally {
+        setOcupGancho(false);
+      }
+    });
   }
 
   function fijarPants(lista) {
@@ -208,21 +245,23 @@ export default function NuevoPedido() {
     e.target.value = "";
     if (!files.length || !idRef.current) return;
     setErrorGlobal("");
-    for (const file of files) {
-      if (pantsRef.current.length >= MAX_PANTALLAZOS || contador.current >= 99) {
-        setErrorGlobal(`Son máximo ${MAX_PANTALLAZOS} pantallazos.`);
-        break;
+    await conOcupado(async () => {
+      for (const file of files) {
+        if (pantsRef.current.length >= MAX_PANTALLAZOS || contador.current >= 99) {
+          setErrorGlobal(`Son máximo ${MAX_PANTALLAZOS} pantallazos.`);
+          break;
+        }
+        contador.current += 1; // numeración continua aunque se quiten o agreguen después
+        const nn = String(contador.current).padStart(2, "0");
+        try {
+          const f = await subir(`pant${nn}`, file, `p${nn}${extSegura(file.name, "imagen")}`);
+          fijarPants([...pantsRef.current, { ...f, url: URL.createObjectURL(file) }]);
+          await guardarPants(pantsRef.current);
+        } catch (err) {
+          setErrorGlobal(err.message);
+        }
       }
-      contador.current += 1; // numeración continua aunque se quiten o agreguen después
-      const nn = String(contador.current).padStart(2, "0");
-      try {
-        const f = await subir(`pant${nn}`, file, `p${nn}${extSegura(file.name, "imagen")}`);
-        fijarPants([...pantsRef.current, { ...f, url: URL.createObjectURL(file) }]);
-        await guardarPants(pantsRef.current);
-      } catch (err) {
-        setErrorGlobal(err.message);
-      }
-    }
+    });
   }
   function moverPant(i, paso) {
     const lista = mover(pantsRef.current, i, paso);
@@ -230,6 +269,7 @@ export default function NuevoPedido() {
     guardarPants(lista);
   }
   function quitarPant(i) {
+    URL.revokeObjectURL(pantsRef.current[i].url);
     const lista = pantsRef.current.filter((_, j) => j !== i);
     fijarPants(lista);
     guardarPants(lista);
@@ -258,7 +298,7 @@ export default function NuevoPedido() {
     }
   }
 
-  const subiendo = Object.values(trabajos).length > 0;
+  const subiendo = Object.values(trabajos).length > 0 || ocupado > 0;
   const falta = !id || !original?.subido || tramos.length === 0 || !gancho || pants.length === 0;
 
   if (listo) return <p className="pt-10 text-center text-xl font-bold">Listo: sale a las 2 p. m.</p>;
@@ -274,7 +314,7 @@ export default function NuevoPedido() {
       {errorGlobal && <p className="rounded bg-red-100 p-2 text-[#E10600]">{errorGlobal}</p>}
 
       <Seccion titulo="1. Video original">
-        <input type="file" accept="video/*" onChange={elegirOriginal} disabled={!id} />
+        <input type="file" accept="video/*" onChange={elegirOriginal} disabled={!id || ocupOrig} />
         <Barra t={trabajos.original} />
         {original && (
           <>
@@ -285,7 +325,7 @@ export default function NuevoPedido() {
       </Seccion>
 
       <Seccion titulo="2. Tu gancho">
-        <input type="file" accept="video/*" onChange={elegirGancho} disabled={!id} />
+        <input type="file" accept="video/*" onChange={elegirGancho} disabled={!id || ocupGancho} />
         <Barra t={trabajos.gancho} />
         {avisoGancho && <p className="rounded bg-yellow-200 p-2">{avisoGancho}</p>}
         {gancho && <p className="text-sm text-black/70">Subido: {gancho.nombre}</p>}

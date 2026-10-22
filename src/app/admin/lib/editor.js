@@ -22,3 +22,8 @@ export function mover(lista, i, paso) {
   return out;
 }
 export const extension = (nombre) => (/\.[a-z0-9]+$/i.exec(nombre || "")?.[0] || ".bin").toLowerCase();
+// Extensión que acepta el servidor (2 a 5 caracteres a-z0-9); si no sirve, una segura según el tipo.
+export function extSegura(nombre, tipo) {
+  const e = extension(nombre);
+  return /^\.[a-z0-9]{2,5}$/.test(e) && e !== ".bin" ? e : tipo === "video" ? ".mp4" : ".jpg";
+}

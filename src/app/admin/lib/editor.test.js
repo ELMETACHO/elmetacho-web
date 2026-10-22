@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ajustar, marcar, mover, extension } from "./editor.js";
+import { ajustar, marcar, mover, extension, extSegura } from "./editor.js";
 
 test("marcar inicio y fin crea el tramo, aunque se marquen al revés", () => {
   let s = marcar([], null, 7);
@@ -21,4 +21,15 @@ test("mover reordena sin salirse", () => {
 test("extensión en minúscula, con defecto", () => {
   assert.equal(extension("IMG_0652.MOV"), ".mov");
   assert.equal(extension("sin"), ".bin");
+});
+
+test("extSegura: minúscula, y defecto por tipo si no sirve", () => {
+  assert.equal(extSegura("A.MOV", "video"), ".mov");
+  assert.equal(extSegura("foto.JPG", "imagen"), ".jpg");
+  assert.equal(extSegura("sin", "video"), ".mp4");
+  assert.equal(extSegura("sin", "imagen"), ".jpg");
+  assert.equal(extSegura("x.bin", "video"), ".mp4");
+  assert.equal(extSegura("x.abcdefg", "video"), ".mp4");
+  assert.equal(extSegura("x.abcdefg", "imagen"), ".jpg");
+  assert.equal(extSegura("x.a", "imagen"), ".jpg");
 });

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ajustar, marcar } from "../../lib/editor.js";
 import { MAX_TRAMOS, avisoLargo, totalContexto, validarTramos } from "../../lib/tramos.js";
 
@@ -10,6 +10,7 @@ export default function EditorTramos({ duracion, tramos, onCambio, videoRef }) {
   const [pendiente, setPendiente] = useState(null);
   const [sel, setSel] = useState({ i: 0, extremo: "inicio" });
   const [error, setError] = useState("");
+  const parada = useRef(null); // { v, fn }: escucha activa que pausa al final del tramo
 
   // Aplica un cambio: si es válido lo informa al padre (que lo guarda); si no, muestra el error.
   function aplicar(nuevos) {
@@ -40,20 +41,28 @@ export default function EditorTramos({ duracion, tramos, onCambio, videoRef }) {
     aplicar(r.tramos);
   }
 
+  function quitarParada() {
+    if (parada.current) parada.current.v.removeEventListener("timeupdate", parada.current.fn);
+    parada.current = null;
+  }
   function reproducir(a, z) {
     const v = videoRef.current;
     if (!v) return;
-    const parar = () => {
+    quitarParada();
+    const fn = () => {
       if (v.currentTime >= z) {
         v.pause();
-        v.removeEventListener("timeupdate", parar);
+        quitarParada();
       }
     };
-    v.addEventListener("timeupdate", parar);
+    parada.current = { v, fn };
+    v.addEventListener("timeupdate", fn);
+    v.addEventListener("pause", quitarParada, { once: true });
     v.currentTime = a;
     v.play().catch(() => {});
   }
 
+  useEffect(() => quitarParada, []);
   const i = Math.min(sel.i, Math.max(0, tramos.length - 1));
   const mueve = (delta) => aplicar(ajustar(tramos, i, sel.extremo, delta, duracion));
 

@@ -8,6 +8,10 @@ const ETIQUETA = {
   fallido: (p) => `Falló: ${p.motivo || "sin detalle"}`,
 };
 
+const fecha = (iso) =>
+  new Date(iso)
+    .toLocaleString("es-CO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Bogota" });
+
 export default function ListaPedidos({ pedidos, error }) {
   const [msg, setMsg] = useState("");
 
@@ -31,7 +35,7 @@ export default function ListaPedidos({ pedidos, error }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Cantados</h1>
-        <button onClick={salir} className="text-sm underline">Salir</button>
+        <button onClick={salir} className="min-h-[44px] min-w-[44px] px-3 text-sm underline">Salir</button>
       </div>
       <a href="/admin/cantados/nuevo" className="rounded bg-[#E10600] p-4 text-center text-lg font-bold text-white">
         Nuevo video
@@ -44,6 +48,7 @@ export default function ListaPedidos({ pedidos, error }) {
           <li key={p.id} className="flex items-center justify-between gap-2 rounded border border-black/20 bg-white p-3">
             <div className="min-w-0">
               <p className="truncate font-semibold">{p.nombre}</p>
+              <p className="text-xs text-black/60">{fecha(p.creado)}</p>
               <p className="text-sm text-black/70">{(ETIQUETA[p.estado] || (() => p.estado))(p)}</p>
             </div>
             {p.estado !== "en_pc" && (
