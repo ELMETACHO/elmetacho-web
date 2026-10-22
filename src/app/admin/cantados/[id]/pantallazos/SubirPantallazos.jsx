@@ -5,7 +5,7 @@ import ListaPantallazos from "../../ListaPantallazos.jsx";
 import { encolarPatch, esperarGuardado } from "../../cola.js";
 import { subirArchivo, usePantallazos, useTrabajos } from "../../subidas.js";
 
-export default function SubirPantallazos({ id, nombre, motivo }) {
+export default function SubirPantallazos({ id, nombre, motivo, remix = false }) {
   const { trabajos, fijarTrabajo, conOcupado, subiendo } = useTrabajos();
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -47,7 +47,9 @@ export default function SubirPantallazos({ id, nombre, motivo }) {
   if (listo)
     return (
       <div className="flex flex-col gap-4 pt-10 text-center">
-        <p className="text-xl font-bold">Listo: sale a las 2 p. m. como pedido con pantallazos.</p>
+        <p className="text-xl font-bold">
+          {remix ? "Listo: el remix sale a las 2 p. m. con estos pantallazos." : "Listo: sale a las 2 p. m. como pedido con pantallazos."}
+        </p>
         <a href="/admin" className="underline">Volver a la lista</a>
       </div>
     );
@@ -58,7 +60,10 @@ export default function SubirPantallazos({ id, nombre, motivo }) {
         <a href="/admin" className="text-sm underline">Volver</a>
       </div>
       <p className="rounded bg-yellow-200 p-2 text-sm">
-        {nombre}: {motivo || "TikTok no dejó leer los comentarios"}. Sube los pantallazos en el orden que quieres; el video, el bucle y el gancho ya los tiene el PC.
+        {nombre}: {motivo || "TikTok no dejó leer los comentarios"}.{" "}
+        {remix
+          ? "Sube pantallazos de los comentarios que salen en tu video publicado, en el mismo orden en que aparecen en el video. El PC los usa para armar el remix y luego los reordena."
+          : "Sube los pantallazos en el orden que quieres; el video, el bucle y el gancho ya los tiene el PC."}
       </p>
       {error && <p className="rounded bg-red-100 p-2 text-[#E10600]">{error}</p>}
       <input type="file" accept="image/*" multiple onChange={elegir} />

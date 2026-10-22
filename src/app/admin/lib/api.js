@@ -18,7 +18,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
   const delPc = (f) => async (req, id) => (esPc(req) ? f(req, id) : NO());
 
   async function verificarArchivos(c) {
-    const lista = [c.original, c.gancho, ...(Array.isArray(c.pantallazos) ? c.pantallazos : [])].filter(Boolean);
+    const lista = [c.original, c.gancho, c.publicado, ...(Array.isArray(c.pantallazos) ? c.pantallazos : [])].filter(Boolean);
     for (const a of lista) if ((await blob.tamano(a.pathname)) !== Number(a.tamano)) return `El archivo ${a.pathname.split("/").pop()} no terminó de subir.`;
     return null;
   }
@@ -80,9 +80,10 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       const malo = await verificarArchivos(p);
       if (malo) return json({ error: malo }, 400);
       await almacen.guardar({ ...p, estado: "listo" });
-      const cuando = tipoDe(p) === "link"
-        ? "a las 2 p. m. Claude escoge los comentarios y te mando el enlace para revisarlos."
-        : "sale a las 2 p. m.";
+      const cuando = {
+        link: "a las 2 p. m. Claude escoge los comentarios y te mando el enlace para revisarlos.",
+        remix: "remix: sale a las 2 p. m., sin revisión (mismos comentarios en otro orden, con otra canción).",
+      }[tipoDe(p)] ?? "sale a las 2 p. m.";
       await avisar(`📥 Recibí: ${nombreVisible(p)} — ${cuando}`).catch(() => {});
       return json({ ok: true });
     }),
@@ -119,7 +120,8 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       const paraPc = todos.filter((p) => p.estado === "listo" || (p.estado === "necesita_pantallazos" && p.pantallazos_listos));
       return json(await Promise.all(paraPc.map(async (p) => ({
         id: p.id, estado: p.estado, tipo: tipoDe(p), link: p.link ?? null, creado: p.creado, titulo: p.titulo, estilo: p.estilo, tramos: p.tramos,
-        original: await firmar(p.original), gancho: await firmar(p.gancho), pantallazos: await Promise.all((p.pantallazos || []).map(firmar)),
+        original: await firmar(p.original), gancho: await firmar(p.gancho), publicado: await firmar(p.publicado ?? null),
+        pantallazos: await Promise.all((p.pantallazos || []).map(firmar)),
       }))));
     }),
     pcBajado: delPc(async (req, id) => {
@@ -127,7 +129,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       if (!p) return json({ error: "Ese pedido no existe." }, 404);
       if (!["listo", "necesita_pantallazos"].includes(p.estado)) return json({ ok: true });   // repetido: no pisar en_pc/en_revision
       await blob.borrarPrefijo(prefijo(p.id));
-      await almacen.guardar({ ...p, estado: "en_pc", original: null, gancho: null, pantallazos: [] });
+      await almacen.guardar({ ...p, estado: "en_pc", original: null, gancho: null, publicado: null, pantallazos: [] });
       return json({ ok: true });
     }),
     pcFallido: delPc(async (req, id) => {
@@ -189,8 +191,9 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       const p = await almacen.leer(id);
       if (!p) return json({ error: "Ese pedido no existe." }, 404);
       // Repetición del PC (se perdió la respuesta): ya los está pidiendo; no se borra lo subido ni se avisa otra vez.
-      if (tipoDe(p) === "link" && p.estado === "necesita_pantallazos") return json({ ok: true });
-      if (tipoDe(p) !== "link" || p.estado !== "en_pc") return json({ error: "Ese pedido no puede pasar a pantallazos." }, 409);
+      const conLink = ["link", "remix"].includes(tipoDe(p));   // remix: los pantallazos reemplazan la búsqueda en TikTok
+      if (conLink && p.estado === "necesita_pantallazos") return json({ ok: true });
+      if (!conLink || p.estado !== "en_pc") return json({ error: "Ese pedido no puede pasar a pantallazos." }, 409);
       const motivo = String((await cuerpo(req)).motivo || "TikTok no dejó leer los comentarios").slice(0, 300);
       await almacen.guardar({ ...p, estado: "necesita_pantallazos", pantallazos: [], pantallazos_listos: false, motivo });
       await avisar(`📸 ${nombreVisible(p)}: ${motivo}. Sube los pantallazos aquí: ${enlace(req, p.id, "pantallazos")}`).catch(() => {});

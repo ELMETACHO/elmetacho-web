@@ -13,8 +13,19 @@ const boton = "rounded bg-[#E10600] p-4 text-lg font-bold text-white disabled:op
 const OPCIONES = [
   { tipo: "pantallazos", titulo: "Con pantallazos", detalle: "Tú escoges los comentarios y subes las fotos." },
   { tipo: "link", titulo: "Por link", detalle: "Claude escoge los comentarios de TikTok y tú los revisas aquí." },
-  { tipo: "remix", titulo: "Remix", detalle: "Reeditar un cantado ya publicado (pronto)." },
+  { tipo: "remix", titulo: "Remix", detalle: "Reeditar un cantado ya publicado: mismos comentarios en otro orden, otra canción. Sin revisión." },
 ];
+// Orden de las secciones de cada tipo (los números de los títulos salen de aquí).
+const SECCIONES = {
+  pantallazos: ["original", "gancho", "pantallazos", "estilo"],
+  link: ["link", "original", "gancho", "estilo"],
+  remix: ["link", "publicado", "original", "gancho", "estilo"],
+};
+const LISTO = {
+  pantallazos: "Listo: sale a las 2 p. m.",
+  link: "Listo: a las 2 p. m. Claude escoge los comentarios y te llega el enlace para revisarlos.",
+  remix: "Listo: el remix sale a las 2 p. m., sin revisión.",
+};
 
 // Lee duración y tamaño en píxeles de un video local.
 function leerMeta(url) {
@@ -45,6 +56,7 @@ export default function NuevoPedido() {
   const [original, setOriginal] = useState(null); // { url, nombre, duracion, ancho, alto, subido }
   const [tramos, setTramos] = useState([]);
   const [gancho, setGancho] = useState(null); // { nombre }
+  const [publicado, setPublicado] = useState(null); // { nombre } (solo remix)
   const [avisoGancho, setAvisoGancho] = useState("");
   const [estilo, setEstilo] = useState(ESTILOS[0]);
   const [titulo, setTitulo] = useState("");
@@ -53,6 +65,7 @@ export default function NuevoPedido() {
   const [listo, setListo] = useState(false);
   const [ocupOrig, setOcupOrig] = useState(false);
   const [ocupGancho, setOcupGancho] = useState(false);
+  const [ocupPub, setOcupPub] = useState(false);
 
   const idRef = useRef(null);
   const videoRef = useRef(null);
@@ -144,14 +157,15 @@ export default function NuevoPedido() {
     patch({ tramos: nuevos }).catch((err) => setErrorGlobal(err.message));
   }
 
-  async function elegirGancho(e) {
+  // Video que no se previsualiza (gancho, publicado): lee su tamaño, lo sube a la ranura `clave` y lo guarda.
+  // `alEmpezar()` limpia lo anterior al elegir; `alLeer(meta)` corre antes de subir; `alSubir(file)` cuando quedó guardado.
+  async function subirVideo(e, clave, setOcup, alEmpezar, alLeer, alSubir) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || !idRef.current) return;
     setErrorGlobal("");
-    setAvisoGancho("");
-    setGancho(null);
-    setOcupGancho(true);
+    alEmpezar();
+    setOcup(true);
     await conOcupado(async () => {
       try {
         const url = URL.createObjectURL(file);
@@ -163,18 +177,38 @@ export default function NuevoPedido() {
         } finally {
           URL.revokeObjectURL(url);
         }
-        if (Math.min(meta.ancho, meta.alto) < 1080) setAvisoGancho("Tu gancho no está en 1080p");
+        alLeer(meta);
         try {
-          const f = await subir("gancho", file, `gancho${extSegura(file.name, "video")}`);
-          await patch({ gancho: { ...f, duracion: meta.duracion, ancho: meta.ancho, alto: meta.alto } });
-          setGancho({ nombre: file.name });
+          const f = await subir(clave, file, `${clave}${extSegura(file.name, "video")}`);
+          await patch({ [clave]: { ...f, duracion: meta.duracion, ancho: meta.ancho, alto: meta.alto } });
+          alSubir(file);
         } catch (err) {
           setErrorGlobal(err.message);
         }
       } finally {
-        setOcupGancho(false);
+        setOcup(false);
       }
     });
+  }
+
+  function elegirGancho(e) {
+    return subirVideo(
+      e,
+      "gancho",
+      setOcupGancho,
+      () => {
+        setAvisoGancho("");
+        setGancho(null);
+      },
+      (meta) => {
+        if (Math.min(meta.ancho, meta.alto) < 1080) setAvisoGancho("Tu gancho no está en 1080p");
+      },
+      (file) => setGancho({ nombre: file.name }),
+    );
+  }
+
+  function elegirPublicado(e) {
+    return subirVideo(e, "publicado", setOcupPub, () => setPublicado(null), () => {}, (file) => setPublicado({ nombre: file.name }));
   }
 
   function elegirEstilo(s) {
@@ -211,17 +245,20 @@ export default function NuevoPedido() {
     }
   }
 
-  const porLink = tipo === "link";
-  const falta = !id || !original?.subido || tramos.length === 0 || !gancho || (porLink ? !linkGuardado : pants.length === 0);
-  const secciones = porLink ? ["link", "original", "gancho", "estilo"] : ["original", "gancho", "pantallazos", "estilo"];
-  const num = (s) => secciones.indexOf(s) + 1;
+  const esRemix = tipo === "remix";
+  const conLink = tipo === "link" || esRemix;
+  const faltan = [
+    !original?.subido && (esRemix ? "clip original" : "video original"),
+    tramos.length === 0 && "marcar un tramo",
+    !gancho && (esRemix ? "gancho nuevo" : "gancho"),
+    conLink && !linkGuardado && "link de TikTok",
+    esRemix && !publicado && "video publicado",
+    tipo === "pantallazos" && pants.length === 0 && "al menos un pantallazo",
+  ].filter(Boolean);
+  const falta = !id || faltan.length > 0;
+  const num = (s) => (SECCIONES[tipo] || []).indexOf(s) + 1;
 
-  if (listo)
-    return (
-      <p className="pt-10 text-center text-xl font-bold">
-        {porLink ? "Listo: a las 2 p. m. Claude escoge los comentarios y te llega el enlace para revisarlos." : "Listo: sale a las 2 p. m."}
-      </p>
-    );
+  if (listo) return <p className="pt-10 text-center text-xl font-bold">{LISTO[tipo]}</p>;
 
   if (!tipo)
     return (
@@ -250,15 +287,15 @@ export default function NuevoPedido() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Nuevo video</h1>
+        <h1 className="text-2xl font-bold">{esRemix ? "Remix" : "Nuevo video"}</h1>
         <a href="/admin" className="text-sm underline">
           Volver
         </a>
       </div>
       {errorGlobal && <p className="rounded bg-red-100 p-2 text-[#E10600]">{errorGlobal}</p>}
 
-      {porLink && (
-        <Seccion titulo={`${num("link")}. Link de TikTok`}>
+      {conLink && (
+        <Seccion titulo={`${num("link")}. Link de TikTok${esRemix ? " del video original" : ""}`}>
           <input
             type="url"
             inputMode="url"
@@ -272,12 +309,25 @@ export default function NuevoPedido() {
             disabled={!id}
             className="rounded border border-black/30 bg-white p-3"
           />
-          <p className="text-sm text-black/60">Solo sirve para leer los comentarios: el video súbelo abajo.</p>
+          <p className="text-sm text-black/60">
+            {esRemix
+              ? "Sirve para buscar los comentarios reales (usuario, likes, foto) de las tarjetas de tu video."
+              : "Solo sirve para leer los comentarios: el video súbelo abajo."}
+          </p>
           {linkGuardado && <p className="text-sm text-black/70">Link guardado.</p>}
         </Seccion>
       )}
 
-      <Seccion titulo={`${num("original")}. Video original`}>
+      {esRemix && (
+        <Seccion titulo={`${num("publicado")}. Tu video ya publicado`}>
+          <input type="file" accept="video/*" onChange={elegirPublicado} disabled={!id || ocupPub} />
+          <Barra t={trabajos.publicado} />
+          <p className="text-sm text-black/60">El cantado tal como salió: de sus tarjetas salen los comentarios.</p>
+          {publicado && <p className="text-sm text-black/70">Subido: {publicado.nombre}</p>}
+        </Seccion>
+      )}
+
+      <Seccion titulo={`${num("original")}. ${esRemix ? "Clip original (el de TikTok, sin editar)" : "Video original"}`}>
         <input type="file" accept="video/*" onChange={elegirOriginal} disabled={!id || ocupOrig} />
         <Barra t={trabajos.original} />
         {original && (
@@ -288,14 +338,14 @@ export default function NuevoPedido() {
         )}
       </Seccion>
 
-      <Seccion titulo={`${num("gancho")}. Tu gancho`}>
+      <Seccion titulo={`${num("gancho")}. ${esRemix ? "Tu gancho nuevo" : "Tu gancho"}`}>
         <input type="file" accept="video/*" onChange={elegirGancho} disabled={!id || ocupGancho} />
         <Barra t={trabajos.gancho} />
         {avisoGancho && <p className="rounded bg-yellow-200 p-2">{avisoGancho}</p>}
         {gancho && <p className="text-sm text-black/70">Subido: {gancho.nombre}</p>}
       </Seccion>
 
-      {!porLink && (
+      {tipo === "pantallazos" && (
         <Seccion titulo={`${num("pantallazos")}. Pantallazos`}>
           <input type="file" accept="image/*" multiple onChange={elegirPants} disabled={!id} />
           {Object.entries(trabajos)
@@ -307,18 +357,22 @@ export default function NuevoPedido() {
         </Seccion>
       )}
 
-      <Seccion titulo={`${num("estilo")}. Estilo y título`}>
-        <div className="grid grid-cols-3 gap-2">
-          {ESTILOS.map((s) => (
-            <button
-              key={s}
-              onClick={() => elegirEstilo(s)}
-              className={`rounded border-2 p-3 ${estilo === s ? "border-[#E10600] bg-[#E10600] font-bold text-white" : "border-black/30 bg-white"}`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+      <Seccion titulo={`${num("estilo")}. ${esRemix ? "Título" : "Estilo y título"}`}>
+        {esRemix ? (
+          <p className="text-sm text-black/60">Si tu video publicado lo hizo este sistema, el estilo y el color del karaoke salen al contrario (salsa ↔ merengue); si no, salen por turno.</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {ESTILOS.map((s) => (
+              <button
+                key={s}
+                onClick={() => elegirEstilo(s)}
+                className={`rounded border-2 p-3 ${estilo === s ? "border-[#E10600] bg-[#E10600] font-bold text-white" : "border-black/30 bg-white"}`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
         <input
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
@@ -331,21 +385,7 @@ export default function NuevoPedido() {
       <button className={boton} disabled={subiendo || falta || enviando} onClick={enviar}>
         {enviando ? "Enviando…" : subiendo ? "Subiendo…" : "Enviar pedido"}
       </button>
-      {falta && !subiendo && id && (
-        <p className="text-sm text-black/60">
-          Falta:{" "}
-          {[
-            !original?.subido && "video original",
-            tramos.length === 0 && "marcar un tramo",
-            !gancho && "gancho",
-            porLink && !linkGuardado && "link de TikTok",
-            !porLink && pants.length === 0 && "al menos un pantallazo",
-          ]
-            .filter(Boolean)
-            .join(", ")}
-          .
-        </p>
-      )}
+      {falta && !subiendo && id && <p className="text-sm text-black/60">Falta: {faltan.join(", ")}.</p>}
     </div>
   );
 }
