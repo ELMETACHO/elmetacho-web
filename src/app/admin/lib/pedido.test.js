@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nuevoId, nuevoPedido, aplicarCambios, erroresParaEnviar, archivos, borradorVencido, prefijo } from "./pedido.js";
+import { nuevoId, nuevoPedido, aplicarCambios, erroresParaEnviar, archivos, borradorVencido, prefijo, TIPOS, TIPOS_DISPONIBLES, linkValido, tipoDe, ordenarLista, subidaPermitida } from "./pedido.js";
 
 const P = () => nuevoPedido("c_20261021_ab12", "2026-10-21T18:30:00.000Z");
 const arch = (n, extra = {}) => ({ pathname: `cantados/c_20261021_ab12/${n}`, tamano: 100, ...extra });
@@ -68,4 +68,67 @@ test("datos nulos o que no son objeto devuelven error sin lanzar", () => {
   assert.deepEqual(aplicarCambios(P(), null), { pedido: P(), errores: ["Datos inválidos."] });
   assert.deepEqual(aplicarCambios(P(), "x").errores, ["Datos inválidos."]);
   assert.deepEqual(aplicarCambios(P(), []).errores, ["Datos inválidos."]);
+});
+
+const L = () => nuevoPedido("c_20261021_ab12", "2026-10-21T18:30:00.000Z", "link");
+
+test("tipos: pantallazos por defecto; los pedidos viejos sin tipo cuentan como pantallazos", () => {
+  assert.deepEqual(TIPOS, ["pantallazos", "link", "remix"]);
+  assert.deepEqual(TIPOS_DISPONIBLES, ["pantallazos", "link"]);
+  assert.equal(P().tipo, "pantallazos");
+  assert.equal(L().tipo, "link");
+  assert.equal(L().link, null);
+  const { tipo, ...viejo } = P();
+  assert.equal(tipo, "pantallazos");
+  assert.equal(tipoDe(viejo), "pantallazos");
+});
+
+test("link de TikTok: solo https con www., vm. o vt.", () => {
+  for (const ok of ["https://www.tiktok.com/@a/video/123", "https://vm.tiktok.com/ZMabc/", "https://vt.tiktok.com/ZS9/", "  https://vt.tiktok.com/ZS9/  "])
+    assert.equal(linkValido(ok), true, ok);
+  for (const malo of ["http://vt.tiktok.com/ZS9/", "https://tiktok.com/@a/video/1", "https://m.tiktok.com/v/1", "https://vt.tiktok.com/",
+    "https://vt.tiktok.com.evil.co/x", "https://www.youtube.com/watch?v=1", "https://vt.tiktok.com/a b", "", null, 5, `https://vt.tiktok.com/${"a".repeat(300)}`])
+    assert.equal(linkValido(malo), false, String(malo));
+});
+
+test("el link se guarda solo en pedidos por link y debe ser válido; un pedido por link no lleva pantallazos", () => {
+  assert.equal(aplicarCambios(L(), { link: " https://vt.tiktok.com/ZS9/ " }).pedido.link, "https://vt.tiktok.com/ZS9/");
+  assert.match(aplicarCambios(L(), { link: "https://youtube.com/x" }).errores[0], /TikTok/);
+  assert.match(aplicarCambios(P(), { link: "https://vt.tiktok.com/ZS9/" }).errores[0], /no lleva link/);
+  assert.match(aplicarCambios(L(), { pantallazos: [arch("p01.jpg")] }).errores[0], /no lleva pantallazos/);
+});
+
+test("para enviar por link: original, tramo, gancho y link (sin pantallazos); remix todavía no", () => {
+  const base = { original: arch("original.mp4", { duracion: 28 }), tramos: [[0, 4]], gancho: arch("gancho.mov") };
+  assert.deepEqual(erroresParaEnviar({ ...L(), ...base }), ["Falta el link de TikTok."]);
+  assert.deepEqual(erroresParaEnviar({ ...L(), ...base, link: "https://vt.tiktok.com/ZS9/" }), []);
+  assert.match(erroresParaEnviar({ ...nuevoPedido("x", "2026-10-21T18:30:00.000Z", "remix"), ...base }).join(" "), /todavía no/);
+});
+
+test("la lista pone arriba lo que espera a Oscar: revisión y luego pantallazos", () => {
+  const l = [{ id: "1", estado: "listo" }, { id: "2", estado: "necesita_pantallazos" }, { id: "3", estado: "en_revision" },
+    { id: "4", estado: "en_pc" }, { id: "5", estado: "en_revision" }];
+  assert.deepEqual(ordenarLista(l).map((p) => p.id), ["3", "5", "2", "1", "4"]);
+});
+
+test("en necesita_pantallazos solo se cambian los pantallazos, y solo hasta enviarlos", () => {
+  const n = { ...L(), estado: "necesita_pantallazos", pantallazos: [], pantallazos_listos: false };
+  const r = aplicarCambios(n, { pantallazos: [arch("p01.jpg")] });
+  assert.deepEqual(r.errores, []);
+  assert.equal(r.pedido.pantallazos.length, 1);
+  assert.match(aplicarCambios(n, { titulo: "x" }).errores[0], /solo se pueden subir pantallazos/);
+  assert.match(aplicarCambios({ ...n, pantallazos_listos: true }, { pantallazos: [] }).errores[0], /Ya enviaste/);
+});
+
+test("subidas: en subiendo todo lo del pedido; en necesita_pantallazos solo pNN hasta enviarlos", () => {
+  const n = { ...L(), estado: "necesita_pantallazos", pantallazos_listos: false };
+  const b = "cantados/c_20261021_ab12/";
+  assert.equal(subidaPermitida(P(), b + "gancho.mov"), true);
+  assert.equal(subidaPermitida(n, b + "p01.jpg"), true);
+  assert.equal(subidaPermitida(n, b + "original.mp4"), false);
+  assert.equal(subidaPermitida({ ...n, pantallazos_listos: true }, b + "p02.jpg"), false);
+  assert.equal(subidaPermitida({ ...P(), estado: "listo" }, b + "p01.jpg"), false);
+  assert.equal(subidaPermitida(P(), "cantados/otro/p01.jpg"), false);
+  assert.equal(subidaPermitida(P(), b + "../x"), false);
+  assert.equal(subidaPermitida(null, b + "p01.jpg"), false);
 });

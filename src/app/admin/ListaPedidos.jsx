@@ -1,9 +1,13 @@
 "use client";
 import { useState } from "react";
+import { EN_EL_PC } from "./lib/pedido.js";
 
 const ETIQUETA = {
   subiendo: () => "Sin enviar",
   listo: () => "Listo para las 2 p. m.",
+  en_revision: () => "Esperando tu revisión",
+  aprobado: () => "Aprobado: se edita en la franja de las 2 p. m.",
+  necesita_pantallazos: (p) => (p.listos ? "Pantallazos recibidos: sale a las 2 p. m." : "TikTok no dejó leer los comentarios: sube pantallazos"),
   en_pc: () => "El PC lo está haciendo",
   fallido: (p) => `Falló: ${p.motivo || "sin detalle"}`,
 };
@@ -51,11 +55,23 @@ export default function ListaPedidos({ pedidos, error }) {
               <p className="text-xs text-black/60">{fecha(p.creado)}</p>
               <p className="text-sm text-black/70">{(ETIQUETA[p.estado] || (() => p.estado))(p)}</p>
             </div>
-            {p.estado !== "en_pc" && (
-              <button onClick={() => cancelar(p.id)} className="shrink-0 rounded border border-[#E10600] px-3 py-2 text-[#E10600]">
-                Cancelar
-              </button>
-            )}
+            <div className="flex shrink-0 flex-col gap-2">
+              {p.estado === "en_revision" && (
+                <a href={`/admin/cantados/${p.id}/revisar`} className="min-h-[44px] rounded bg-[#E10600] px-3 py-2 text-center font-bold text-white">
+                  Revisar
+                </a>
+              )}
+              {p.estado === "necesita_pantallazos" && !p.listos && (
+                <a href={`/admin/cantados/${p.id}/pantallazos`} className="min-h-[44px] rounded bg-[#E10600] px-3 py-2 text-center font-bold text-white">
+                  Subir pantallazos
+                </a>
+              )}
+              {!EN_EL_PC.includes(p.estado) && (
+                <button onClick={() => cancelar(p.id)} className="min-h-[44px] rounded border border-[#E10600] px-3 py-2 text-[#E10600]">
+                  Cancelar
+                </button>
+              )}
+            </div>
           </li>
         ))}
       </ul>

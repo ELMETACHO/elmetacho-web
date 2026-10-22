@@ -11,6 +11,23 @@ Página privada de elmetacho.com para pedir videos de "comentarios cantados" des
 
 Telegram sigue de respaldo. Si un pedido de Telegram es igual a uno de la web (título y duración ±0,5 s) queda como repetido y no se hace.
 
+## Pedidos por link (fase 2, spec `docs/superpowers/specs/2026-10-22-admin-fase2-design.md`)
+
+1. **Nuevo video → Por link.** Pega el link de TikTok (`https://www.tiktok.com/…`, `https://vm.tiktok.com/…` o `https://vt.tiktok.com/…`; otro no deja enviar), sube el video, marca los tramos y sube tu gancho. No lleva pantallazos.
+2. **Franja de las 2 p. m. (día 1).** El PC baja los archivos (la web los borra), lee los comentarios en TikTok con el original subido, Claude escoge y revisa con el reglamento y publica la **propuesta**: el pedido pasa a `en_revision` y llega al bot un aviso con el enlace `…/admin/cantados/<id>/revisar`.
+3. **Revisión (celular).** Tarjetas en orden: ✓ = dentro, ✕ = a «Fuera» (no deja quitar el último comentario que queda), ↑↓ = mover, ✎ = corregir la línea que se canta (termina en coma; si no la pones, se agrega). En «Fuera», ↩ lo vuelve a meter al final. Cada cambio se guarda solo. «Aprobar» → `aprobado`. «Trae más» → la franja siguiente pone otros en lugar de los que quitaste y vuelve el enlace (si no quitaste ninguno llega «No quitaste ninguno…»; si no hay con qué reponer, «No hay más comentarios para reponer…»; en los dos casos sigue en revisión con 24 h nuevas). Mientras «Aprobar» o «Trae más» están en camino, los botones de edición quedan desactivados.
+4. **Plazo.** 24 h desde la propuesta; se da por vencida **2 h antes** para que la franja del día siguiente la recoja con la lista como esté (la pantalla dice «se aprueba solo en N h»). Ojo: una propuesta publicada después de ~16:00 vence después de la franja del día 2, así que se aprueba sola en la del **día 3**.
+5. **Franja siguiente (día 2).** El PC trae los aprobados, aplica la lista final, hace la canción, edita y entrega; al entregar se borra el registro.
+6. **TikTok pide sesión o captcha.** El pedido pasa a `necesita_pantallazos` y llega el aviso con `…/admin/cantados/<id>/pantallazos`. Sube las fotos en orden en esa página y toca «Enviar pantallazos»; la franja siguiente lo hace como pedido con pantallazos. Mientras el PC no lo haya bajado, `necesita_pantallazos` se puede cancelar.
+
+En Redis solo hay texto: la propuesta (`id`, usuario, texto, línea, likes, dentro) y la revisión (orden, fuera, líneas corregidas). Nada de imágenes.
+
+**Versión de la propuesta.** Las APIs de revisión de sesión exigen la `version` de la propuesta en el cuerpo: `{orden, fuera, lineas, version}` en `PATCH …/revision` y `{version}` en `aprobar` y `trae-mas`. Si la propuesta cambió (llegó una nueva), responden 409 «La propuesta cambió: recarga la página.». Un cuerpo JSON `null` o que no sea objeto se trata como `{}`.
+
+### Estados
+
+`subiendo` → `listo` → `en_pc` → (por link) `en_revision` → `aprobado` → (borrado al entregar). Ramas: `en_pc` → `necesita_pantallazos` → `en_pc`; `fallido`. No se puede cancelar en `en_pc`, `en_revision` ni `aprobado` (el PC ya tiene el proyecto); `necesita_pantallazos` sí, hasta que el PC lo baje.
+
 ## Cómo se usa desde el celular
 
 1. Abre `elmetacho.com/admin` (o la vista previa del PR), escribe la clave y entra. La sesión dura 30 días.
@@ -21,7 +38,7 @@ Telegram sigue de respaldo. Si un pedido de Telegram es igual a uno de la web (t
    4. **Pantallazos:** selección múltiple (hasta 40); ↑↓ para reordenar, ✕ para quitar.
    5. **Estilo:** Salsa / Merengue / Salsa y merengue (por defecto).
    6. **Enviar pedido:** se activa con original subido, ≥ 1 tramo, gancho y ≥ 1 pantallazo. Llega aviso al bot: "Recibí: … sale a las 2 p. m.". Si faltan `TELEGRAM_BOT_TOKEN` o `TELEGRAM_CHAT_ID`, el pedido se envía igual, sin aviso.
-3. En la lista puedes **Cancelar** un pedido en `listo`, `subiendo` o `fallido` (no si está `en_pc`). Si se corta la señal en una subida, sale "Reintentar" y el pedido sigue en `subiendo`.
+3. En la lista puedes **Cancelar** un pedido en `listo`, `subiendo` o `fallido` (no en `en_pc`, `en_revision` ni `aprobado`). Si se corta la señal en una subida, sale "Reintentar" y el pedido sigue en `subiendo`.
 
 ## Variables de entorno
 
@@ -52,14 +69,21 @@ Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la c
 | `POST /admin/api/entrar` | Cualquiera (con límite de intentos) | Verifica la clave y pone la cookie |
 | `POST /admin/api/salir` | Sesión | Borra la cookie |
 | `POST /admin/api/cantados` | Sesión | Crea pedido `subiendo` |
-| `PATCH /admin/api/cantados/<id>` | Sesión | Guarda tramos, título, estilo, pantallazos, archivos subidos |
-| `POST /admin/api/cantados/<id>/enviar` | Sesión | Valida, pasa a `listo`, avisa a Telegram |
-| `DELETE /admin/api/cantados/<id>` | Sesión | Cancela: borra el prefijo en Blob y el registro (no si `en_pc`); si el pedido no existe responde ok |
+| `PATCH /admin/api/cantados/<id>` | Sesión | Guarda link, tramos, título, estilo, pantallazos, archivos subidos (en `necesita_pantallazos` solo acepta pantallazos) |
+| `POST /admin/api/cantados/<id>/enviar` | Sesión | Valida, pasa a `listo`, avisa a Telegram; en `necesita_pantallazos` marca `pantallazos_listos` y avisa |
+| `DELETE /admin/api/cantados/<id>` | Sesión | Cancela: borra el prefijo en Blob y el registro (no en `en_pc`, `en_revision` ni `aprobado`); si el pedido no existe responde ok |
 | `POST /admin/api/cantados/subir` | Sesión | `handleUpload` de Blob (tipos video/imagen); sin sesión responde 400 con el mensaje, no 401 |
-| `GET /admin/api/pc/pedidos` | Solo PC | Pedidos `listo` con enlaces firmados; limpia borradores > 48 h |
-| `POST /admin/api/pc/pedidos/<id>/bajado` | Solo PC | Pasa a `en_pc` y borra sus blobs |
-| `POST /admin/api/pc/pedidos/<id>/fallido` | Solo PC | `fallido` + motivo; **borra todos los archivos del pedido** |
+| `GET /admin/api/pc/pedidos` | Solo PC | Pedidos `listo` (con `tipo`, `link` y `estado`) y `necesita_pantallazos` con pantallazos enviados (`original`/`gancho` en `null`), con enlaces firmados; limpia borradores > 48 h |
+| `POST /admin/api/pc/pedidos/<id>/bajado` | Solo PC | Pasa `listo` y `necesita_pantallazos` a `en_pc` y borra sus blobs |
+| `POST /admin/api/pc/pedidos/<id>/fallido` | Solo PC | `fallido` + motivo; **borra todos los archivos del pedido** y quita `propuesta` y `revision` (el texto solo vive mientras está en revisión) |
 | `DELETE /admin/api/pc/pedidos/<id>` | Solo PC | Entregado: borra el prefijo en Blob (por si quedó algo) y el registro |
+| `PATCH /admin/api/cantados/<id>/revision` | Sesión | Guarda `{orden, fuera, lineas, version}` completo; 409 si ya no está en revisión, pidió más, venció o la `version` ya no es la vigente |
+| `POST /admin/api/cantados/<id>/aprobar` | Sesión | Cuerpo `{version}`; `en_revision` → `aprobado` (409 si la propuesta cambió) |
+| `POST /admin/api/cantados/<id>/trae-mas` | Sesión | Cuerpo `{version}`; marca «trae más» (la revisión queda congelada hasta la franja) |
+| `POST /admin/api/pc/pedidos/<id>/propuesta` | Solo PC | Publica la propuesta, `en_revision`, vence en 24 h, aviso con enlace → `{ok, version, vence}`. **Idempotente:** si el pedido está `en_revision` o `aprobado` y llega la misma propuesta (mismos ids, orden, líneas y «dentro»), responde 200 con la `version`/`vence` guardados sin tocar la revisión ni avisar otra vez. Si no, 409 salvo que esté `en_pc`, `necesita_pantallazos` o `en_revision` con «trae más»; el 409 trae `{error, estado, version}` |
+| `GET /admin/api/pc/aprobados` | Solo PC | Aprobados (y vencidos, que se aprueban solos) y los que piden más, con su lista final |
+| `POST /admin/api/pc/pedidos/<id>/necesita-pantallazos` | Solo PC | Link bloqueado por TikTok (`en_pc` → `necesita_pantallazos`): pide pantallazos con aviso. Repetido sobre un pedido que ya está en `necesita_pantallazos` → 200 sin cambios ni aviso nuevo |
+| `POST /admin/api/pc/pedidos/<id>/trae-mas-atendido` | Solo PC | Cuerpo opcional `{motivo}`: `"sin_quitados"` → aviso «No quitaste ninguno…»; si no, «No hay más comentarios para reponer…». Vuelve a revisión con 24 h nuevas |
 
 Sin sesión → 401 (salvo `subir`, que da 400; y el login, que puede dar 429 si está bloqueado). El token del PC no sirve en las rutas de sesión y la cookie no sirve en las del PC. No hay `proxy.js`: la sesión se verifica en `layout.jsx` y al inicio de cada API.
 
@@ -78,6 +102,7 @@ Verificado en los tipos instalados y con `build` (Task 6):
 - `handleUpload` y `upload` en `@vercel/blob/client`; `onBeforeGenerateToken(pathname, clientPayload, multipart)` devuelve `allowedContentTypes` (admite comodines como `video/*`), `maximumSizeInBytes`, `addRandomSuffix`, `allowOverwrite`, etc.
 - `list({prefix, cursor})` devuelve `{blobs, cursor, hasMore}`; se usa para el borrado por prefijo (probado solo con un doble, no contra un almacén real).
 - Pruebas (2026-10-22): `npm test` 94 pasan, 0 fallan; `eslint` sin salida; `npm run build` OK. El build no necesita variables.
+- Fase 2 por link (2026-10-22): `npm test` 139 pasan, 0 fallan; `npx eslint --ignore-pattern ".claude/**"` sin salida; `npm run build` OK.
 
 ## Lo que NO se ha probado
 
@@ -85,6 +110,7 @@ Verificado en los tipos instalados y con `build` (Task 6):
 - **Enlaces firmados reales** (que el PC los descargue de verdad).
 - **Punta a punta:** pedido real desde el celular, franja a mano en el PC, llegada por Telegram y comprobación de que Blob y las llaves `admin:cantados:*` quedan vacíos.
 - Vista de teléfono en la vista previa del PR.
+- **Fase 2 por link:** revisión real en el celular, aviso real del bot con el enlace y un pedido real de punta a punta.
 
 ## Seguridad
 
@@ -96,4 +122,7 @@ Verificado en los tipos instalados y con `build` (Task 6):
 
 ## Riesgos conocidos
 
-- **Pedido atascado en `en_pc`.** Si el PC nunca lo termina (ni lo marca entregado ni fallido), queda un registro en Redis sin archivos que no se puede cancelar desde la web (cancelar responde 409 en `en_pc`). Para limpiarlo: pídele a Claude que llame `DELETE /admin/api/pc/pedidos/<id>` con el token del PC (`ADMIN_PC_TOKEN`), o borra la clave `admin:cantados:<id>` en Redis (y quita el id del set `admin:cantados:ids`).
+- **Pedido atascado en `en_pc`, `en_revision` o `aprobado`.** Si el PC nunca lo termina (ni lo marca entregado ni fallido), queda un registro en Redis que no se puede cancelar desde la web (cancelar responde 409 en esos tres estados). Para limpiarlo: pídele a Claude que llame `DELETE /admin/api/pc/pedidos/<id>` con el token del PC (`ADMIN_PC_TOKEN`), o borra la clave `admin:cantados:<id>` en Redis (y quita el id del set `admin:cantados:ids`).
+- **Publicar con 409.** Si una pasada publicó la propuesta y se perdió la respuesta, la siguiente la repite (`enviar-letras` reintenta en cada pasada los pedidos por link `por_revisar` + `revisado`) y la web responde 200 con la misma versión: el PC sigue solo, sin intervenir. Por eso un 409 con `estado` `en_revision` o `aprobado` significa que **la web tiene otra lista** distinta a la del PC: el PC **no** la adopta (con su numeración se perderían comentarios que aprobaste), deja el pedido en `por_revisar` con `propuesta_en_conflicto` y la versión de la web, lo anota en el informe («la web tiene otra propuesta (vN) de <carpeta>: revísalo a mano»), te avisa una sola vez por Telegram y `enviar-letras` deja de reintentarlo. Claude lo resuelve a mano: compara la lista de la web (la página de revisión) con la del PC; si vale la del PC y el pedido sigue `en_revision`, te pide pulsar «Trae más» en la web y repite `publicar-propuesta` (la web la acepta como versión nueva y el conflicto se limpia); si vale la de la web o ya está `aprobado`, te pregunta qué hacer (p. ej. borrar el pedido con `DELETE /admin/api/pc/pedidos/<id>` y pedirlo otra vez). Con otro estado (p. ej. `listo` porque falló «bajado») el PC no cambia nada, lo anota en el informe y lo reintenta en la próxima pasada; si se repite varios días, míralo a mano. Si responde 404 (lo cancelaste en la web), el pedido local pasa a `fallido`. Si tras limpiar las líneas no queda ningún comentario dentro, el PC no publica: lo marca `fallido` («la propuesta quedó sin comentarios») y la web lo recibe por `fallido`.
+- **Pantallazos con respuesta perdida.** Si la web pasó a `necesita_pantallazos` pero el PC no se enteró, el PC igual baja los pantallazos cuando lleguen (su pedido sigue por link en `recibido`), y si vuelve a pedirlos la web responde 200 sin avisar de nuevo.
+- **Recargar la página de pantallazos** pierde la lista de fotos ya subidas en pantalla (los archivos quedan en Blob, pero la lista que se envía hay que volver a armarla).
