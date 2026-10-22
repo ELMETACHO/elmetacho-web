@@ -123,7 +123,12 @@ Validación pura en `src/app/admin/lib/` (tramos, pedido completo, cookie, lími
 - PC: pytest con un servidor falso (pedidos, descarga con tamaño correcto/incorrecto, borrado, fallido, repetido) + las 240 pruebas actuales.
 - Punta a punta: Oscar sube un pedido real desde el celular; Claude corre la franja a mano; llegan los dos cortes por Telegram; se comprueba que el almacén Blob y las llaves `admin:cantados:*` quedan vacíos.
 
-## 10. Publicación
+## 10. Fases siguientes (anotadas 2026-10-21; cada una con su propia lluvia de ideas → spec → plan)
+
+1. **Reedición de videos ya publicados ("remix").** Oscar sube un cantado ya monetizado + el link del original. El sistema recupera los MISMOS comentarios en el mismo orden (por red del original; si no aparecen, recortes del video de Oscar o tarjeta recreada con los datos reales leídos de su video, como las tarjetas HTML actuales) y lo reedita con otra canción, ritmo, karaoke y cabeza. Pendiente verificar con la política actual de Meta que la reedición propia califique para monetizar. Solo comentarios reales: nunca inventados.
+2. **Flujo actual de Telegram en la web.** Subir video + gancho (sin pantallazos): Claude elige comentarios, los deja en la web para que Oscar los revise (hasta 24 h) y a la franja siguiente de las 2 p. m. edita con lo aprobado.
+
+## 11. Publicación
 
 - PR 1 (`feat/admin-cantados`): `src/app/admin/**`, `docs/admin.md`, esta spec y el plan, **más `package.json`/`package-lock.json` (`@vercel/blob`)** → toca archivos compartidos: lo aprueba Oscar.
 - PR 2: `src/app/robots.js` (`Disallow: /admin`) → lo aprueba Oscar.
