@@ -1,13 +1,20 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { upload } from "@vercel/blob/client";
+import Barra from "../Barra.jsx";
+import ListaPantallazos from "../ListaPantallazos.jsx";
+import { encolarPatch } from "../cola.js";
+import { subirArchivo, usePantallazos, useTrabajos } from "../subidas.js";
 import EditorTramos from "./EditorTramos.jsx";
-import { extSegura, mover } from "../../lib/editor.js";
-import { ESTILOS } from "../../lib/pedido.js";
+import { extSegura } from "../../lib/editor.js";
+import { ESTILOS, TIPOS_DISPONIBLES, linkValido } from "../../lib/pedido.js";
 
-const MAX_PANTALLAZOS = 40;
 const boton = "rounded bg-[#E10600] p-4 text-lg font-bold text-white disabled:opacity-40";
+const OPCIONES = [
+  { tipo: "pantallazos", titulo: "Con pantallazos", detalle: "Tú escoges los comentarios y subes las fotos." },
+  { tipo: "link", titulo: "Por link", detalle: "Claude escoge los comentarios de TikTok y tú los revisas aquí." },
+  { tipo: "remix", titulo: "Remix", detalle: "Reeditar un cantado ya publicado (pronto)." },
+];
 
 // Lee duración y tamaño en píxeles de un video local.
 function leerMeta(url) {
@@ -21,28 +28,6 @@ function leerMeta(url) {
   });
 }
 
-function Barra({ t }) {
-  if (!t) return null;
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="h-3 rounded bg-black/15">
-        <div
-          className={`h-3 rounded ${t.error ? "bg-red-700" : "bg-[#E10600]"}`}
-          style={{ width: `${t.error ? 100 : t.pct}%` }}
-        />
-      </div>
-      {t.error && (
-        <div className="flex items-center justify-between gap-2 text-[#E10600]">
-          <span>{t.error}</span>
-          <button onClick={t.reintentar} className="rounded border border-[#E10600] px-3 py-2">
-            Reintentar
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 const Seccion = ({ titulo, children }) => (
   <section className="flex flex-col gap-3 rounded border border-black/15 bg-white p-3">
     <h2 className="text-lg font-bold">{titulo}</h2>
@@ -53,105 +38,66 @@ const Seccion = ({ titulo, children }) => (
 export default function NuevoPedido() {
   const router = useRouter();
   const [id, setId] = useState(null);
+  const [tipo, setTipo] = useState(null);
+  const [link, setLink] = useState("");
+  const [linkGuardado, setLinkGuardado] = useState(false);
   const [errorGlobal, setErrorGlobal] = useState("");
   const [original, setOriginal] = useState(null); // { url, nombre, duracion, ancho, alto, subido }
   const [tramos, setTramos] = useState([]);
   const [gancho, setGancho] = useState(null); // { nombre }
   const [avisoGancho, setAvisoGancho] = useState("");
-  const [pants, setPants] = useState([]); // { pathname, tamano, nombre, url }
   const [estilo, setEstilo] = useState(ESTILOS[0]);
   const [titulo, setTitulo] = useState("");
-  const [trabajos, setTrabajos] = useState({}); // clave -> { pct, error, reintentar }
+  const { trabajos, fijarTrabajo, conOcupado, subiendo } = useTrabajos(); // trabajos: barras; subiendo: hay handlers en curso
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(false);
-  const [ocupado, setOcupado] = useState(0); // handlers de archivos en curso (incluye el guardado, no solo la subida)
   const [ocupOrig, setOcupOrig] = useState(false);
   const [ocupGancho, setOcupGancho] = useState(false);
 
   const idRef = useRef(null);
   const videoRef = useRef(null);
   const cola = useRef(Promise.resolve());
-  const pantsRef = useRef([]);
-  const contador = useRef(0);
   const origenGuardado = useRef(false); // el original ya está en el servidor, con su duración
   const tramosRef = useRef([]);
   const urlOrig = useRef(null);
 
   useEffect(() => {
-    let vivo = true;
-    fetch("/admin/api/cantados", { method: "POST" })
-      .then((r) => r.json())
-      .then((d) => {
-        if (!vivo) return;
-        if (!d.id) throw new Error("sin id");
-        idRef.current = d.id;
-        setId(d.id);
-      })
-      .catch(() => vivo && setErrorGlobal("No se pudo crear el pedido. Recarga la página."));
-    const pantsActuales = pantsRef;
     const urlActual = urlOrig;
     return () => {
-      vivo = false;
       if (urlActual.current) URL.revokeObjectURL(urlActual.current);
-      pantsActuales.current.forEach((p) => URL.revokeObjectURL(p.url));
     };
   }, []);
 
-  // Cuenta handlers en curso para bloquear "Enviar pedido" hasta que todo quede guardado.
-  async function conOcupado(fn) {
-    setOcupado((n) => n + 1);
+  // El tipo se elige primero: con él se crea el pedido (spec fase 2 §4).
+  async function elegirTipo(t) {
+    setTipo(t);
+    setErrorGlobal("");
     try {
-      return await fn();
-    } finally {
-      setOcupado((n) => n - 1);
+      const r = await fetch("/admin/api/cantados", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ tipo: t }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.id) throw new Error(d.error || "sin id");
+      idRef.current = d.id;
+      setId(d.id);
+    } catch {
+      setErrorGlobal("No se pudo crear el pedido. Recarga la página.");
     }
   }
 
   // PATCH en fila (el servidor lee y escribe el pedido completo: de a uno evita pisarse).
-  function patch(cuerpo) {
-    const paso = cola.current.then(async () => {
-      const r = await fetch(`/admin/api/cantados/${idRef.current}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(cuerpo),
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "No se pudo guardar.");
-      return d;
-    });
-    cola.current = paso.catch(() => {});
-    return paso;
-  }
-  const fijarTrabajo = (k, v) =>
-    setTrabajos((t) => {
-      const n = { ...t };
-      if (v) n[k] = v;
-      else delete n[k];
-      return n;
-    });
-
-  // Sube un archivo a Blob con barra de progreso. Si falla, queda "Reintentar" y espera el toque.
-  async function subir(clave, file, nombre) {
-    const pathname = `cantados/${idRef.current}/${nombre}`;
-    for (;;) {
-      fijarTrabajo(clave, { pct: 0 });
-      try {
-        await upload(pathname, file, {
-          access: "private",
-          handleUploadUrl: "/admin/api/cantados/subir",
-          clientPayload: idRef.current,
-          multipart: file.size > 20e6,
-          onUploadProgress: ({ percentage }) => fijarTrabajo(clave, { pct: Math.round(percentage) }),
-        });
-        fijarTrabajo(clave, null);
-        return { pathname, tamano: file.size, nombre: file.name };
-      } catch (e) {
-        await new Promise((siguiente) =>
-          fijarTrabajo(clave, { pct: 100, error: e?.message || "Falló la subida.", reintentar: siguiente }),
-        );
-      }
-    }
-  }
+  const patch = (cuerpo) => encolarPatch(cola, `/admin/api/cantados/${idRef.current}`, cuerpo);
+  const subir = (clave, file, nombre) => subirArchivo(idRef.current, clave, file, nombre, fijarTrabajo);
+  const { pants, elegir: elegirPants, moverPant, quitarPant } = usePantallazos({
+    listoParaElegir: () => Boolean(idRef.current),
+    subir,
+    patch,
+    conOcupado,
+    alError: setErrorGlobal,
+    alLimpiar: () => setErrorGlobal(""),
+  });
 
   async function elegirOriginal(e) {
     const file = e.target.files?.[0];
@@ -231,53 +177,20 @@ export default function NuevoPedido() {
     });
   }
 
-  function fijarPants(lista) {
-    pantsRef.current = lista;
-    setPants(lista);
-  }
-  const guardarPants = (lista) =>
-    patch({ pantallazos: lista.map(({ pathname, tamano, nombre }) => ({ pathname, tamano, nombre })) }).catch((err) =>
-      setErrorGlobal(err.message),
-    );
-
-  async function elegirPants(e) {
-    const files = [...(e.target.files || [])];
-    e.target.value = "";
-    if (!files.length || !idRef.current) return;
-    setErrorGlobal("");
-    await conOcupado(async () => {
-      for (const file of files) {
-        if (pantsRef.current.length >= MAX_PANTALLAZOS || contador.current >= 99) {
-          setErrorGlobal(`Son máximo ${MAX_PANTALLAZOS} pantallazos.`);
-          break;
-        }
-        contador.current += 1; // numeración continua aunque se quiten o agreguen después
-        const nn = String(contador.current).padStart(2, "0");
-        try {
-          const f = await subir(`pant${nn}`, file, `p${nn}${extSegura(file.name, "imagen")}`);
-          fijarPants([...pantsRef.current, { ...f, url: URL.createObjectURL(file) }]);
-          await guardarPants(pantsRef.current);
-        } catch (err) {
-          setErrorGlobal(err.message);
-        }
-      }
-    });
-  }
-  function moverPant(i, paso) {
-    const lista = mover(pantsRef.current, i, paso);
-    fijarPants(lista);
-    guardarPants(lista);
-  }
-  function quitarPant(i) {
-    URL.revokeObjectURL(pantsRef.current[i].url);
-    const lista = pantsRef.current.filter((_, j) => j !== i);
-    fijarPants(lista);
-    guardarPants(lista);
-  }
-
   function elegirEstilo(s) {
     setEstilo(s);
     patch({ estilo: s }).catch((err) => setErrorGlobal(err.message));
+  }
+
+  function guardarLink() {
+    const v = link.trim();
+    if (!v || !idRef.current) return;
+    if (!linkValido(v))
+      return setErrorGlobal("Ese link no es de TikTok: debe empezar por https://www.tiktok.com/, https://vm.tiktok.com/ o https://vt.tiktok.com/.");
+    setErrorGlobal("");
+    patch({ link: v })
+      .then(() => setLinkGuardado(true))
+      .catch((err) => setErrorGlobal(err.message));
   }
 
   async function enviar() {
@@ -298,10 +211,41 @@ export default function NuevoPedido() {
     }
   }
 
-  const subiendo = Object.values(trabajos).length > 0 || ocupado > 0;
-  const falta = !id || !original?.subido || tramos.length === 0 || !gancho || pants.length === 0;
+  const porLink = tipo === "link";
+  const falta = !id || !original?.subido || tramos.length === 0 || !gancho || (porLink ? !linkGuardado : pants.length === 0);
+  const secciones = porLink ? ["link", "original", "gancho", "estilo"] : ["original", "gancho", "pantallazos", "estilo"];
+  const num = (s) => secciones.indexOf(s) + 1;
 
-  if (listo) return <p className="pt-10 text-center text-xl font-bold">Listo: sale a las 2 p. m.</p>;
+  if (listo)
+    return (
+      <p className="pt-10 text-center text-xl font-bold">
+        {porLink ? "Listo: a las 2 p. m. Claude escoge los comentarios y te llega el enlace para revisarlos." : "Listo: sale a las 2 p. m."}
+      </p>
+    );
+
+  if (!tipo)
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Nuevo video</h1>
+          <a href="/admin" className="text-sm underline">
+            Volver
+          </a>
+        </div>
+        <p className="text-black/70">¿Qué vas a pedir?</p>
+        {OPCIONES.map((o) => (
+          <button
+            key={o.tipo}
+            onClick={() => elegirTipo(o.tipo)}
+            disabled={!TIPOS_DISPONIBLES.includes(o.tipo)}
+            className="flex flex-col gap-1 rounded border-2 border-[#E10600] bg-white p-4 text-left disabled:border-black/20 disabled:opacity-50"
+          >
+            <span className="text-lg font-bold">{o.titulo}</span>
+            <span className="text-sm text-black/70">{o.detalle}</span>
+          </button>
+        ))}
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-4">
@@ -313,7 +257,27 @@ export default function NuevoPedido() {
       </div>
       {errorGlobal && <p className="rounded bg-red-100 p-2 text-[#E10600]">{errorGlobal}</p>}
 
-      <Seccion titulo="1. Video original">
+      {porLink && (
+        <Seccion titulo={`${num("link")}. Link de TikTok`}>
+          <input
+            type="url"
+            inputMode="url"
+            value={link}
+            placeholder="https://vt.tiktok.com/…"
+            onChange={(e) => {
+              setLink(e.target.value);
+              setLinkGuardado(false);
+            }}
+            onBlur={guardarLink}
+            disabled={!id}
+            className="rounded border border-black/30 bg-white p-3"
+          />
+          <p className="text-sm text-black/60">Solo sirve para leer los comentarios: el video súbelo abajo.</p>
+          {linkGuardado && <p className="text-sm text-black/70">Link guardado.</p>}
+        </Seccion>
+      )}
+
+      <Seccion titulo={`${num("original")}. Video original`}>
         <input type="file" accept="video/*" onChange={elegirOriginal} disabled={!id || ocupOrig} />
         <Barra t={trabajos.original} />
         {original && (
@@ -324,43 +288,26 @@ export default function NuevoPedido() {
         )}
       </Seccion>
 
-      <Seccion titulo="2. Tu gancho">
+      <Seccion titulo={`${num("gancho")}. Tu gancho`}>
         <input type="file" accept="video/*" onChange={elegirGancho} disabled={!id || ocupGancho} />
         <Barra t={trabajos.gancho} />
         {avisoGancho && <p className="rounded bg-yellow-200 p-2">{avisoGancho}</p>}
         {gancho && <p className="text-sm text-black/70">Subido: {gancho.nombre}</p>}
       </Seccion>
 
-      <Seccion titulo="3. Pantallazos">
-        <input type="file" accept="image/*" multiple onChange={elegirPants} disabled={!id} />
-        {Object.entries(trabajos)
-          .filter(([k]) => k.startsWith("pant"))
-          .map(([k, t]) => (
-            <Barra key={k} t={t} />
-          ))}
-        <ul className="flex flex-col gap-2">
-          {pants.map((p, i) => (
-            <li key={p.pathname} className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt="" className="h-16 w-16 rounded object-cover" />
-              <span className="min-w-0 flex-1 truncate text-sm">
-                {i + 1}. {p.nombre}
-              </span>
-              <button aria-label="Subir" className="px-2 py-2 text-xl" onClick={() => moverPant(i, -1)}>
-                ↑
-              </button>
-              <button aria-label="Bajar" className="px-2 py-2 text-xl" onClick={() => moverPant(i, 1)}>
-                ↓
-              </button>
-              <button aria-label="Quitar" className="px-2 py-2 text-xl" onClick={() => quitarPant(i)}>
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Seccion>
+      {!porLink && (
+        <Seccion titulo={`${num("pantallazos")}. Pantallazos`}>
+          <input type="file" accept="image/*" multiple onChange={elegirPants} disabled={!id} />
+          {Object.entries(trabajos)
+            .filter(([k]) => k.startsWith("pant"))
+            .map(([k, t]) => (
+              <Barra key={k} t={t} />
+            ))}
+          <ListaPantallazos pants={pants} onMover={moverPant} onQuitar={quitarPant} />
+        </Seccion>
+      )}
 
-      <Seccion titulo="4. Estilo y título">
+      <Seccion titulo={`${num("estilo")}. Estilo y título`}>
         <div className="grid grid-cols-3 gap-2">
           {ESTILOS.map((s) => (
             <button
@@ -391,7 +338,8 @@ export default function NuevoPedido() {
             !original?.subido && "video original",
             tramos.length === 0 && "marcar un tramo",
             !gancho && "gancho",
-            pants.length === 0 && "al menos un pantallazo",
+            porLink && !linkGuardado && "link de TikTok",
+            !porLink && pants.length === 0 && "al menos un pantallazo",
           ]
             .filter(Boolean)
             .join(", ")}

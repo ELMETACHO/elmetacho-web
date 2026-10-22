@@ -1,0 +1,75 @@
+"use client";
+import { useRef, useState } from "react";
+import Barra from "../../Barra.jsx";
+import ListaPantallazos from "../../ListaPantallazos.jsx";
+import { encolarPatch, esperarGuardado } from "../../cola.js";
+import { subirArchivo, usePantallazos, useTrabajos } from "../../subidas.js";
+
+export default function SubirPantallazos({ id, nombre, motivo }) {
+  const { trabajos, fijarTrabajo, conOcupado, subiendo } = useTrabajos();
+  const [error, setError] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [listo, setListo] = useState(false);
+  const cola = useRef(Promise.resolve());
+  const ultimo = useRef(null);
+
+  // Cada guardado lleva la lista completa: se registra el último para decidir el envío por su resultado.
+  const patch = (cuerpo) => {
+    const p = encolarPatch(cola, `/admin/api/cantados/${id}`, cuerpo);
+    ultimo.current = p.then(() => ({ ok: true }), (e) => ({ ok: false, error: e }));
+    return p;
+  };
+  const { pants, elegir, moverPant, quitarPant } = usePantallazos({
+    listoParaElegir: () => true,
+    subir: (clave, file, nombreArchivo) => subirArchivo(id, clave, file, nombreArchivo, fijarTrabajo),
+    patch,
+    conOcupado,
+    alError: setError,
+    alLimpiar: () => setError(""),
+  });
+
+  async function enviar() {
+    setEnviando(true);
+    setError("");
+    try {
+      const g = await esperarGuardado(ultimo);
+      if (!g.ok) throw new Error(g.error?.message || "No se pudo guardar.");
+      const r = await fetch(`/admin/api/cantados/${id}/enviar`, { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "No se pudo enviar.");
+      setListo(true);
+    } catch (err) {
+      setError(err.message);
+      setEnviando(false);
+    }
+  }
+
+  if (listo)
+    return (
+      <div className="flex flex-col gap-4 pt-10 text-center">
+        <p className="text-xl font-bold">Listo: sale a las 2 p. m. como pedido con pantallazos.</p>
+        <a href="/admin" className="underline">Volver a la lista</a>
+      </div>
+    );
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Pantallazos</h1>
+        <a href="/admin" className="text-sm underline">Volver</a>
+      </div>
+      <p className="rounded bg-yellow-200 p-2 text-sm">
+        {nombre}: {motivo || "TikTok no dejó leer los comentarios"}. Sube los pantallazos en el orden que quieres; el video, el bucle y el gancho ya los tiene el PC.
+      </p>
+      {error && <p className="rounded bg-red-100 p-2 text-[#E10600]">{error}</p>}
+      <input type="file" accept="image/*" multiple onChange={elegir} />
+      {Object.entries(trabajos).map(([k, t]) => (
+        <Barra key={k} t={t} />
+      ))}
+      <ListaPantallazos pants={pants} onMover={moverPant} onQuitar={quitarPant} />
+      <button className="rounded bg-[#E10600] p-4 text-lg font-bold text-white disabled:opacity-40"
+        disabled={subiendo || enviando || pants.length === 0} onClick={enviar}>
+        {enviando ? "Enviando…" : subiendo ? "Subiendo…" : "Enviar pantallazos"}
+      </button>
+    </div>
+  );
+}

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { almacenRedis } from "./lib/almacen.js";
 import { urlRedisDirecta } from "../api/lead/config.js";
-import { nombreVisible } from "./lib/pedido.js";
+import { nombreVisible, ordenarLista, tipoDe } from "./lib/pedido.js";
 import { COOKIE, sesionValida } from "./lib/sesion.js";
 import ListaPedidos from "./ListaPedidos.jsx";
 
@@ -20,8 +20,9 @@ export default async function Admin() {
     const url = urlRedisDirecta(process.env);
     if (!url) throw new Error("sin url");
     almacen = await almacenRedis(url);
-    pedidos = (await almacen.listar()).map((p) => ({
+    pedidos = ordenarLista(await almacen.listar()).map((p) => ({
       id: p.id, nombre: nombreVisible(p), creado: p.creado, estado: p.estado, motivo: p.motivo ?? null,
+      tipo: tipoDe(p), listos: Boolean(p.pantallazos_listos),
     }));
   } catch {
     error = "No se pudo leer la lista de pedidos (Redis no responde).";
