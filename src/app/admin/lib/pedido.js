@@ -10,6 +10,7 @@ const PATRON = {
   original: /^original\.[a-z0-9]{2,5}$/,
   gancho: /^gancho\.[a-z0-9]{2,5}$/,
   pantallazo: /^p\d{2}\.[a-z0-9]{2,5}$/,
+  publicado: /^publicado\.[a-z0-9]{2,5}$/,   // remix: el video ya publicado del que salen los comentarios
 };
 
 export const prefijo = (id) => `cantados/${id}/`;
@@ -18,7 +19,7 @@ export function nuevoId(fecha, azar) {
   return `c_${d}_${azar}`;
 }
 export const TIPOS = ["pantallazos", "link", "remix"];
-export const TIPOS_DISPONIBLES = ["pantallazos", "link"];   // remix: después de su prueba (spec fase 2 §7)
+export const TIPOS_DISPONIBLES = ["pantallazos", "link", "remix"];
 export const EN_EL_PC = ["en_pc", "en_revision", "aprobado"];   // el PC ya tiene el proyecto: no se cancela desde la web
 const LINK = /^https:\/\/(www\.|vm\.|vt\.)tiktok\.com\/\S+$/;
 const MAX_LINK = 300;
@@ -26,7 +27,7 @@ export const tipoDe = (p) => p.tipo || "pantallazos";      // pedidos de la fase
 export const linkValido = (x) => typeof x === "string" && x.trim().length <= MAX_LINK && LINK.test(x.trim());
 export const nuevoPedido = (id, creado, tipo = "pantallazos") => ({
   id, creado, tipo, estado: "subiendo", titulo: null, estilo: ESTILOS[0], tramos: [],
-  original: null, gancho: null, pantallazos: [], link: null, motivo: null,
+  original: null, gancho: null, pantallazos: [], link: null, publicado: null, motivo: null,
 });
 
 // Número finito >= 0, o undefined si el campo no viene. Otro valor = inválido (null).
@@ -57,8 +58,12 @@ export function aplicarCambios(p, c) {
   const out = { ...p }, errores = [];
   if ("titulo" in c) out.titulo = typeof c.titulo === "string" && c.titulo.trim() ? c.titulo.trim().slice(0, 200) : null;
   if ("estilo" in c) ESTILOS.includes(c.estilo) ? (out.estilo = c.estilo) : errores.push("Estilo no válido.");
-  for (const campo of ["original", "gancho"]) {
+  for (const campo of ["original", "gancho", "publicado"]) {
     if (campo in c) {
+      if (campo === "publicado" && tipoDe(p) !== "remix") {
+        errores.push("Este pedido no lleva video publicado.");
+        continue;
+      }
       const a = archivoValido(p.id, c[campo], PATRON[campo]);
       a ? (out[campo] = a) : errores.push(`El archivo de ${campo} no es de este pedido.`);
     }
@@ -91,11 +96,12 @@ export function erroresParaEnviar(p) {
   if (!(p.original?.tamano > 0)) e.push("Falta el video original.");
   if (!p.tramos?.length) e.push("Falta marcar el bucle.");
   if (!(p.gancho?.tamano > 0)) e.push("Falta tu gancho.");
-  if (tipo === "link" && !linkValido(p.link)) e.push("Falta el link de TikTok.");
+  if (tipo !== "pantallazos" && !linkValido(p.link)) e.push("Falta el link de TikTok.");
+  if (tipo === "remix" && !(p.publicado?.tamano > 0)) e.push("Falta tu video ya publicado.");
   if (tipo === "pantallazos" && (!p.pantallazos?.length || !p.pantallazos.every((a) => a.tamano > 0))) e.push("Faltan los pantallazos.");
   return e;
 }
-export const archivos = (p) => [p.original, p.gancho, ...(p.pantallazos || [])].filter(Boolean).map((a) => a.pathname);
+export const archivos = (p) => [p.original, p.gancho, p.publicado, ...(p.pantallazos || [])].filter(Boolean).map((a) => a.pathname);
 export const borradorVencido = (p, ahoraMs) =>
   p.estado === "subiendo" && ahoraMs - Date.parse(p.creado) > HORAS_BORRADOR * 3600e3;
 export const nombreVisible = (p) => p.titulo || p.original?.nombre || p.id;

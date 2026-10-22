@@ -26,7 +26,22 @@ En Redis solo hay texto: la propuesta (`id`, usuario, texto, línea, likes, dent
 
 ### Estados
 
-`subiendo` → `listo` → `en_pc` → (por link) `en_revision` → `aprobado` → (borrado al entregar). Ramas: `en_pc` → `necesita_pantallazos` → `en_pc`; `fallido`. No se puede cancelar en `en_pc`, `en_revision` ni `aprobado` (el PC ya tiene el proyecto); `necesita_pantallazos` sí, hasta que el PC lo baje.
+`subiendo` → `listo` → `en_pc` → (por link) `en_revision` → `aprobado` → (borrado al entregar); (remix) `en_pc` → (borrado al entregar), sin revisión. Ramas: `en_pc` → `necesita_pantallazos` → `en_pc` (por link o remix); `fallido`. No se puede cancelar en `en_pc`, `en_revision` ni `aprobado` (el PC ya tiene el proyecto); `necesita_pantallazos` sí, hasta que el PC lo baje.
+
+## Remix (fase 2, spec `docs/superpowers/specs/2026-10-22-admin-fase2-design.md` §2.4–8, §5, §7)
+
+Reeditar un cantado ya publicado: los mismos comentarios en otro orden, otra canción y gancho nuevo. El tipo `remix` ya está disponible en la web (`TIPOS_DISPONIBLES`); el PC lo hace con `PREMIERE-CLAUDE/cantados` (`herramientas/remix.py`, `docs/runbook-pasada.md`).
+
+1. **Nuevo video → Remix.** Pega el link del TikTok **original**, sube **tu video ya publicado** (el cantado tal como salió; también sirve el corte corto de YouTube), el **clip original** sin editar (marca los tramos como siempre) y tu **gancho nuevo**. El título es opcional. No hay selector de estilo ni pantallazos. Si el publicado lo hizo este sistema, el PC saca el estilo contrario al suyo (salsa ↔ merengue) y el color de karaoke que sigue al que tenía; si no (remix por tarjetas, p. ej. un video de Premiere), no hay proyecto previo y estilo y color salen por turno, alternando como en un pedido nuevo. «Enviar pedido» se activa con link, publicado, clip, ≥ 1 tramo y gancho. Llega aviso al bot: «📥 Recibí: <nombre> — remix: sale a las 2 p. m., sin revisión (mismos comentarios en otro orden, con otra canción).»
+2. **Franja de las 2 p. m. (el mismo día, sin revisión de letra).** El PC baja los tres videos (la web los borra) y busca los comentarios:
+   - Si el publicado lo hizo este sistema (mismo link o mismo video de TikTok, y un corte renderizado que dura lo mismo ±1 s), los toma de su proyecto viejo, con sus textos ya revisados.
+   - Si no (p. ej. un video hecho en Premiere), lee las tarjetas del publicado (un cuadro cada 0,5 s + OCR) y las empareja con los comentarios de TikTok (usuario, likes y foto reales). Las que no aparecen en TikTok se **dibujan** con el texto real que se leyó, un usuario inventado y neutro, sin likes y con avatar genérico.
+   - Todo texto dudoso se corrobora con el audio del publicado (whisper: lo que se canta mientras la tarjeta está en pantalla) y Claude lo compara con el cuadro antes de cantarlo. Nunca se inventa texto: si no se lee ni se oye, ese comentario queda fuera.
+   - Reordena (el primero sale de los más graciosos; ninguno queda en su puesto anterior cuando se puede), hace la canción, edita y entrega los dos cortes. **El resumen del bot dice cuántas tarjetas se dibujaron y cuáles son (los primeros 40 caracteres de cada una).**
+3. **«Subir pantallazos» (TikTok bloquea o no se leyeron tarjetas).** El PC pasa el pedido a `necesita_pantallazos` y llega el aviso con `…/admin/cantados/<id>/pantallazos`. La pantalla pide los pantallazos de los comentarios que salen en tu video publicado, **en el orden en que aparecen en el video**, y «Enviar pantallazos» lo devuelve a la franja siguiente. Dos casos: TikTok pide sesión o captcha (los pantallazos se emparejan con las tarjetas leídas) o no se pudo leer ninguna tarjeta (los pantallazos pasan a ser las tarjetas, en el orden que subiste). Si tampoco se lee nada en las fotos, queda `fallido` con el motivo.
+4. **Riesgo de monetización (spec §2.8):** el primer remix es una prueba. Se publica y se mira el panel de riesgo de monetización de Meta antes de hacer más.
+
+En Redis el remix solo agrega la ranura `publicado` (archivo `cantados/<id>/publicado.<ext>`, que se borra al bajar el PC, como los demás).
 
 ## Cómo se usa desde el celular
 
@@ -68,13 +83,13 @@ Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la c
 |---|---|---|
 | `POST /admin/api/entrar` | Cualquiera (con límite de intentos) | Verifica la clave y pone la cookie |
 | `POST /admin/api/salir` | Sesión | Borra la cookie |
-| `POST /admin/api/cantados` | Sesión | Crea pedido `subiendo` |
-| `PATCH /admin/api/cantados/<id>` | Sesión | Guarda link, tramos, título, estilo, pantallazos, archivos subidos (en `necesita_pantallazos` solo acepta pantallazos) |
+| `POST /admin/api/cantados` | Sesión | Crea pedido `subiendo`; cuerpo `{tipo}`: `pantallazos` (por defecto), `link` o `remix` |
+| `PATCH /admin/api/cantados/<id>` | Sesión | Guarda link, tramos, título, estilo, pantallazos, archivos subidos (`original`, `gancho` y, solo en remix, `publicado`) (en `necesita_pantallazos` solo acepta pantallazos) |
 | `POST /admin/api/cantados/<id>/enviar` | Sesión | Valida, pasa a `listo`, avisa a Telegram; en `necesita_pantallazos` marca `pantallazos_listos` y avisa |
 | `DELETE /admin/api/cantados/<id>` | Sesión | Cancela: borra el prefijo en Blob y el registro (no en `en_pc`, `en_revision` ni `aprobado`); si el pedido no existe responde ok |
 | `POST /admin/api/cantados/subir` | Sesión | `handleUpload` de Blob (tipos video/imagen); sin sesión responde 400 con el mensaje, no 401 |
-| `GET /admin/api/pc/pedidos` | Solo PC | Pedidos `listo` (con `tipo`, `link` y `estado`) y `necesita_pantallazos` con pantallazos enviados (`original`/`gancho` en `null`), con enlaces firmados; limpia borradores > 48 h |
-| `POST /admin/api/pc/pedidos/<id>/bajado` | Solo PC | Pasa `listo` y `necesita_pantallazos` a `en_pc` y borra sus blobs |
+| `GET /admin/api/pc/pedidos` | Solo PC | Pedidos `listo` (con `tipo`, `link`, `estado` y `publicado` firmado en remix) y `necesita_pantallazos` con pantallazos enviados (`original`/`gancho`/`publicado` en `null`), con enlaces firmados; limpia borradores > 48 h |
+| `POST /admin/api/pc/pedidos/<id>/bajado` | Solo PC | Pasa `listo` y `necesita_pantallazos` a `en_pc`, borra sus blobs (también el publicado), deja los archivos en `null` y los pantallazos en `[]` |
 | `POST /admin/api/pc/pedidos/<id>/fallido` | Solo PC | `fallido` + motivo; **borra todos los archivos del pedido** y quita `propuesta` y `revision` (el texto solo vive mientras está en revisión) |
 | `DELETE /admin/api/pc/pedidos/<id>` | Solo PC | Entregado: borra el prefijo en Blob (por si quedó algo) y el registro |
 | `PATCH /admin/api/cantados/<id>/revision` | Sesión | Guarda `{orden, fuera, lineas, version}` completo; 409 si ya no está en revisión, pidió más, venció o la `version` ya no es la vigente |
@@ -82,7 +97,7 @@ Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la c
 | `POST /admin/api/cantados/<id>/trae-mas` | Sesión | Cuerpo `{version}`; marca «trae más» (la revisión queda congelada hasta la franja) |
 | `POST /admin/api/pc/pedidos/<id>/propuesta` | Solo PC | Publica la propuesta, `en_revision`, vence en 24 h, aviso con enlace → `{ok, version, vence}`. **Idempotente:** si el pedido está `en_revision` o `aprobado` y llega la misma propuesta (mismos ids, orden, líneas y «dentro»), responde 200 con la `version`/`vence` guardados sin tocar la revisión ni avisar otra vez. Si no, 409 salvo que esté `en_pc`, `necesita_pantallazos` o `en_revision` con «trae más»; el 409 trae `{error, estado, version}` |
 | `GET /admin/api/pc/aprobados` | Solo PC | Aprobados (y vencidos, que se aprueban solos) y los que piden más, con su lista final |
-| `POST /admin/api/pc/pedidos/<id>/necesita-pantallazos` | Solo PC | Link bloqueado por TikTok (`en_pc` → `necesita_pantallazos`): pide pantallazos con aviso. Repetido sobre un pedido que ya está en `necesita_pantallazos` → 200 sin cambios ni aviso nuevo |
+| `POST /admin/api/pc/pedidos/<id>/necesita-pantallazos` | Solo PC | Pedido por link o remix bloqueado por TikTok (`en_pc` → `necesita_pantallazos`): pide pantallazos con aviso. Repetido sobre un pedido que ya está en `necesita_pantallazos` → 200 sin cambios ni aviso nuevo |
 | `POST /admin/api/pc/pedidos/<id>/trae-mas-atendido` | Solo PC | Cuerpo opcional `{motivo}`: `"sin_quitados"` → aviso «No quitaste ninguno…»; si no, «No hay más comentarios para reponer…». Vuelve a revisión con 24 h nuevas |
 
 Sin sesión → 401 (salvo `subir`, que da 400; y el login, que puede dar 429 si está bloqueado). El token del PC no sirve en las rutas de sesión y la cookie no sirve en las del PC. No hay `proxy.js`: la sesión se verifica en `layout.jsx` y al inicio de cada API.
@@ -103,6 +118,7 @@ Verificado en los tipos instalados y con `build` (Task 6):
 - `list({prefix, cursor})` devuelve `{blobs, cursor, hasMore}`; se usa para el borrado por prefijo (probado solo con un doble, no contra un almacén real).
 - Pruebas (2026-10-22): `npm test` 94 pasan, 0 fallan; `eslint` sin salida; `npm run build` OK. El build no necesita variables.
 - Fase 2 por link (2026-10-22): `npm test` 139 pasan, 0 fallan; `npx eslint --ignore-pattern ".claude/**"` sin salida; `npm run build` OK.
+- Remix (2026-10-22): `npm test` 149 pasan, 0 fallan; `npx eslint --ignore-pattern ".claude/**"` sin salida; `npm run build` OK.
 
 ## Lo que NO se ha probado
 
@@ -111,6 +127,7 @@ Verificado en los tipos instalados y con `build` (Task 6):
 - **Punta a punta:** pedido real desde el celular, franja a mano en el PC, llegada por Telegram y comprobación de que Blob y las llaves `admin:cantados:*` quedan vacíos.
 - Vista de teléfono en la vista previa del PR.
 - **Fase 2 por link:** revisión real en el celular, aviso real del bot con el enlace y un pedido real de punta a punta.
+- **Remix:** un remix real de punta a punta (uno de un video de este sistema y uno de Premiere), la lectura de tarjetas sobre videos nuevos, el emparejamiento con TikTok real, la pantalla de remix en el celular y el remix por tarjetas con estilo y color por turno (solo se probó con dobles).
 
 ## Seguridad
 

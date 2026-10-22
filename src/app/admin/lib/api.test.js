@@ -153,11 +153,13 @@ async function pedidoLink(api, tamanos) {
   return id;
 }
 
-test("crear: el tipo viene en el cuerpo; sin cuerpo es pantallazos; remix o basura no", async () => {
+test("crear: el tipo viene en el cuerpo; sin cuerpo es pantallazos; remix sí; basura no", async () => {
   const { api, almacen } = montar();
   const { id } = await (await api.crear(conSesion())).json();
   assert.equal((await almacen.leer(id)).tipo, "pantallazos");
-  assert.equal((await api.crear(conSesion({ tipo: "remix" }))).status, 400);
+  const r = await api.crear(conSesion({ tipo: "remix" }));
+  assert.equal(r.status, 200);
+  assert.equal((await almacen.leer((await r.json()).id)).tipo, "remix");
   assert.equal((await api.crear(conSesion({ tipo: "otro" }))).status, 400);
 });
 
@@ -461,4 +463,54 @@ test("pantallazos en necesita_pantallazos: se suben, se envían y el PC los reci
   assert.equal((await api.enviar(conSesion(), id)).status, 409);
   assert.equal((await api.pcBajado(pc(), id)).status, 200);
   assert.equal((await almacen.leer(id)).estado, "en_pc");
+});
+
+async function pedidoRemix(api, tamanos) {
+  const { id } = await (await api.crear(conSesion({ tipo: "remix" }))).json();
+  const base = `cantados/${id}/`;
+  for (const [n, t] of [["original.mp4", 500], ["gancho.mov", 300], ["publicado.mp4", 900]]) tamanos.set(base + n, t);
+  const r = await api.cambiar(conSesion({ original: { pathname: base + "original.mp4", tamano: 500, duracion: 28 }, tramos: [[0, 4]],
+    gancho: { pathname: base + "gancho.mov", tamano: 300 }, publicado: { pathname: base + "publicado.mp4", tamano: 900, duracion: 61 },
+    link: "https://vt.tiktok.com/ZS9/" }, "PATCH"), id);
+  assert.equal(r.status, 200);
+  return id;
+}
+
+test("remix: se envía con aviso, el PC recibe el publicado firmado y al bajarlo se borra todo de Blob", async () => {
+  const { api, almacen, avisos, tamanos, borrados } = montar();
+  const id = await pedidoRemix(api, tamanos);
+  assert.equal((await api.enviar(conSesion(), id)).status, 200);
+  assert.match(avisos[0], /remix/);
+  const [p] = await (await api.pcPedidos(pc())).json();
+  assert.deepEqual([p.tipo, p.link, p.estado], ["remix", "https://vt.tiktok.com/ZS9/", "listo"]);
+  assert.equal(p.publicado.url, `https://firmado/cantados/${id}/publicado.mp4`);
+  assert.equal((await api.pcBajado(pc(), id)).status, 200);
+  const g = await almacen.leer(id);
+  assert.deepEqual([g.estado, g.original, g.gancho, g.publicado], ["en_pc", null, null, null]);
+  assert.deepEqual(borrados, [`cantados/${id}/`]);
+});
+
+test("remix: no se envía sin el publicado ni con un publicado que no terminó de subir", async () => {
+  const { api, almacen, tamanos, avisos } = montar();
+  const id = await pedidoRemix(api, tamanos);
+  const p = await almacen.leer(id);
+  await almacen.guardar({ ...p, publicado: null });
+  const r = await api.enviar(conSesion(), id);
+  assert.equal(r.status, 400);
+  assert.match((await r.json()).error, /publicado/);
+  await almacen.guardar(p);
+  tamanos.set(`cantados/${id}/publicado.mp4`, 10);
+  assert.equal((await api.enviar(conSesion(), id)).status, 400);
+  assert.deepEqual([(await almacen.leer(id)).estado, avisos.length], ["subiendo", 0]);
+});
+
+test("necesita-pantallazos: también para un remix en el PC; repetido no avisa otra vez; pantallazos no", async () => {
+  const { api, almacen, avisos } = montar();
+  const id = await enPc(almacen, { tipo: "remix", publicado: null });
+  assert.equal((await api.pcNecesitaPantallazos(pcCon({ motivo: "captcha" }), id)).status, 200);
+  assert.deepEqual([(await almacen.leer(id)).estado, avisos.length], ["necesita_pantallazos", 1]);
+  assert.equal((await api.pcNecesitaPantallazos(pcCon({ motivo: "captcha" }), id)).status, 200);
+  assert.equal(avisos.length, 1);
+  await enPc(almacen, { tipo: "pantallazos" });
+  assert.equal((await api.pcNecesitaPantallazos(pcCon({}), id)).status, 409);
 });

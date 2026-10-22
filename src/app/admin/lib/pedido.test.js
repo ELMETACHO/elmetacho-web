@@ -74,7 +74,7 @@ const L = () => nuevoPedido("c_20261021_ab12", "2026-10-21T18:30:00.000Z", "link
 
 test("tipos: pantallazos por defecto; los pedidos viejos sin tipo cuentan como pantallazos", () => {
   assert.deepEqual(TIPOS, ["pantallazos", "link", "remix"]);
-  assert.deepEqual(TIPOS_DISPONIBLES, ["pantallazos", "link"]);
+  assert.deepEqual(TIPOS_DISPONIBLES, ["pantallazos", "link", "remix"]);
   assert.equal(P().tipo, "pantallazos");
   assert.equal(L().tipo, "link");
   assert.equal(L().link, null);
@@ -98,11 +98,10 @@ test("el link se guarda solo en pedidos por link y debe ser válido; un pedido p
   assert.match(aplicarCambios(L(), { pantallazos: [arch("p01.jpg")] }).errores[0], /no lleva pantallazos/);
 });
 
-test("para enviar por link: original, tramo, gancho y link (sin pantallazos); remix todavía no", () => {
+test("para enviar por link: original, tramo, gancho y link (sin pantallazos)", () => {
   const base = { original: arch("original.mp4", { duracion: 28 }), tramos: [[0, 4]], gancho: arch("gancho.mov") };
   assert.deepEqual(erroresParaEnviar({ ...L(), ...base }), ["Falta el link de TikTok."]);
   assert.deepEqual(erroresParaEnviar({ ...L(), ...base, link: "https://vt.tiktok.com/ZS9/" }), []);
-  assert.match(erroresParaEnviar({ ...nuevoPedido("x", "2026-10-21T18:30:00.000Z", "remix"), ...base }).join(" "), /todavía no/);
 });
 
 test("la lista pone arriba lo que espera a Oscar: revisión y luego pantallazos", () => {
@@ -131,4 +130,28 @@ test("subidas: en subiendo todo lo del pedido; en necesita_pantallazos solo pNN 
   assert.equal(subidaPermitida(P(), "cantados/otro/p01.jpg"), false);
   assert.equal(subidaPermitida(P(), b + "../x"), false);
   assert.equal(subidaPermitida(null, b + "p01.jpg"), false);
+});
+
+const R = () => nuevoPedido("c_20261021_ab12", "2026-10-21T18:30:00.000Z", "remix");
+
+test("remix: lleva link y video publicado; los otros tipos no llevan publicado", () => {
+  assert.equal(R().publicado, null);
+  const pub = arch("publicado.mp4", { duracion: 61 });
+  const r = aplicarCambios(R(), { publicado: pub, link: "https://vt.tiktok.com/ZS9/" });
+  assert.deepEqual(r.errores, []);
+  assert.equal(r.pedido.publicado.pathname, "cantados/c_20261021_ab12/publicado.mp4");
+  assert.match(aplicarCambios(L(), { publicado: pub }).errores[0], /no lleva video publicado/);
+  assert.match(aplicarCambios(P(), { publicado: pub }).errores[0], /no lleva video publicado/);
+  assert.match(aplicarCambios(R(), { publicado: arch("original.mp4") }).errores[0], /archivo/);
+  assert.match(aplicarCambios(R(), { pantallazos: [arch("p01.jpg")] }).errores[0], /no lleva pantallazos/);
+});
+
+test("para enviar un remix: clip original, tramo, gancho nuevo, link y publicado", () => {
+  const base = { original: arch("original.mp4", { duracion: 28 }), tramos: [[0, 4]], gancho: arch("gancho.mov") };
+  assert.deepEqual(erroresParaEnviar({ ...R(), ...base }), ["Falta el link de TikTok.", "Falta tu video ya publicado."]);
+  const listo = { ...R(), ...base, link: "https://vt.tiktok.com/ZS9/", publicado: arch("publicado.mp4") };
+  assert.deepEqual(erroresParaEnviar(listo), []);
+  assert.deepEqual(archivos(listo), [listo.original.pathname, listo.gancho.pathname, listo.publicado.pathname]);
+  assert.deepEqual(erroresParaEnviar({ ...listo, publicado: { ...listo.publicado, tamano: 0 } }), ["Falta tu video ya publicado."]);
+  assert.match(erroresParaEnviar({ ...listo, tipo: "otro" }).join(" "), /todavía no/);
 });

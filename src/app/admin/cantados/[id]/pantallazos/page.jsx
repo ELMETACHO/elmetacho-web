@@ -1,4 +1,4 @@
-import { nombreVisible } from "../../../lib/pedido.js";
+import { nombreVisible, tipoDe } from "../../../lib/pedido.js";
 import { pedidoDeSesion } from "../pedidoDeSesion.js";
 import SubirPantallazos from "./SubirPantallazos.jsx";
 
@@ -17,5 +17,5 @@ export default async function PaginaPantallazos({ params }) {
         <a href="/admin" className="underline">Volver a la lista</a>
       </div>
     );
-  return <SubirPantallazos id={p.id} nombre={nombreVisible(p)} motivo={p.motivo || ""} />;
+  return <SubirPantallazos id={p.id} nombre={nombreVisible(p)} motivo={p.motivo || ""} remix={tipoDe(p) === "remix"} />;
 }
