@@ -9,7 +9,7 @@ import EditorTramos from "./EditorTramos.jsx";
 import { extSegura } from "../../lib/editor.js";
 import { ESTILOS, TIPOS_DISPONIBLES, linkValido } from "../../lib/pedido.js";
 
-const boton = "rounded bg-[#E10600] p-4 text-lg font-bold text-white disabled:opacity-40";
+const boton = "adm-btn primario grande";
 const OPCIONES = [
   { tipo: "pantallazos", titulo: "Con pantallazos", detalle: "Tú escoges los comentarios y subes las fotos." },
   { tipo: "link", titulo: "Por link", detalle: "Claude escoge los comentarios de TikTok y tú los revisas aquí." },
@@ -40,8 +40,8 @@ function leerMeta(url) {
 }
 
 const Seccion = ({ titulo, children }) => (
-  <section className="flex flex-col gap-3 rounded border border-black/15 bg-white p-3">
-    <h2 className="text-lg font-bold">{titulo}</h2>
+  <section className="adm-tarjeta flex flex-col gap-3">
+    <h2 className="adm-h2">{titulo}</h2>
     {children}
   </section>
 );
@@ -258,27 +258,27 @@ export default function NuevoPedido() {
   const falta = !id || faltan.length > 0;
   const num = (s) => (SECCIONES[tipo] || []).indexOf(s) + 1;
 
-  if (listo) return <p className="pt-10 text-center text-xl font-bold">{LISTO[tipo]}</p>;
+  if (listo) return <p className="adm-tarjeta mt-10 p-6 text-center text-xl font-bold text-[var(--verde)]">{LISTO[tipo]}</p>;
 
   if (!tipo)
     return (
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Nuevo video</h1>
-          <a href="/admin" className="text-sm underline">
+          <h1 className="adm-titulo">Nuevo video</h1>
+          <a href="/admin" className="adm-btn secundario chico">
             Volver
           </a>
         </div>
-        <p className="text-black/70">¿Qué vas a pedir?</p>
+        <p className="adm-sub">¿Qué vas a pedir?</p>
         {OPCIONES.map((o) => (
           <button
             key={o.tipo}
             onClick={() => elegirTipo(o.tipo)}
             disabled={!TIPOS_DISPONIBLES.includes(o.tipo)}
-            className="flex flex-col gap-1 rounded border-2 border-[#E10600] bg-white p-4 text-left disabled:border-black/20 disabled:opacity-50"
+            className="adm-opcion flex flex-col gap-1"
           >
             <span className="text-lg font-bold">{o.titulo}</span>
-            <span className="text-sm text-black/70">{o.detalle}</span>
+            <span className="adm-sub text-sm">{o.detalle}</span>
           </button>
         ))}
       </div>
@@ -287,12 +287,12 @@ export default function NuevoPedido() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{esRemix ? "Remix" : "Nuevo video"}</h1>
-        <a href="/admin" className="text-sm underline">
+        <h1 className="adm-titulo">{esRemix ? "Remix" : "Nuevo video"}</h1>
+        <a href="/admin" className="adm-btn secundario chico">
           Volver
         </a>
       </div>
-      {errorGlobal && <p className="rounded bg-red-100 p-2 text-[#E10600]">{errorGlobal}</p>}
+      {errorGlobal && <p className="adm-error">{errorGlobal}</p>}
 
       {conLink && (
         <Seccion titulo={`${num("link")}. Link de TikTok${esRemix ? " del video original" : ""}`}>
@@ -307,14 +307,14 @@ export default function NuevoPedido() {
             }}
             onBlur={guardarLink}
             disabled={!id}
-            className="rounded border border-black/30 bg-white p-3"
+            className="adm-campo"
           />
-          <p className="text-sm text-black/60">
+          <p className="adm-sub text-sm">
             {esRemix
               ? "Sirve para buscar los comentarios reales (usuario, likes, foto) de las tarjetas de tu video."
               : "Solo sirve para leer los comentarios: el video súbelo abajo."}
           </p>
-          {linkGuardado && <p className="text-sm text-black/70">Link guardado.</p>}
+          {linkGuardado && <p className="text-sm font-semibold text-[var(--verde)]">Link guardado.</p>}
         </Seccion>
       )}
 
@@ -322,8 +322,8 @@ export default function NuevoPedido() {
         <Seccion titulo={`${num("publicado")}. Tu video ya publicado`}>
           <input type="file" accept="video/*" onChange={elegirPublicado} disabled={!id || ocupPub} />
           <Barra t={trabajos.publicado} />
-          <p className="text-sm text-black/60">El cantado tal como salió: de sus tarjetas salen los comentarios.</p>
-          {publicado && <p className="text-sm text-black/70">Subido: {publicado.nombre}</p>}
+          <p className="adm-sub text-sm">El cantado tal como salió: de sus tarjetas salen los comentarios.</p>
+          {publicado && <p className="text-sm font-semibold text-[var(--verde)]">Subido: {publicado.nombre}</p>}
         </Seccion>
       )}
 
@@ -332,7 +332,7 @@ export default function NuevoPedido() {
         <Barra t={trabajos.original} />
         {original && (
           <>
-            <video ref={videoRef} src={original.url} controls playsInline className="w-full rounded bg-black" />
+            <video ref={videoRef} src={original.url} controls playsInline className="adm-video" />
             <EditorTramos duracion={original.duracion} tramos={tramos} onCambio={cambioTramos} videoRef={videoRef} />
           </>
         )}
@@ -341,8 +341,8 @@ export default function NuevoPedido() {
       <Seccion titulo={`${num("gancho")}. ${esRemix ? "Tu gancho nuevo" : "Tu gancho"}`}>
         <input type="file" accept="video/*" onChange={elegirGancho} disabled={!id || ocupGancho} />
         <Barra t={trabajos.gancho} />
-        {avisoGancho && <p className="rounded bg-yellow-200 p-2">{avisoGancho}</p>}
-        {gancho && <p className="text-sm text-black/70">Subido: {gancho.nombre}</p>}
+        {avisoGancho && <p className="adm-aviso">{avisoGancho}</p>}
+        {gancho && <p className="text-sm font-semibold text-[var(--verde)]">Subido: {gancho.nombre}</p>}
       </Seccion>
 
       {tipo === "pantallazos" && (
@@ -359,14 +359,14 @@ export default function NuevoPedido() {
 
       <Seccion titulo={`${num("estilo")}. ${esRemix ? "Título" : "Estilo y título"}`}>
         {esRemix ? (
-          <p className="text-sm text-black/60">Si tu video publicado lo hizo este sistema, el estilo y el color del karaoke salen al contrario (salsa ↔ merengue); si no, salen por turno.</p>
+          <p className="adm-sub text-sm">Si tu video publicado lo hizo este sistema, el estilo y el color del karaoke salen al contrario (salsa ↔ merengue); si no, salen por turno.</p>
         ) : (
           <div className="grid grid-cols-3 gap-2">
             {ESTILOS.map((s) => (
               <button
                 key={s}
                 onClick={() => elegirEstilo(s)}
-                className={`rounded border-2 p-3 ${estilo === s ? "border-[#E10600] bg-[#E10600] font-bold text-white" : "border-black/30 bg-white"}`}
+                className={`adm-opcion p-3 text-center text-sm ${estilo === s ? "on font-bold" : ""}`}
               >
                 {s}
               </button>
@@ -378,14 +378,14 @@ export default function NuevoPedido() {
           onChange={(e) => setTitulo(e.target.value)}
           placeholder="Título (opcional)"
           onBlur={() => patch({ titulo }).catch((err) => setErrorGlobal(err.message))}
-          className="rounded border border-black/30 bg-white p-3"
+          className="adm-campo"
         />
       </Seccion>
 
       <button className={boton} disabled={subiendo || falta || enviando} onClick={enviar}>
         {enviando ? "Enviando…" : subiendo ? "Subiendo…" : "Enviar pedido"}
       </button>
-      {falta && !subiendo && id && <p className="text-sm text-black/60">Falta: {faltan.join(", ")}.</p>}
+      {falta && !subiendo && id && <p className="adm-sub text-center text-sm">Falta: {faltan.join(", ")}.</p>}
     </div>
   );
 }

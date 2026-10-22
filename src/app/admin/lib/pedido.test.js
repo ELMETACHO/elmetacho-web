@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nuevoId, nuevoPedido, aplicarCambios, erroresParaEnviar, archivos, borradorVencido, prefijo, TIPOS, TIPOS_DISPONIBLES, linkValido, tipoDe, ordenarLista, subidaPermitida } from "./pedido.js";
+import { nuevoId, nuevoPedido, aplicarCambios, erroresParaEnviar, archivos, borradorVencido, prefijo, TIPOS, TIPOS_DISPONIBLES, linkValido, tipoDe, ordenarLista, subidaPermitida, tonoEstado } from "./pedido.js";
 
 const P = () => nuevoPedido("c_20261021_ab12", "2026-10-21T18:30:00.000Z");
 const arch = (n, extra = {}) => ({ pathname: `cantados/c_20261021_ab12/${n}`, tamano: 100, ...extra });
@@ -154,4 +154,13 @@ test("para enviar un remix: clip original, tramo, gancho nuevo, link y publicado
   assert.deepEqual(archivos(listo), [listo.original.pathname, listo.gancho.pathname, listo.publicado.pathname]);
   assert.deepEqual(erroresParaEnviar({ ...listo, publicado: { ...listo.publicado, tamano: 0 } }), ["Falta tu video ya publicado."]);
   assert.match(erroresParaEnviar({ ...listo, tipo: "otro" }).join(" "), /todavía no/);
+});
+
+test("tono de la etiqueta de estado: ámbar si espera a Oscar, rojo si falló, menta si va en camino", () => {
+  assert.equal(tonoEstado({ estado: "en_revision" }), "espera");
+  assert.equal(tonoEstado({ estado: "necesita_pantallazos", listos: false }), "espera");
+  assert.equal(tonoEstado({ estado: "necesita_pantallazos", listos: true }), "camino");
+  assert.equal(tonoEstado({ estado: "fallido" }), "error");
+  assert.equal(tonoEstado({ estado: "subiendo" }), "neutro");
+  for (const estado of ["listo", "aprobado", "en_pc"]) assert.equal(tonoEstado({ estado }), "camino");
 });

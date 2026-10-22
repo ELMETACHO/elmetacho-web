@@ -115,3 +115,11 @@ export function subidaPermitida(p, pathname) {
   if (p.estado === "subiendo") return true;
   return p.estado === "necesita_pantallazos" && !p.pantallazos_listos && PATRON.pantallazo.test(pathname.slice(prefijo(p.id).length));
 }
+
+// Color de la etiqueta de estado en la lista: espera = te toca a ti; camino = el sistema lo está llevando.
+export function tonoEstado(p) {
+  if (p.estado === "fallido") return "error";
+  if (p.estado === "subiendo") return "neutro";
+  if (p.estado === "en_revision" || (p.estado === "necesita_pantallazos" && !p.listos)) return "espera";
+  return "camino";
+}
