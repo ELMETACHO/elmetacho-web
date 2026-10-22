@@ -1,0 +1,33 @@
+// Dependencias reales de las API de /admin: Redis de la cuenta, Vercel Blob privado y el bot central de Telegram.
+import { randomBytes } from "node:crypto";
+import { del, head, issueSignedToken, presignUrl } from "@vercel/blob";
+import { urlRedisDirecta } from "../../api/lead/config.js";
+import { almacenRedis } from "./almacen.js";
+import { crearApi } from "./api.js";
+
+const blob = {
+  tamano: async (pathname) => { try { return (await head(pathname)).size; } catch { return null; } },
+  borrar: async (pathnames) => { if (pathnames.length) await del(pathnames); },
+  enlace: async (pathname) => {
+    const token = await issueSignedToken({ pathname, operations: ["get"], validUntil: Date.now() + 3600e3 });
+    return (await presignUrl(token, { operation: "get", pathname, access: "private" })).presignedUrl;
+  },
+};
+async function avisar(texto) {
+  const { TELEGRAM_BOT_TOKEN: t, TELEGRAM_CHAT_ID: chat } = process.env;
+  if (!t || !chat) return;
+  await fetch(`https://api.telegram.org/bot${t}/sendMessage`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text: texto.slice(0, 4000) }),
+  });
+}
+export function conApi(fn) {
+  return async (req, ctx) => {
+    const almacen = await almacenRedis(urlRedisDirecta(process.env));
+    try {
+      const api = crearApi({ almacen, blob, avisar, env: process.env, ahora: Date.now, azar: () => randomBytes(2).toString("hex") });
+      return await fn(api, req, (await ctx?.params)?.id);
+    } finally {
+      almacen.cerrar();
+    }
+  };
+}
