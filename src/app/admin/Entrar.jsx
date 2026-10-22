@@ -26,18 +26,18 @@ export default function Entrar() {
   }
 
   return (
-    <form onSubmit={enviar} className="flex flex-col gap-3 pt-10">
-      <h1 className="text-2xl font-bold">Admin</h1>
+    <form onSubmit={enviar} className="adm-tarjeta mt-10 flex flex-col gap-3 p-5">
+      <h1 className="adm-titulo">Admin</h1>
       <input
         type="password"
         value={clave}
         onChange={(e) => setClave(e.target.value)}
         placeholder="Clave"
         autoComplete="current-password"
-        className="rounded border border-black/30 bg-white p-3 text-lg"
+        className="adm-campo text-lg"
       />
-      {error && <p className="text-[#E10600]">{error}</p>}
-      <button disabled={cargando || !clave} className="rounded bg-[#E10600] p-4 text-lg font-bold text-white disabled:opacity-50">
+      {error && <p className="adm-error">{error}</p>}
+      <button disabled={cargando || !clave} className="adm-btn primario grande">
         {cargando ? "Entrando…" : "Entrar"}
       </button>
     </form>

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ajustar, marcar } from "../../lib/editor.js";
 import { MAX_TRAMOS, avisoLargo, totalContexto, validarTramos } from "../../lib/tramos.js";
 
-const boton = "rounded bg-[#E10600] px-3 py-3 font-bold text-white disabled:opacity-40";
+const boton = "adm-btn primario";
 const fmt = (n) => String(n).replace(".", ",");
 
 export default function EditorTramos({ duracion, tramos, onCambio, videoRef }) {
@@ -68,11 +68,11 @@ export default function EditorTramos({ duracion, tramos, onCambio, videoRef }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative h-4 rounded bg-black/15">
+      <div className="adm-pista alta">
         {tramos.map(([a, z], k) => (
           <div
             key={k}
-            className="absolute top-0 h-4 rounded bg-[#E10600]"
+            className="adm-relleno absolute top-0"
             style={{ left: `${(a / duracion) * 100}%`, width: `${((z - a) / duracion) * 100}%` }}
           />
         ))}
@@ -89,17 +89,17 @@ export default function EditorTramos({ duracion, tramos, onCambio, videoRef }) {
       {tramos.map(([a, z], k) => (
         <div
           key={k}
-          className={`flex items-center gap-2 rounded border p-2 ${k === i ? "border-[#E10600] bg-white" : "border-black/20"}`}
+          className={`adm-opcion flex items-center gap-2 p-2 ${k === i ? "on" : ""}`}
         >
-          <button className="flex-1 text-left" onClick={() => setSel({ ...sel, i: k })}>
+          <button className="flex-1 px-2 text-left font-semibold" onClick={() => setSel({ ...sel, i: k })}>
             Tramo {k + 1}: {fmt(a)} – {fmt(z)} s
           </button>
-          <button aria-label="Reproducir tramo" className="px-2 py-2 text-xl" onClick={() => reproducir(a, z)}>
+          <button aria-label="Reproducir tramo" className="adm-icono" onClick={() => reproducir(a, z)}>
             ▶
           </button>
           <button
             aria-label="Borrar tramo"
-            className="px-2 py-2 text-xl"
+            className="adm-icono peligro"
             onClick={() => aplicar(tramos.filter((_, j) => j !== k))}
           >
             🗑
@@ -114,7 +114,7 @@ export default function EditorTramos({ duracion, tramos, onCambio, videoRef }) {
               <button
                 key={e}
                 onClick={() => setSel({ ...sel, i, extremo: e })}
-                className={`rounded border-2 p-2 ${sel.extremo === e ? "border-[#E10600] font-bold" : "border-black/20"}`}
+                className={`adm-opcion p-2 text-center ${sel.extremo === e ? "on font-bold" : ""}`}
               >
                 Ajustar {e}
               </button>
@@ -133,9 +133,9 @@ export default function EditorTramos({ duracion, tramos, onCambio, videoRef }) {
 
       <p className="font-semibold">Contexto: {fmt(totalContexto(tramos))} s</p>
       {avisoLargo(tramos) && (
-        <p className="rounded bg-yellow-200 p-2">Más de 25 s: más riesgo de reclamo por contenido reutilizado</p>
+        <p className="adm-aviso">Más de 25 s: más riesgo de reclamo por contenido reutilizado</p>
       )}
-      {error && <p className="text-[#E10600]">{error}</p>}
+      {error && <p className="adm-error">{error}</p>}
     </div>
   );
 }

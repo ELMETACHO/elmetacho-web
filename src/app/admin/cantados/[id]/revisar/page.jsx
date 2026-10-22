@@ -11,12 +11,12 @@ export default async function PaginaRevisar({ params }) {
   const t = ahora();
   const { dentro, pedido: p, error } = await pedidoDeSesion(id, t);   // verifica la sesión antes de leer Redis
   if (!dentro) return null;
-  if (error) return <p className="text-[#E10600]">{error}</p>;
+  if (error) return <p className="adm-error">{error}</p>;
   if (!p?.propuesta)
     return (
-      <div className="flex flex-col gap-4 pt-10 text-center">
+      <div className="adm-tarjeta mt-10 flex flex-col items-center gap-4 p-6 text-center">
         <p>Este pedido no tiene comentarios para revisar.</p>
-        <a href="/admin" className="inline-flex min-h-[44px] items-center justify-center underline">Volver a la lista</a>
+        <a href="/admin" className="adm-btn secundario">Volver a la lista</a>
       </div>
     );
   const aviso = p.estado === "aprobado" ? "Ya está aprobado: se edita en la franja de las 2 p. m." : noEditable(p, t);

@@ -46,32 +46,34 @@ export default function SubirPantallazos({ id, nombre, motivo, remix = false }) 
 
   if (listo)
     return (
-      <div className="flex flex-col gap-4 pt-10 text-center">
-        <p className="text-xl font-bold">
+      <div className="adm-tarjeta mt-10 flex flex-col items-center gap-4 p-6 text-center">
+        <p className="text-xl font-bold text-[var(--verde)]">
           {remix ? "Listo: el remix sale a las 2 p. m. con estos pantallazos." : "Listo: sale a las 2 p. m. como pedido con pantallazos."}
         </p>
-        <a href="/admin" className="underline">Volver a la lista</a>
+        <a href="/admin" className="adm-btn secundario">Volver a la lista</a>
       </div>
     );
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Pantallazos</h1>
-        <a href="/admin" className="text-sm underline">Volver</a>
+        <h1 className="adm-titulo">Pantallazos</h1>
+        <a href="/admin" className="adm-btn secundario chico">Volver</a>
       </div>
-      <p className="rounded bg-yellow-200 p-2 text-sm">
+      <p className="adm-aviso">
         {nombre}: {motivo || "TikTok no dejó leer los comentarios"}.{" "}
         {remix
           ? "Sube pantallazos de los comentarios que salen en tu video publicado, en el mismo orden en que aparecen en el video. El PC los usa para armar el remix y luego los reordena."
           : "Sube los pantallazos en el orden que quieres; el video, el bucle y el gancho ya los tiene el PC."}
       </p>
-      {error && <p className="rounded bg-red-100 p-2 text-[#E10600]">{error}</p>}
-      <input type="file" accept="image/*" multiple onChange={elegir} />
+      {error && <p className="adm-error">{error}</p>}
+      <div className="adm-tarjeta">
+        <input type="file" accept="image/*" multiple onChange={elegir} />
+      </div>
       {Object.entries(trabajos).map(([k, t]) => (
         <Barra key={k} t={t} />
       ))}
       <ListaPantallazos pants={pants} onMover={moverPant} onQuitar={quitarPant} />
-      <button className="rounded bg-[#E10600] p-4 text-lg font-bold text-white disabled:opacity-40"
+      <button className="adm-btn primario grande"
         disabled={subiendo || enviando || pants.length === 0} onClick={enviar}>
         {enviando ? "Enviando…" : subiendo ? "Subiendo…" : "Enviar pantallazos"}
       </button>

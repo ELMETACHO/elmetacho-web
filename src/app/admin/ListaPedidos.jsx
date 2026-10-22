@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { EN_EL_PC } from "./lib/pedido.js";
+import { EN_EL_PC, tonoEstado } from "./lib/pedido.js";
 
 const ETIQUETA = {
   subiendo: () => "Sin enviar",
@@ -38,36 +38,37 @@ export default function ListaPedidos({ pedidos, error }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Cantados</h1>
-        <button onClick={salir} className="min-h-[44px] min-w-[44px] px-3 text-sm underline">Salir</button>
+        <h1 className="adm-titulo">Cantados</h1>
+        <button onClick={salir} className="adm-btn secundario chico">Salir</button>
       </div>
-      <a href="/admin/cantados/nuevo" className="rounded bg-[#E10600] p-4 text-center text-lg font-bold text-white">
+      <a href="/admin/cantados/nuevo" className="adm-btn primario grande">
         Nuevo video
       </a>
-      {error && <p className="text-[#E10600]">{error}</p>}
-      {msg && <p className="text-[#E10600]">{msg}</p>}
-      {!error && pedidos.length === 0 && <p className="text-black/60">No hay pedidos.</p>}
-      <ul className="flex flex-col gap-2">
+      {error && <p className="adm-error">{error}</p>}
+      {msg && <p className="adm-error">{msg}</p>}
+      {!error && pedidos.length === 0 && <p className="adm-sub text-center">No hay pedidos.</p>}
+      <ul className="flex flex-col gap-3">
         {pedidos.map((p) => (
-          <li key={p.id} className="flex items-center justify-between gap-2 rounded border border-black/20 bg-white p-3">
+          <li key={p.id} className="adm-tarjeta flex flex-col gap-3">
             <div className="min-w-0">
               <p className="truncate font-semibold">{p.nombre}</p>
-              <p className="text-xs text-black/60">{fecha(p.creado)}</p>
-              <p className="text-sm text-black/70">{(ETIQUETA[p.estado] || (() => p.estado))(p)}</p>
+              {/* El servidor y el navegador escriben "a. m." con espacios distintos: no es un error real. */}
+              <p className="adm-sub text-xs" suppressHydrationWarning>{fecha(p.creado)}</p>
+              <p className={`adm-etq mt-2 ${tonoEstado(p)}`}>{(ETIQUETA[p.estado] || (() => p.estado))(p)}</p>
             </div>
-            <div className="flex shrink-0 flex-col gap-2">
+            <div className="flex flex-wrap gap-2 empty:hidden">
               {p.estado === "en_revision" && (
-                <a href={`/admin/cantados/${p.id}/revisar`} className="min-h-[44px] rounded bg-[#E10600] px-3 py-2 text-center font-bold text-white">
+                <a href={`/admin/cantados/${p.id}/revisar`} className="adm-btn primario flex-1">
                   Revisar
                 </a>
               )}
               {p.estado === "necesita_pantallazos" && !p.listos && (
-                <a href={`/admin/cantados/${p.id}/pantallazos`} className="min-h-[44px] rounded bg-[#E10600] px-3 py-2 text-center font-bold text-white">
+                <a href={`/admin/cantados/${p.id}/pantallazos`} className="adm-btn primario flex-1">
                   Subir pantallazos
                 </a>
               )}
               {!EN_EL_PC.includes(p.estado) && (
-                <button onClick={() => cancelar(p.id)} className="min-h-[44px] rounded border border-[#E10600] px-3 py-2 text-[#E10600]">
+                <button onClick={() => cancelar(p.id)} className="adm-btn peligro">
                   Cancelar
                 </button>
               )}
