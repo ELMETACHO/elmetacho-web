@@ -9,7 +9,7 @@ function montar() {
   const almacen = almacenMemoria(), borrados = [], avisos = [], tamanos = new Map();
   const api = crearApi({
     almacen, env: { ADMIN_CLAVE: "secreta", ADMIN_PC_TOKEN: "pc-tok" }, ahora: () => T, azar: () => "ab12",
-    blob: { tamano: async (p) => tamanos.get(p) ?? null, borrar: async (ps) => void borrados.push(...ps), enlace: async (p) => `https://firmado/${p}` },
+    blob: { tamano: async (p) => tamanos.get(p) ?? null, borrarPrefijo: async (pre) => void borrados.push(pre), enlace: async (p) => `https://firmado/${p}` },
     avisar: async (t) => void avisos.push(t),
   });
   return { api, almacen, borrados, avisos, tamanos };
@@ -74,7 +74,7 @@ test("bajado: en_pc y borra los blobs; cancelar en_pc = 409; entregado borra el 
     original: { pathname: base + "original.mp4", tamano: 5 }, gancho: { pathname: base + "g.mov", tamano: 5 }, pantallazos: [{ pathname: base + "p01.jpg", tamano: 5 }] });
   assert.equal((await api.pcBajado(pc(), id)).status, 200);
   assert.equal((await almacen.leer(id)).estado, "en_pc");
-  assert.deepEqual(borrados.sort(), [base + "g.mov", base + "original.mp4", base + "p01.jpg"]);
+  assert.deepEqual(borrados, [base]);
   assert.equal((await api.cancelar(conSesion(null, "DELETE"), id)).status, 409);
   assert.equal((await api.pcEntregado(pc(), id)).status, 200);
   assert.equal(await almacen.leer(id), null);
@@ -85,7 +85,7 @@ test("pcPedidos borra borradores de más de 48 h con sus archivos", async () => 
   await almacen.guardar({ id: "viejo", creado: new Date(T - 50 * 3600e3).toISOString(), estado: "subiendo", pantallazos: [], original: { pathname: "cantados/viejo/original.mp4", tamano: 1 }, gancho: null });
   await api.pcPedidos(pc());
   assert.equal(await almacen.leer("viejo"), null);
-  assert.deepEqual(borrados, ["cantados/viejo/original.mp4"]);
+  assert.deepEqual(borrados, ["cantados/viejo/"]);
 });
 test("autorizarSubida: solo con sesión, en su carpeta y con el pedido en subiendo", async () => {
   const { api } = montar();
@@ -101,4 +101,23 @@ test("fallido guarda el motivo", async () => {
   const r = await api.pcFallido(new Request("https://x", { method: "POST", headers: { authorization: "Bearer pc-tok" }, body: JSON.stringify({ motivo: "sin comentarios" }) }), "c");
   assert.equal(r.status, 200);
   assert.deepEqual([(await almacen.leer("c")).estado, (await almacen.leer("c")).motivo], ["fallido", "sin comentarios"]);
+});
+test("cancelar borra todo el prefijo del pedido (también un gancho huérfano reemplazado)", async () => {
+  const { api, almacen, borrados } = montar();
+  const id = "c_20261021_ab12", base = `cantados/${id}/`;
+  await almacen.guardar({ id, creado: new Date(T).toISOString(), estado: "subiendo", pantallazos: [], original: null,
+    gancho: { pathname: base + "gancho.mov", tamano: 5 } });
+  assert.equal((await api.cancelar(conSesion(null, "DELETE"), id)).status, 200);
+  assert.deepEqual(borrados, [base]);
+  assert.equal(await almacen.leer(id), null);
+});
+test("entregado sobre un pedido existente borra su prefijo antes del registro; sobre uno inexistente no borra blobs", async () => {
+  const { api, almacen, borrados } = montar();
+  const id = "c_20261021_cd34", base = `cantados/${id}/`;
+  await almacen.guardar({ id, creado: new Date(T).toISOString(), estado: "listo", pantallazos: [], original: { pathname: base + "original.mp4", tamano: 5 }, gancho: null });
+  assert.equal((await api.pcEntregado(pc(), id)).status, 200);
+  assert.deepEqual(borrados, [base]);
+  assert.equal(await almacen.leer(id), null);
+  assert.equal((await api.pcEntregado(pc(), "no_existe")).status, 200);
+  assert.deepEqual(borrados, [base]);
 });

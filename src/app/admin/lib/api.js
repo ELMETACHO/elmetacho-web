@@ -1,7 +1,7 @@
 // Lógica de las API de /admin con dependencias inyectadas (las rutas pasan Redis, Blob y Telegram reales). Spec admin §6.
 import { COOKIE, claveCorrecta, cookieBorrada, cookieSesion, firmarSesion, leerCookie, sesionValida, tokenPcValido } from "./sesion.js";
 import { estaBloqueado, limpiarIntentos, registrarFallo } from "./intentos.js";
-import { aplicarCambios, archivos, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo } from "./pedido.js";
+import { aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo } from "./pedido.js";
 
 const json = (d, status = 200, headers = {}) => Response.json(d, { status, headers });
 const NO = () => json({ error: "No autorizado." }, 401);
@@ -60,7 +60,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       const p = await almacen.leer(id);
       if (!p) return json({ ok: true });
       if (p.estado === "en_pc") return json({ error: "El PC lo está haciendo; ya no se puede cancelar." }, 409);
-      await blob.borrar(archivos(p));
+      await blob.borrarPrefijo(prefijo(p.id));
       await almacen.borrar(id);
       return json({ ok: true });
     }),
@@ -71,7 +71,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
     },
     pcPedidos: delPc(async () => {
       const todos = await almacen.listar();
-      for (const p of todos.filter((x) => borradorVencido(x, ahora()))) { await blob.borrar(archivos(p)); await almacen.borrar(p.id); }
+      for (const p of todos.filter((x) => borradorVencido(x, ahora()))) { await blob.borrarPrefijo(prefijo(p.id)); await almacen.borrar(p.id); }
       const firmar = async (a) => ({ ...a, url: await blob.enlace(a.pathname) });
       const listos = todos.filter((p) => p.estado === "listo");
       return json(await Promise.all(listos.map(async (p) => ({
@@ -82,7 +82,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
     pcBajado: delPc(async (req, id) => {
       const p = await almacen.leer(id);
       if (!p) return json({ error: "Ese pedido no existe." }, 404);
-      await blob.borrar(archivos(p));
+      await blob.borrarPrefijo(prefijo(p.id));
       await almacen.guardar({ ...p, estado: "en_pc", original: null, gancho: null, pantallazos: [] });
       return json({ ok: true });
     }),
@@ -93,6 +93,11 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       await almacen.guardar({ ...p, estado: "fallido", motivo: String(motivo || "sin detalle").slice(0, 300) });
       return json({ ok: true });
     }),
-    pcEntregado: delPc(async (req, id) => { await almacen.borrar(id); return json({ ok: true }); }),
+    pcEntregado: delPc(async (req, id) => {
+      const p = await almacen.leer(id);
+      if (p) await blob.borrarPrefijo(prefijo(p.id));
+      await almacen.borrar(id);
+      return json({ ok: true });
+    }),
   };
 }

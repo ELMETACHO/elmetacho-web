@@ -1,13 +1,21 @@
 // Dependencias reales de las API de /admin: Redis de la cuenta, Vercel Blob privado y el bot central de Telegram.
 import { randomBytes } from "node:crypto";
-import { del, head, issueSignedToken, presignUrl } from "@vercel/blob";
+import { del, head, issueSignedToken, list, presignUrl } from "@vercel/blob";
 import { urlRedisDirecta } from "../../api/lead/config.js";
 import { almacenRedis } from "./almacen.js";
 import { crearApi } from "./api.js";
 
 const blob = {
   tamano: async (pathname) => { try { return (await head(pathname)).size; } catch { return null; } },
-  borrar: async (pathnames) => { if (pathnames.length) await del(pathnames); },
+  // Borra TODO lo que haya bajo el prefijo (incluye subidas reemplazadas o nunca registradas).
+  borrarPrefijo: async (prefix) => {
+    let cursor;
+    do {
+      const r = await list({ prefix, cursor });
+      if (r.blobs.length) await del(r.blobs.map((b) => b.url));
+      cursor = r.hasMore ? r.cursor : undefined;
+    } while (cursor);
+  },
   enlace: async (pathname) => {
     const token = await issueSignedToken({ pathname, operations: ["get"], validUntil: Date.now() + 3600e3 });
     return (await presignUrl(token, { operation: "get", pathname, access: "private" })).presignedUrl;
