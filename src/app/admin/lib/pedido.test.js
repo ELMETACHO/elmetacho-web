@@ -45,3 +45,27 @@ test("borrador de más de 48 h vence; uno listo nunca", () => {
   assert.equal(borradorVencido({ ...P(), estado: "listo" }, t + 99 * 3600e3), false);
   assert.equal(prefijo("x"), "cantados/x/");
 });
+
+test("rechaza rutas que no son la ranura exacta del pedido", () => {
+  const ruta = (x) => aplicarCambios(P(), { original: { pathname: x, tamano: 1 } }).errores[0];
+  assert.match(ruta("cantados/c_20261021_ab12/"), /archivo/);
+  assert.match(ruta("cantados/c_20261021_ab12/%2e%2e/x"), /archivo/);
+  assert.match(ruta("cantados/c_20261021_ab12/sub/original.mp4"), /archivo/);
+  assert.match(ruta("cantados/c_20261021_ab12/original\..mp4"), /archivo/);
+  assert.match(aplicarCambios(P(), { gancho: { pathname: "cantados/c_20261021_ab12/p01.jpg", tamano: 1 } }).errores[0], /archivo/);
+  assert.match(aplicarCambios(P(), { pantallazos: [{ pathname: "cantados/c_20261021_ab12/gancho.mov", tamano: 1 }] }).errores[0], /archivo/);
+});
+
+test("rechaza tamaños y medidas negativas o no finitas", () => {
+  assert.match(aplicarCambios(P(), { original: arch("original.mp4", { tamano: -5 }) }).errores[0], /archivo/);
+  assert.match(aplicarCambios(P(), { original: arch("original.mp4", { tamano: 1.5 }) }).errores[0], /archivo/);
+  assert.match(aplicarCambios(P(), { original: arch("original.mp4", { tamano: NaN }) }).errores[0], /archivo/);
+  assert.match(aplicarCambios(P(), { original: arch("original.mp4", { duracion: -1 }) }).errores[0], /archivo/);
+  assert.match(aplicarCambios(P(), { gancho: arch("gancho.mov", { ancho: Infinity }) }).errores[0], /archivo/);
+});
+
+test("datos nulos o que no son objeto devuelven error sin lanzar", () => {
+  assert.deepEqual(aplicarCambios(P(), null), { pedido: P(), errores: ["Datos inválidos."] });
+  assert.deepEqual(aplicarCambios(P(), "x").errores, ["Datos inválidos."]);
+  assert.deepEqual(aplicarCambios(P(), []).errores, ["Datos inválidos."]);
+});
