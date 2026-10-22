@@ -14,6 +14,8 @@ test("cambiar la clave invalida la sesión; alterar la firma también", () => {
   assert.equal(sesionValida(v.slice(0, -2) + "xx", "clave-1", T0), false);
   assert.equal(sesionValida("basura", "clave-1", T0), false);
   assert.equal(sesionValida(v, "", T0), false);
+  assert.equal(sesionValida(v, "clave-1", undefined), false);   // falla cerrado
+  assert.equal(sesionValida(v, "clave-1", NaN), false);
 });
 test("compara la clave sin importar el largo", () => {
   assert.equal(claveCorrecta("abc", "abc"), true);

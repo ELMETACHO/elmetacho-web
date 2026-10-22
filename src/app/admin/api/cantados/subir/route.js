@@ -3,15 +3,14 @@ import { handleUpload } from "@vercel/blob/client";
 import { conApi } from "../../../lib/deps.js";
 export const runtime = "nodejs";
 export const POST = conApi(async (api, req) => {
-  const body = await req.json();
   try {
+    const body = await req.json();
     const r = await handleUpload({
       body, request: req,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         await api.autorizarSubida(req, pathname, clientPayload);
         return { allowedContentTypes: ["video/*", "image/*"], maximumSizeInBytes: 2 * 1024 ** 3, addRandomSuffix: false, allowOverwrite: true };
       },
-      onUploadCompleted: async () => {},
     });
     return Response.json(r);
   } catch (e) {

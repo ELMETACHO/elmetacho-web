@@ -19,7 +19,7 @@ export function firmarSesion(clave, ahoraMs) {
 export function sesionValida(valor, clave, ahoraMs) {
   if (!clave || typeof valor !== "string") return false;
   const [vence, firma] = valor.split(".");
-  if (!/^\d+$/.test(vence || "") || !firma || Number(vence) < ahoraMs) return false;
+  if (!/^\d+$/.test(vence || "") || !firma || !(Number(vence) >= ahoraMs)) return false;  // falla cerrado si ahoraMs no es número
   return iguales(firma, createHmac("sha256", llave(clave)).update(vence).digest("base64url"));
 }
 export function leerCookie(cabecera, nombre) {

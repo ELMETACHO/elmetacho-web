@@ -5,7 +5,7 @@ Página privada de elmetacho.com para pedir videos de "comentarios cantados" des
 ## Qué es y el flujo
 
 1. **Celular → web.** Oscar entra a `/admin`, sube el video original, marca los bucles, sube su gancho y los pantallazos, y envía el pedido. Los archivos van directo del navegador a Vercel Blob (privado); los datos del pedido quedan en Redis.
-2. **PC a las 2 p. m.** La tarea programada "cantados-pasada" pregunta a la web por los pedidos `listo`, baja los archivos con enlaces firmados (1 h), verifica el tamaño de cada uno y marca `bajado`. Ahí la web **borra los blobs**.
+2. **PC a las 2 p. m.** La tarea programada "cantados-pasada" pregunta a la web por los pedidos `listo`, baja los archivos con enlaces firmados (12 h), verifica el tamaño de cada uno y marca `bajado`. Ahí la web **borra los blobs**.
 3. **Producción y entrega.** El PC produce (sistema `PREMIERE-CLAUDE/cantados`) y entrega los dos cortes por Telegram. Al entregar, el PC llama `DELETE` y la web **borra el registro** de Redis.
 4. **Nada queda en la nube.** Todo lo que haya bajo `cantados/<id>/` en Blob se borra **por prefijo** (se lista el prefijo y se borra cada blob, así caen también las subidas reemplazadas o nunca registradas, p. ej. un `gancho.mp4` cambiado por un `gancho.mov`) en cuatro momentos: al bajar el PC, al cancelar, en la purga de borradores de más de 48 h y al entregar. El registro de Redis se borra al entregar o cancelar. **La purga de 48 h solo corre cuando el PC consulta la lista**: si la tarea del PC está pausada, los borradores esperan hasta la siguiente consulta.
 
@@ -43,7 +43,7 @@ Vercel → proyecto → **Storage** → **Create** → **Blob** → acceso **Pri
 
 ## Cambiar la clave
 
-Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la cookie queda inválida). Cinco intentos fallidos desde una misma IP bloquean 15 min **contados desde el primer fallo** (ventana fija, contador en Redis); mientras esté bloqueada, el login responde 429. Para el PC: cambia `ADMIN_PC_TOKEN` en Vercel y en `PREMIERE-CLAUDE/.env`.
+Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la cookie queda inválida). Cinco intentos fallidos desde una misma IP bloquean 15 min (contador en Redis; INCR y EXPIRE van juntos en una transacción MULTI, así la clave nunca queda sin vencimiento; el plazo se renueva con cada fallo); mientras esté bloqueada, el login responde 429. Para el PC: cambia `ADMIN_PC_TOKEN` en Vercel y en `PREMIERE-CLAUDE/.env`.
 
 ## API
 
@@ -58,7 +58,7 @@ Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la c
 | `POST /admin/api/cantados/subir` | Sesión | `handleUpload` de Blob (tipos video/imagen); sin sesión responde 400 con el mensaje, no 401 |
 | `GET /admin/api/pc/pedidos` | Solo PC | Pedidos `listo` con enlaces firmados; limpia borradores > 48 h |
 | `POST /admin/api/pc/pedidos/<id>/bajado` | Solo PC | Pasa a `en_pc` y borra sus blobs |
-| `POST /admin/api/pc/pedidos/<id>/fallido` | Solo PC | `fallido` + motivo |
+| `POST /admin/api/pc/pedidos/<id>/fallido` | Solo PC | `fallido` + motivo; **borra todos los archivos del pedido** |
 | `DELETE /admin/api/pc/pedidos/<id>` | Solo PC | Entregado: borra el prefijo en Blob (por si quedó algo) y el registro |
 
 Sin sesión → 401 (salvo `subir`, que da 400; y el login, que puede dar 429 si está bloqueado). El token del PC no sirve en las rutas de sesión y la cookie no sirve en las del PC. No hay `proxy.js`: la sesión se verifica en `layout.jsx` y al inicio de cada API.
@@ -92,4 +92,8 @@ Verificado en los tipos instalados y con `build` (Task 6):
 - Cookie `admin_sesion`: httpOnly, Secure, SameSite=Lax, 30 días, firmada HMAC-SHA256; clave comparada en tiempo constante.
 - `/admin` lleva `noindex, nofollow`; no está en `sitemap.js` ni en `llms.txt`.
 - `Disallow: /admin` en `src/app/robots.js` va en un **PR aparte** (archivo compartido; lo aprueba Oscar).
-- Los blobs son privados; solo se leen con enlaces firmados de 1 h que entrega la API del PC.
+- Los blobs son privados; solo se leen con enlaces firmados de 12 h que entrega la API del PC.
+
+## Riesgos conocidos
+
+- **Pedido atascado en `en_pc`.** Si el PC nunca lo termina (ni lo marca entregado ni fallido), queda un registro en Redis sin archivos que no se puede cancelar desde la web (cancelar responde 409 en `en_pc`). Para limpiarlo: pídele a Claude que llame `DELETE /admin/api/pc/pedidos/<id>` con el token del PC (`ADMIN_PC_TOKEN`), o borra la clave `admin:cantados:<id>` en Redis (y quita el id del set `admin:cantados:ids`).

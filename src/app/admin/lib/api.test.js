@@ -121,3 +121,22 @@ test("entregado sobre un pedido existente borra su prefijo antes del registro; s
   assert.equal((await api.pcEntregado(pc(), "no_existe")).status, 200);
   assert.deepEqual(borrados, [base]);
 });
+test("fallido borra todos los blobs del pedido", async () => {
+  const { api, almacen, borrados } = montar();
+  await almacen.guardar({ id: "c_x", creado: new Date(T).toISOString(), estado: "en_pc" });
+  await api.pcFallido(new Request("https://x", { method: "POST", headers: { authorization: "Bearer pc-tok" }, body: JSON.stringify({ motivo: "m" }) }), "c_x");
+  assert.deepEqual(borrados, ["cantados/c_x/"]);
+});
+test("enviar re-verifica los tamaños reales de los blobs", async () => {
+  const { api, almacen, tamanos, avisos } = montar();
+  const id = "c_20261021_ab12", base = `cantados/${id}/`;
+  await almacen.guardar({ id, creado: new Date(T).toISOString(), estado: "subiendo", titulo: null, estilo: "Salsa", tramos: [[0, 4], [7, 13]],
+    original: { pathname: base + "original.mp4", tamano: 500, duracion: 28 }, gancho: { pathname: base + "gancho.mov", tamano: 300 }, pantallazos: [{ pathname: base + "p01.jpg", tamano: 10 }] });
+  tamanos.set(base + "original.mp4", 500); tamanos.set(base + "gancho.mov", 1); tamanos.set(base + "p01.jpg", 10);
+  assert.equal((await api.enviar(conSesion(), id)).status, 400);
+  assert.equal((await almacen.leer(id)).estado, "subiendo");
+  assert.equal(avisos.length, 0);
+  tamanos.set(base + "gancho.mov", 300);
+  assert.equal((await api.enviar(conSesion(), id)).status, 200);
+  assert.equal((await almacen.leer(id)).estado, "listo");
+});

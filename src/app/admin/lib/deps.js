@@ -17,15 +17,16 @@ const blob = {
     } while (cursor);
   },
   enlace: async (pathname) => {
-    const token = await issueSignedToken({ pathname, operations: ["get"], validUntil: Date.now() + 3600e3 });
-    return (await presignUrl(token, { operation: "get", pathname, access: "private" })).presignedUrl;
+    const validUntil = Date.now() + 12 * 3600e3;   // el PC puede tardar en bajar; 12 h
+    const token = await issueSignedToken({ pathname, operations: ["get"], validUntil });
+    return (await presignUrl(token, { operation: "get", pathname, access: "private", validUntil })).presignedUrl;
   },
 };
 async function avisar(texto) {
   const { TELEGRAM_BOT_TOKEN: t, TELEGRAM_CHAT_ID: chat } = process.env;
   if (!t || !chat) return;
   await fetch(`https://api.telegram.org/bot${t}/sendMessage`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text: texto.slice(0, 4000) }),
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text: texto.slice(0, 4000) }), signal: AbortSignal.timeout(10000),
   });
 }
 export function conApi(fn) {

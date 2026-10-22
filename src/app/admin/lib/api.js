@@ -52,6 +52,8 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       if (p.estado !== "subiendo") return json({ error: "Ya estaba enviado." }, 409);
       const e = erroresParaEnviar(p);
       if (e.length) return json({ error: e.join(" ") }, 400);
+      const malo = await verificarArchivos(p);
+      if (malo) return json({ error: malo }, 400);
       await almacen.guardar({ ...p, estado: "listo" });
       await avisar(`📥 Recibí: ${nombreVisible(p)} — sale a las 2 p. m.`).catch(() => {});
       return json({ ok: true });
@@ -90,6 +92,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       const p = await almacen.leer(id);
       if (!p) return json({ error: "Ese pedido no existe." }, 404);
       const { motivo } = await cuerpo(req);
+      await blob.borrarPrefijo(prefijo(p.id));
       await almacen.guardar({ ...p, estado: "fallido", motivo: String(motivo || "sin detalle").slice(0, 300) });
       return json({ ok: true });
     }),
