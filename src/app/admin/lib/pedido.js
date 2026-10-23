@@ -24,6 +24,7 @@ export const EN_EL_PC = ["en_pc", "en_revision", "aprobado"];   // el PC ya tien
 const LINK = /^https:\/\/(www\.|vm\.|vt\.)tiktok\.com\/\S+$/;
 const MAX_LINK = 300;
 export const tipoDe = (p) => p.tipo || "pantallazos";      // pedidos de la fase 1 no traen tipo
+export const esCabina = (p) => Boolean(p) && tipoDe(p) === "cabina";   // candidatos del sondeo (spec cabina §4)
 // Destino (spec stories 2026-10-22 §6): las stories de Facebook van en su propia sección. Sin campo = reel.
 export const DESTINOS = ["reel", "story"];
 // Oscar (2026-10-22): la story es una opción más de «Nuevo video» con la misma estructura de «con pantallazos».

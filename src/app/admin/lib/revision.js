@@ -34,10 +34,10 @@ export function validarPropuesta(lista) {
   return { comentarios, errores: [] };
 }
 
-export function publicarPropuesta(p, comentarios, ahoraMs) {
+export function publicarPropuesta(p, comentarios, ahoraMs, horas = HORAS_REVISION) {
   return {
     ...p, estado: "en_revision", automatico: false,
-    propuesta: { publicada: iso(ahoraMs), vence: iso(ahoraMs + HORAS_REVISION * 3600e3), version: (p.propuesta?.version || 0) + 1, comentarios },
+    propuesta: { publicada: iso(ahoraMs), vence: iso(ahoraMs + horas * 3600e3), version: (p.propuesta?.version || 0) + 1, comentarios },
     revision: { orden: comentarios.filter((c) => c.dentro).map((c) => c.id), fuera: comentarios.filter((c) => !c.dentro).map((c) => c.id),
                 lineas: {}, trae_mas: false, aprobada_en: null },
   };
