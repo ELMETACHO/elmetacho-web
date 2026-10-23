@@ -48,7 +48,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       const { tipo = "pantallazos", destino = "reel" } = await cuerpo(req);
       if (!TIPOS_DISPONIBLES.includes(tipo)) return json({ error: "Tipo de pedido no válido." }, 400);
       if (!DESTINOS.includes(destino)) return json({ error: "Destino no válido." }, 400);
-      if (destino === "story" && !TIPOS_STORY.includes(tipo)) return json({ error: "Una story solo puede ser con pantallazos o por link." }, 400);
+      if (destino === "story" && !TIPOS_STORY.includes(tipo)) return json({ error: "Una story solo puede ser con pantallazos." }, 400);
       const p = nuevoPedido(nuevoId(new Date(ahora()), azar()), new Date(ahora()).toISOString(), tipo, destino);
       await almacen.guardar(p);
       return json({ id: p.id });

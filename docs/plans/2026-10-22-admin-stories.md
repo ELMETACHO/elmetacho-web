@@ -2,6 +2,12 @@
 
 > **Para quien lo ejecute:** superpowers:executing-plans con TDD. Trabajar en una rama propia (worktree) y abrir un PR. **No fusionar sin el visto bueno de Oscar:** fusionar a `main` publica en elmetacho.com.
 
+> **Ajuste de Oscar (2026-10-22), reemplaza las pestañas y la sección aparte:** "Que en admin, en la lista seleccionable ahora aparezca "storie" y que copie la estructura "con pantallazos"". Quedó así:
+> - En «Nuevo video» hay una opción más, **«Story»**. Usa el mismo formulario que «Con pantallazos»: original, tramos, gancho, pantallazos y estilo. Por dentro es un pedido `tipo: "pantallazos"` con `destino: "story"` (`pedidoDeOpcion`).
+> - No hay pestañas, ni `/admin/stories`, ni story por link. En la lista, el pedido lleva la etiqueta «Story».
+> - La API rechaza `destino: "story"` con un tipo que no sea `pantallazos` (400). `GET /admin/api/pc/pedidos` devuelve `destino`, y el aviso a Telegram dice «📥 Recibí la story: …».
+> - La Tarea 2 de abajo (listas y pestañas) se hizo y se revirtió (commit 7e24472); no aplica.
+
 **Objetivo:** una sección «Stories» en `/admin`, con su lista y su botón «Nueva story», que use el mismo formulario y la misma API que los videos. Las stories quedan marcadas con `destino: "story"` y el PC las recibe así.
 
 **Arquitectura:** un campo `destino` (`"reel"` por defecto, o `"story"`) en el pedido de Redis. Se fija al crear el pedido y no se cambia. Las dos listas filtran por ese campo, y `GET /admin/api/pc/pedidos` lo devuelve. No hay almacén, API ni formulario nuevos: es el mismo `NuevoPedido`, con un `destino` como prop.

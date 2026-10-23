@@ -51,7 +51,10 @@ export default function ListaPedidos({ pedidos, error }) {
         {pedidos.map((p) => (
           <li key={p.id} className="adm-tarjeta flex flex-col gap-3">
             <div className="min-w-0">
-              <p className="truncate font-semibold">{p.nombre}</p>
+              <p className="truncate font-semibold">
+                {p.story && <span className="adm-etq camino mr-2">Story</span>}
+                {p.nombre}
+              </p>
               {/* El servidor y el navegador escriben "a. m." con espacios distintos: no es un error real. */}
               <p className="adm-sub text-xs" suppressHydrationWarning>{fecha(p.creado)}</p>
               <p className={`adm-etq mt-2 ${tonoEstado(p)}`}>{(ETIQUETA[p.estado] || (() => p.estado))(p)}</p>

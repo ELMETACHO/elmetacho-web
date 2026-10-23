@@ -11,6 +11,14 @@ Página privada de elmetacho.com para pedir videos de "comentarios cantados" des
 
 Telegram sigue de respaldo. Si un pedido de Telegram es igual a uno de la web (título y duración ±0,5 s) queda como repetido y no se hace.
 
+## Stories de Facebook (2026-10-22, spec `PREMIERE-CLAUDE\cantados\docs\2026-10-22-stories-design.md`)
+
+Prueba de una semana: 3 cantados al día que salen como **story de Facebook**, de videos virales distintos a los de los reels.
+
+1. **Nuevo video → Story.** Es el mismo formulario de «Con pantallazos»: original, tramos, gancho, pantallazos y estilo. El pedido se guarda como `tipo: "pantallazos"` con `destino: "story"`. Los pedidos sin `destino` son reels. La API no deja crear una story de otro tipo (400). Al enviar llega al bot «📥 Recibí la story: <nombre> — sale a las 2 p. m.».
+2. **Lista.** El pedido lleva la etiqueta «Story» junto al nombre. Todo lo demás (estados, cancelar) es igual.
+3. **PC.** `GET /admin/api/pc/pedidos` incluye `destino`. El PC lo hace igual que un pedido con pantallazos, pero **sin corto de YouTube**, y lo entrega por el bot como un solo video con el pie «📱 STORY de Facebook — no subir como reel».
+
 ## Pedidos por link (fase 2, spec `docs/superpowers/specs/2026-10-22-admin-fase2-design.md`)
 
 1. **Nuevo video → Por link.** Pega el link de TikTok (`https://www.tiktok.com/…`, `https://vm.tiktok.com/…` o `https://vt.tiktok.com/…`; otro no deja enviar), sube el video, marca los tramos y sube tu gancho. No lleva pantallazos.

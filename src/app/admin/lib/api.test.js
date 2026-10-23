@@ -515,11 +515,12 @@ test("necesita-pantallazos: también para un remix en el PC; repetido no avisa o
   assert.equal((await api.pcNecesitaPantallazos(pcCon({}), id)).status, 409);
 });
 
-test("crear una story: guarda destino; remix como story o destino raro → 400", async () => {
+test("crear una story: guarda destino; link o remix como story, o destino raro → 400", async () => {
   const { api, almacen } = montar();
   const { id } = await (await api.crear(conSesion({ tipo: "pantallazos", destino: "story" }))).json();
   assert.equal((await almacen.leer(id)).destino, "story");
   assert.equal((await api.crear(conSesion({ tipo: "remix", destino: "story" }))).status, 400);
+  assert.equal((await api.crear(conSesion({ tipo: "link", destino: "story" }))).status, 400);   // Oscar: story = con pantallazos
   for (const d of ["Story", "", 3, null]) assert.equal((await api.crear(conSesion({ tipo: "pantallazos", destino: d }))).status, 400, String(d));
   const reel = await (await api.crear(conSesion({ tipo: "remix" }))).json();
   assert.equal((await almacen.leer(reel.id)).destino, "reel");
