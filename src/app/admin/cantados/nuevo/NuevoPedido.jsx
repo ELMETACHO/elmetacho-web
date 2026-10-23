@@ -7,7 +7,7 @@ import { encolarPatch } from "../cola.js";
 import { subirArchivo, usePantallazos, useTrabajos } from "../subidas.js";
 import EditorTramos from "./EditorTramos.jsx";
 import { extSegura } from "../../lib/editor.js";
-import { ESTILOS, TIPOS_DISPONIBLES, linkValido } from "../../lib/pedido.js";
+import { ESTILOS, TIPOS_DISPONIBLES, TIPOS_STORY, linkValido } from "../../lib/pedido.js";
 
 const boton = "adm-btn primario grande";
 const OPCIONES = [
@@ -46,7 +46,10 @@ const Seccion = ({ titulo, children }) => (
   </section>
 );
 
-export default function NuevoPedido() {
+export default function NuevoPedido({ destino = "reel" }) {
+  const story = destino === "story";
+  const volver = story ? "/admin/stories" : "/admin";
+  const opciones = story ? OPCIONES.filter((o) => TIPOS_STORY.includes(o.tipo)) : OPCIONES;
   const router = useRouter();
   const [id, setId] = useState(null);
   const [tipo, setTipo] = useState(null);
@@ -89,7 +92,7 @@ export default function NuevoPedido() {
       const r = await fetch("/admin/api/cantados", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ tipo: t }),
+        body: JSON.stringify({ tipo: t, destino }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.id) throw new Error(d.error || "sin id");
@@ -237,7 +240,7 @@ export default function NuevoPedido() {
       if (!r.ok) throw new Error(d.error || "No se pudo enviar.");
       setListo(true);
       setTimeout(() => {
-        router.push("/admin");
+        router.push(volver);
       }, 1500);
     } catch (err) {
       setErrorGlobal(err.message);
@@ -264,13 +267,13 @@ export default function NuevoPedido() {
     return (
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="adm-titulo">Nuevo video</h1>
-          <a href="/admin" className="adm-btn secundario chico">
+          <h1 className="adm-titulo">{story ? "Nueva story" : "Nuevo video"}</h1>
+          <a href={volver} className="adm-btn secundario chico">
             Volver
           </a>
         </div>
         <p className="adm-sub">¿Qué vas a pedir?</p>
-        {OPCIONES.map((o) => (
+        {opciones.map((o) => (
           <button
             key={o.tipo}
             onClick={() => elegirTipo(o.tipo)}
@@ -287,8 +290,8 @@ export default function NuevoPedido() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="adm-titulo">{esRemix ? "Remix" : "Nuevo video"}</h1>
-        <a href="/admin" className="adm-btn secundario chico">
+        <h1 className="adm-titulo">{esRemix ? "Remix" : story ? "Nueva story" : "Nuevo video"}</h1>
+        <a href={volver} className="adm-btn secundario chico">
           Volver
         </a>
       </div>

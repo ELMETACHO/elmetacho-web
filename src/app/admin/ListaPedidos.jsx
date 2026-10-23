@@ -16,7 +16,8 @@ const fecha = (iso) =>
   new Date(iso)
     .toLocaleString("es-CO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Bogota" });
 
-export default function ListaPedidos({ pedidos, error }) {
+export default function ListaPedidos({ pedidos, error, destino = "reel" }) {
+  const story = destino === "story";
   const [msg, setMsg] = useState("");
 
   async function cancelar(id) {
@@ -38,15 +39,19 @@ export default function ListaPedidos({ pedidos, error }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="adm-titulo">Cantados</h1>
+        <h1 className="adm-titulo">{story ? "Stories" : "Cantados"}</h1>
         <button onClick={salir} className="adm-btn secundario chico">Salir</button>
       </div>
-      <a href="/admin/cantados/nuevo" className="adm-btn primario grande">
-        Nuevo video
+      <nav className="flex gap-2">
+        <a href="/admin" className={`adm-btn chico flex-1 ${story ? "secundario" : "primario"}`}>Videos</a>
+        <a href="/admin/stories" className={`adm-btn chico flex-1 ${story ? "primario" : "secundario"}`}>Stories</a>
+      </nav>
+      <a href={story ? "/admin/cantados/nuevo?destino=story" : "/admin/cantados/nuevo"} className="adm-btn primario grande">
+        {story ? "Nueva story" : "Nuevo video"}
       </a>
       {error && <p className="adm-error">{error}</p>}
       {msg && <p className="adm-error">{msg}</p>}
-      {!error && pedidos.length === 0 && <p className="adm-sub text-center">No hay pedidos.</p>}
+      {!error && pedidos.length === 0 && <p className="adm-sub text-center">{story ? "No hay stories." : "No hay pedidos."}</p>}
       <ul className="flex flex-col gap-3">
         {pedidos.map((p) => (
           <li key={p.id} className="adm-tarjeta flex flex-col gap-3">
