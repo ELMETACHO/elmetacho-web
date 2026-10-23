@@ -57,13 +57,25 @@ function archivoValido(id, a, patron) {
            nombre: typeof a.nombre === "string" ? a.nombre.slice(0, 120) : undefined };
 }
 
+const CAMPOS_CABINA = ["tramos", "destino", "gancho"];
+
 export function aplicarCambios(p, c) {
   if (!c || typeof c !== "object" || Array.isArray(c)) return { pedido: p, errores: ["Datos inválidos."] };
-  if (p.estado === "necesita_pantallazos") {
+  if (esCabina(p)) {
+    // Spec cabina §4: Oscar solo marca tramos, escoge destino y sube su gancho, y solo mientras está en revisión.
+    if (p.estado !== "en_revision") return { pedido: p, errores: ["Este candidato ya no está en la Cabina."] };
+    if (Object.keys(c).some((k) => !CAMPOS_CABINA.includes(k)))
+      return { pedido: p, errores: ["En la Cabina solo se cambian los tramos, el destino y el gancho."] };
+  } else if (p.estado === "necesita_pantallazos") {
     if (p.pantallazos_listos) return { pedido: p, errores: ["Ya enviaste los pantallazos."] };
     if (Object.keys(c).some((k) => k !== "pantallazos")) return { pedido: p, errores: ["En este pedido solo se pueden subir pantallazos."] };
   } else if (p.estado !== "subiendo") return { pedido: p, errores: ["Este pedido ya se envió; cancélalo y súbelo de nuevo."] };
   const out = { ...p }, errores = [];
+  if ("destino" in c) {
+    if (!esCabina(p)) errores.push("El destino se escoge al crear el pedido.");
+    else if (DESTINOS.includes(c.destino)) out.destino = c.destino;
+    else errores.push("Destino no válido.");
+  }
   if ("titulo" in c) out.titulo = typeof c.titulo === "string" && c.titulo.trim() ? c.titulo.trim().slice(0, 200) : null;
   if ("estilo" in c) ESTILOS.includes(c.estilo) ? (out.estilo = c.estilo) : errores.push("Estilo no válido.");
   for (const campo of ["original", "gancho", "publicado"]) {
@@ -91,7 +103,7 @@ export function aplicarCambios(p, c) {
     }
   }
   if ("tramos" in c) {
-    const r = validarTramos(c.tramos, out.original?.duracion);
+    const r = validarTramos(c.tramos, esCabina(p) ? p.vista_previa?.duracion : out.original?.duracion);
     r.errores.length ? errores.push(...r.errores) : (out.tramos = r.tramos);
   }
   return { pedido: errores.length ? p : out, errores };
@@ -117,12 +129,18 @@ export const nombreVisible = (p) => p.titulo || p.original?.nombre || p.id;
 const PRIORIDAD = { en_revision: 0, necesita_pantallazos: 1 };   // lo que espera a Oscar va arriba
 export const ordenarLista = (lista) => [...lista].sort((a, b) => (PRIORIDAD[a.estado] ?? 2) - (PRIORIDAD[b.estado] ?? 2));
 
-// ¿Puede el navegador subir este archivo? En subiendo, cualquiera de su carpeta; en necesita_pantallazos, solo pNN.
+// ¿Puede el navegador subir este archivo? En subiendo, cualquiera de su carpeta; en necesita_pantallazos, solo pNN;
+// en un candidato de la Cabina, solo su gancho y solo en revisión (la vista y los medios los sube el PC con su token).
 export function subidaPermitida(p, pathname) {
   if (!p || typeof pathname !== "string" || pathname.includes("..") || !pathname.startsWith(prefijo(p.id))) return false;
+  const resto = pathname.slice(prefijo(p.id).length);
+  if (esCabina(p)) return p.estado === "en_revision" && PATRON.gancho.test(resto);
   if (p.estado === "subiendo") return true;
-  return p.estado === "necesita_pantallazos" && !p.pantallazos_listos && PATRON.pantallazo.test(pathname.slice(prefijo(p.id).length));
+  return p.estado === "necesita_pantallazos" && !p.pantallazos_listos && PATRON.pantallazo.test(resto);
 }
+
+// Cancelar (o «Descartar» en la Cabina): no cuando el PC ya tiene el trabajo. Un candidato se descarta mientras espera a Oscar.
+export const sePuedeCancelar = (p) => (esCabina(p) ? ["subiendo", "en_revision"].includes(p.estado) : !EN_EL_PC.includes(p.estado));
 
 // Color de la etiqueta de estado en la lista: espera = te toca a ti; camino = el sistema lo está llevando.
 export function tonoEstado(p) {
