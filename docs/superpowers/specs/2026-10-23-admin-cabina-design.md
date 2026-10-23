@@ -27,7 +27,7 @@ Hoy la Cabina es una página local del PC (`herramientas/cabina.py`, puerto 8765
 6. **Sin revisar en 3 días → automático como story corta**: 30–40 s, solo los comentarios más likeados, los primeros **5 s vacíos** para el gancho, entrega con la nota «Pendiente: tu gancho».
 7. **Todo a las 2 p. m.:** el sondeo y la producción que hoy hace la tarea de las 2 a. m. («Metacho Cantados Noche») pasan a la franja; esa tarea se quita.
 8. **Sondeo:** unos **20 links por franja** (hoy pasan ~70 %: 28 de 40 el 2026-10-23), con su propio Chrome, en paralelo a Suno y los renders. Aviso por Telegram cuando en `PENDIENTES.txt` queden **menos de 40 links**.
-9. **Vercel Pro** (Oscar, 2026-10-23): sin bloqueo por cuota; las imágenes de los comentarios se suben una por una. Los ganchos se suben en **una sola pieza** si pesan menos de 500 MB (hoy, multipart desde 20 MB, y cada parte es una operación avanzada).
+9. **Vercel Pro** (Oscar, 2026-10-23): sin bloqueo por cuota; las imágenes de los comentarios se suben una por una y los ganchos siguen subiéndose como hoy (multipart desde 20 MB, que aguanta mejor una caída de señal).
 10. **Pantallazos más grandes al subirlos** (Nuevo video y Subir pantallazos): Oscar debe poder leer cada uno para ordenarlos; el nombre del archivo pasa a segundo plano.
 
 ## 3. Recorrido
