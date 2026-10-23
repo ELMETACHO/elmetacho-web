@@ -133,3 +133,164 @@ test("subida: 409 si ya no está subiendo; 404 si no existe o no es de la Cabina
   assert.equal((await m.api.pcCabinaSubida(pc({ pathname: "cantados/c_link/vista.mp4", tamano: 10 }), "c_link")).status, 404);
   assert.equal(m.tokens.length, 0);
 });
+
+async function publicado(m) {
+  const id = await subido(m);
+  const r = await m.api.pcCabinaPublicar(pc({}), id);
+  assert.equal(r.status, 200);
+  return id;
+}
+// Lo que Oscar deja con sesión (Task 6 lo prueba por la API): orden, línea, tramos, destino, gancho y aprobado.
+async function aprobadoAMano(m, id) {
+  const p = await m.almacen.leer(id);
+  await m.almacen.guardar({ ...p, estado: "aprobado", tramos: [[2, 9]], destino: "story",
+    gancho: { pathname: `cantados/${id}/gancho.mov`, tamano: 300, duracion: 4, ancho: 1080, alto: 1920, nombre: "g.mov" },
+    revision: { ...p.revision, orden: ["c2", "c3"], fuera: ["c1"], lineas: { c3: "otra cosa," }, aprobada_en: new Date(T).toISOString() } });
+}
+const lista = async (m) => {
+  const r = await m.api.pcCabinaLista(pc(undefined, "GET"));
+  assert.equal(r.status, 200);
+  return r.json();
+};
+
+test("publicar, lista, bajado y entregado exigen el token del PC", async () => {
+  const m = montar();
+  for (const f of ["pcCabinaPublicar", "pcCabinaLista", "pcCabinaBajado", "pcCabinaEntregado"]) {
+    assert.equal((await m.api[f](sesion({}), "c_x")).status, 401, f);
+    assert.equal((await m.api[f](pc({}, "POST", "malo"), "c_x")).status, 401, f);
+  }
+});
+
+test("publicar: sin todos los archivos = 409 con lo que falta; sigue subiendo y no avisa", async () => {
+  const m = montar();
+  const id = await crear(m);
+  await m.api.pcCabinaSubida(pc({ pathname: `cantados/${id}/vista.mp4`, tamano: 4_000_000 }), id);
+  m.tamanos.set(`cantados/${id}/vista.mp4`, 4_000_000);
+  m.tamanos.set(`cantados/${id}/m01.jpg`, 1000);   // existe en Blob pero nunca pidió token: no hay tamaño esperado
+  const r = await m.api.pcCabinaPublicar(pc({}), id);
+  assert.equal(r.status, 409);
+  assert.deepEqual((await r.json()).faltan, [`cantados/${id}/m01.jpg`, `cantados/${id}/m03.mp4`]);
+  assert.equal((await m.almacen.leer(id)).estado, "subiendo");
+  assert.equal(m.avisos.length, 0);
+});
+
+test("publicar: un archivo con otro tamaño del anunciado = 409", async () => {
+  const m = montar();
+  const id = await subido(m);
+  m.tamanos.set(`cantados/${id}/m03.mp4`, 1999);
+  assert.equal((await m.api.pcCabinaPublicar(pc({}), id)).status, 409);
+});
+
+test("publicar: en_revision, vence a las 72 h, sin aviso por Telegram; repetir = 200 igual", async () => {
+  const m = montar();
+  const id = await subido(m);
+  const r = await m.api.pcCabinaPublicar(pc({}), id);
+  assert.deepEqual(await r.json(), { ok: true, version: 1, vence: new Date(T + 72 * H).toISOString() });
+  const p = await m.almacen.leer(id);
+  assert.deepEqual([p.estado, p.revision.orden, p.revision.fuera, "comentarios_cabina" in p], ["en_revision", ["c1", "c2"], ["c3"], false]);
+  assert.equal(m.avisos.length, 0);
+  const otra = await m.api.pcCabinaPublicar(pc({}), id);
+  assert.deepEqual([otra.status, (await otra.json()).version, m.avisos.length], [200, 1, 0]);
+  assert.equal((await m.api.pcCabinaPublicar(pc({}), "no_existe")).status, 404);
+});
+
+test("lista: aprobados con la lista de Oscar y el gancho firmado; vivos = todos los candidatos y nada más", async () => {
+  const m = montar();
+  const a = await publicado(m), b = await publicado(m), s = await crear(m);
+  await aprobadoAMano(m, a);
+  await m.almacen.guardar({ id: "c_link", creado: new Date(T).toISOString(), tipo: "link", estado: "listo", pantallazos: [] });
+  const { decididos, vivos } = await lista(m);
+  assert.deepEqual([...vivos].sort(), [a, b, s].sort());
+  assert.deepEqual(decididos, [{
+    id: a, estado: "aprobado", link: "https://www.tiktok.com/@x/video/7", destino: "story", titulo: null, tramos: [[2, 9]],
+    orden: [{ id: "c2", linea: "uy no," }, { id: "c3", linea: "otra cosa," }], fuera: ["c1"],
+    gancho: { pathname: `cantados/${a}/gancho.mov`, tamano: 300, ancho: 1080, alto: 1920, duracion: 4, url: `https://firmado/cantados/${a}/gancho.mov` },
+  }]);
+});
+
+test("lista: a las 70 h (72 − 2 de holgura) sin revisar pasa a automatico con el orden propuesto; un instante antes no", async () => {
+  const reloj = { t: T };
+  const m = montar(reloj);
+  const id = await publicado(m);
+  reloj.t = T + 70 * H - 1;
+  assert.deepEqual((await lista(m)).decididos, []);
+  reloj.t = T + 70 * H;
+  assert.deepEqual((await lista(m)).decididos.map((d) => [d.id, d.estado, d.orden, d.fuera, d.gancho]),
+    [[id, "automatico", [{ id: "c1", linea: "jajaja," }, { id: "c2", linea: "uy no," }], ["c3"], null]]);
+  assert.equal((await m.almacen.leer(id)).estado, "automatico");
+});
+
+test("lista: purga lo no publicado en 24 h y lo que lleva 7 días en revisión, con su Blob, antes de vencer", async () => {
+  const reloj = { t: T };
+  const m = montar(reloj);
+  const sinPublicar = await crear(m);
+  const olvidado = await publicado(m);
+  reloj.t = T + 24 * H + 1000;
+  assert.deepEqual((await lista(m)).vivos, [olvidado]);
+  assert.equal(await m.almacen.leer(sinPublicar), null);
+  reloj.t = T + 7 * 24 * H + 1000;   // el PC no consultó en una semana: se purga, no sale como story
+  assert.deepEqual(await lista(m), { decididos: [], vivos: [] });
+  assert.equal(await m.almacen.leer(olvidado), null);
+  assert.deepEqual(m.borrados, [`cantados/${sinPublicar}/`, `cantados/${olvidado}/`]);
+});
+
+test("bajado: aprobado → en_pc, borra el Blob y deja los archivos en null; repetido = 200; sin decidir = 409", async () => {
+  const m = montar();
+  const id = await publicado(m);
+  assert.equal((await m.api.pcCabinaBajado(pc({}), id)).status, 409);
+  await aprobadoAMano(m, id);
+  assert.equal((await m.api.pcCabinaBajado(pc({}), id)).status, 200);
+  const p = await m.almacen.leer(id);
+  assert.deepEqual([p.estado, p.gancho, p.vista_previa, p.propuesta.comentarios.every((c) => c.medio === null)], ["en_pc", null, null, true]);
+  assert.deepEqual(m.borrados, [`cantados/${id}/`]);
+  assert.equal((await m.api.pcCabinaBajado(pc({}), id)).status, 200);
+  assert.equal(m.borrados.length, 1);
+  assert.equal((await m.api.pcCabinaBajado(pc({}), "no_existe")).status, 404);
+  assert.deepEqual(await lista(m), { decididos: [], vivos: [id] });
+});
+
+test("lista: vivos trae todos los candidatos que existen, en cualquier estado", async () => {
+  const m = montar();
+  const ids = [];
+  for (const estado of ["subiendo", "en_revision", "aprobado", "automatico", "en_pc", "fallido"]) {
+    const id = await publicado(m);
+    await m.almacen.guardar({ ...(await m.almacen.leer(id)), estado });
+    ids.push(id);
+  }
+  assert.deepEqual([...(await lista(m)).vivos].sort(), [...ids].sort());
+});
+
+test("bajado también para un automatico", async () => {
+  const reloj = { t: T };
+  const m = montar(reloj);
+  const id = await publicado(m);
+  reloj.t = T + 72 * H;
+  await lista(m);
+  assert.equal((await m.api.pcCabinaBajado(pc({}), id)).status, 200);
+  assert.equal((await m.almacen.leer(id)).estado, "en_pc");
+});
+
+test("entregado: borra registro y prefijo; inexistente = 200; un pedido que no es de la Cabina = 404 y se queda", async () => {
+  const m = montar();
+  const id = await publicado(m);
+  assert.equal((await m.api.pcCabinaEntregado(pc(undefined, "DELETE"), id)).status, 200);
+  assert.deepEqual([await m.almacen.leer(id), m.borrados], [null, [`cantados/${id}/`]]);
+  assert.equal((await m.api.pcCabinaEntregado(pc(undefined, "DELETE"), id)).status, 200);
+  await m.almacen.guardar({ id: "c_link", creado: new Date(T).toISOString(), tipo: "link", estado: "en_pc", pantallazos: [] });
+  assert.equal((await m.api.pcCabinaEntregado(pc(undefined, "DELETE"), "c_link")).status, 404);
+  assert.equal((await m.almacen.leer("c_link")).estado, "en_pc");
+  assert.equal(m.borrados.length, 1);
+});
+
+test("el flujo por link no ve la Cabina: pcAprobados no lista ni aprueba candidatos", async () => {
+  const reloj = { t: T };
+  const m = montar(reloj);
+  const a = await publicado(m), b = await publicado(m);
+  await aprobadoAMano(m, a);
+  reloj.t = T + 71 * H;   // ya vencido (70 h): sin el filtro, pcAprobados lo «aprobaría solo» como pedido por link
+  assert.deepEqual(await (await m.api.pcAprobados(pc(undefined, "GET"))).json(), []);
+  assert.deepEqual([(await m.almacen.leer(a)).estado, (await m.almacen.leer(b)).estado], ["aprobado", "en_revision"]);
+  reloj.t = T + 80 * H;
+  assert.deepEqual(await (await m.api.pcAprobados(pc(undefined, "GET"))).json(), []);
+  assert.equal((await m.almacen.leer(b)).estado, "en_revision");   // solo GET pc/cabina lo pasa a automatico
+});

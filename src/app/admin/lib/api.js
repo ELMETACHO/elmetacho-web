@@ -1,7 +1,7 @@
 // Lógica de las API de /admin con dependencias inyectadas (las rutas pasan Redis, Blob y Telegram reales). Spec admin §6.
 import { COOKIE, claveCorrecta, cookieBorrada, cookieSesion, firmarSesion, leerCookie, sesionValida, tokenPcValido } from "./sesion.js";
 import { estaBloqueado, limpiarIntentos, registrarFallo } from "./intentos.js";
-import { DESTINOS, EN_EL_PC, TIPOS_DISPONIBLES, TIPOS_STORY, destinoDe, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, subidaPermitida, tipoDe } from "./pedido.js";
+import { DESTINOS, EN_EL_PC, TIPOS_DISPONIBLES, TIPOS_STORY, destinoDe, esCabina, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, subidaPermitida, tipoDe } from "./pedido.js";
 import { aplicarRevision, aprobarRevision, aprobarVencido, listaFinal, masAtendido, noEditable, pedirMas, publicarPropuesta, puedePublicarPropuesta, validarPropuesta, vencida, yaPublicada } from "./revision.js";
 import { rutasCabina } from "./api-cabina.js";
 
@@ -36,7 +36,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
   }
 
   return {
-    ...rutasCabina({ almacen, blob, avisar, ahora, azar, json, cuerpo, conSesion, delPc }),
+    ...rutasCabina({ almacen, blob, ahora, azar, json, cuerpo, conSesion, delPc }),
     sesionDe,
     entrar: async (req) => {
       if (await estaBloqueado(almacen, ip(req))) return json({ error: "Demasiados intentos. Espera 15 minutos." }, 429);
@@ -167,7 +167,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       return json({ ok: true, version: nuevo.propuesta.version, vence: nuevo.propuesta.vence });
     }),
     pcAprobados: delPc(async () => {
-      const todos = await almacen.listar();
+      const todos = (await almacen.listar()).filter((p) => !esCabina(p));   // la Cabina tiene su ruta: GET /admin/api/pc/cabina
       for (const [k, p] of todos.entries()) {
         if (vencida(p, ahora())) {
           todos[k] = aprobarVencido(p, ahora());
