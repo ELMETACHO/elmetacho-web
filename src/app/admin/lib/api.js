@@ -3,6 +3,7 @@ import { COOKIE, claveCorrecta, cookieBorrada, cookieSesion, firmarSesion, leerC
 import { estaBloqueado, limpiarIntentos, registrarFallo } from "./intentos.js";
 import { DESTINOS, EN_EL_PC, TIPOS_DISPONIBLES, TIPOS_STORY, destinoDe, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, subidaPermitida, tipoDe } from "./pedido.js";
 import { aplicarRevision, aprobarRevision, aprobarVencido, listaFinal, masAtendido, noEditable, pedirMas, publicarPropuesta, puedePublicarPropuesta, validarPropuesta, vencida, yaPublicada } from "./revision.js";
+import { rutasCabina } from "./api-cabina.js";
 
 const json = (d, status = 200, headers = {}) => Response.json(d, { status, headers });
 const NO = () => json({ error: "No autorizado." }, 401);
@@ -35,6 +36,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
   }
 
   return {
+    ...rutasCabina({ almacen, blob, avisar, ahora, azar, json, cuerpo, conSesion, delPc }),
     sesionDe,
     entrar: async (req) => {
       if (await estaBloqueado(almacen, ip(req))) return json({ error: "Demasiados intentos. Espera 15 minutos." }, 429);
