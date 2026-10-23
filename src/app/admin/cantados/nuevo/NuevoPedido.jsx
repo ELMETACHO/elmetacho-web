@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Barra from "../Barra.jsx";
 import ListaPantallazos from "../ListaPantallazos.jsx";
 import { encolarPatch } from "../cola.js";
-import { subirArchivo, usePantallazos, useTrabajos } from "../subidas.js";
+import { leerMeta, subirArchivo, usePantallazos, useTrabajos } from "../subidas.js";
 import EditorTramos from "./EditorTramos.jsx";
 import { extSegura } from "../../lib/editor.js";
 import { ESTILOS, TIPOS_DISPONIBLES, linkValido, pedidoDeOpcion } from "../../lib/pedido.js";
@@ -28,18 +28,6 @@ const LISTO = {
   remix: "Listo: el remix sale a las 2 p. m., sin revisión.",
 };
 const LISTO_STORY = "Listo: la story sale a las 2 p. m. y te llega por Telegram.";
-
-// Lee duración y tamaño en píxeles de un video local.
-function leerMeta(url) {
-  return new Promise((ok, mal) => {
-    const v = document.createElement("video");
-    v.preload = "metadata";
-    v.muted = true;
-    v.onloadedmetadata = () => ok({ duracion: v.duration, ancho: v.videoWidth, alto: v.videoHeight });
-    v.onerror = () => mal(new Error("No pude leer ese video. Prueba con otro."));
-    v.src = url;
-  });
-}
 
 const Seccion = ({ titulo, children }) => (
   <section className="adm-tarjeta flex flex-col gap-3">
@@ -108,7 +96,7 @@ export default function NuevoPedido() {
   // PATCH en fila (el servidor lee y escribe el pedido completo: de a uno evita pisarse).
   const patch = (cuerpo) => encolarPatch(cola, `/admin/api/cantados/${idRef.current}`, cuerpo);
   const subir = (clave, file, nombre) => subirArchivo(idRef.current, clave, file, nombre, fijarTrabajo);
-  const { pants, elegir: elegirPants, moverPant, quitarPant } = usePantallazos({
+  const { pants, elegir: elegirPants, moverPant, moverPantA, quitarPant } = usePantallazos({
     listoParaElegir: () => Boolean(idRef.current),
     subir,
     patch,
@@ -358,7 +346,7 @@ export default function NuevoPedido() {
             .map(([k, t]) => (
               <Barra key={k} t={t} />
             ))}
-          <ListaPantallazos pants={pants} onMover={moverPant} onQuitar={quitarPant} />
+          <ListaPantallazos pants={pants} onMover={moverPant} onMoverA={moverPantA} onQuitar={quitarPant} />
         </Seccion>
       )}
 

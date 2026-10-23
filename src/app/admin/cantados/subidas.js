@@ -2,8 +2,21 @@
 // (compartido por «Nuevo video» y «Subir pantallazos»). El PATCH en fila vive en cola.js.
 import { useEffect, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
+import { moverA } from "../lib/arrastre.js";
 import { extSegura, mover } from "../lib/editor.js";
 import { MAX_PANTALLAZOS } from "../lib/pedido.js";
+
+// Lee duración y tamaño en píxeles de un video local (Nuevo video y gancho de la Cabina).
+export function leerMeta(url) {
+  return new Promise((ok, mal) => {
+    const v = document.createElement("video");
+    v.preload = "metadata";
+    v.muted = true;
+    v.onloadedmetadata = () => ok({ duracion: v.duration, ancho: v.videoWidth, alto: v.videoHeight });
+    v.onerror = () => mal(new Error("No pude leer ese video. Prueba con otro."));
+    v.src = url;
+  });
+}
 
 // Sube un archivo a Blob con barra de progreso. Si falla, queda "Reintentar" y espera el toque.
 export async function subirArchivo(id, clave, file, nombre, fijarTrabajo) {
@@ -95,11 +108,17 @@ export function usePantallazos({ listoParaElegir, subir, patch, conOcupado, alEr
     fijarPants(lista);
     guardar(lista);
   }
+  function moverPantA(de, a) {
+    const lista = moverA(pantsRef.current, de, a);
+    if (lista === pantsRef.current) return;
+    fijarPants(lista);
+    guardar(lista);
+  }
   function quitarPant(i) {
     URL.revokeObjectURL(pantsRef.current[i].url);
     const lista = pantsRef.current.filter((_, j) => j !== i);
     fijarPants(lista);
     guardar(lista);
   }
-  return { pants, elegir, moverPant, quitarPant };
+  return { pants, elegir, moverPant, moverPantA, quitarPant };
 }

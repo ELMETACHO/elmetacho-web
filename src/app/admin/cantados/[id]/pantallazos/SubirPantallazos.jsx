@@ -19,7 +19,7 @@ export default function SubirPantallazos({ id, nombre, motivo, remix = false }) 
     ultimo.current = p.then(() => ({ ok: true }), (e) => ({ ok: false, error: e }));
     return p;
   };
-  const { pants, elegir, moverPant, quitarPant } = usePantallazos({
+  const { pants, elegir, moverPant, moverPantA, quitarPant } = usePantallazos({
     listoParaElegir: () => true,
     subir: (clave, file, nombreArchivo) => subirArchivo(id, clave, file, nombreArchivo, fijarTrabajo),
     patch,
@@ -72,7 +72,7 @@ export default function SubirPantallazos({ id, nombre, motivo, remix = false }) 
       {Object.entries(trabajos).map(([k, t]) => (
         <Barra key={k} t={t} />
       ))}
-      <ListaPantallazos pants={pants} onMover={moverPant} onQuitar={quitarPant} />
+      <ListaPantallazos pants={pants} onMover={moverPant} onMoverA={moverPantA} onQuitar={quitarPant} />
       <button className="adm-btn primario grande"
         disabled={subiendo || enviando || pants.length === 0} onClick={enviar}>
         {enviando ? "Enviando…" : subiendo ? "Subiendo…" : "Enviar pantallazos"}
