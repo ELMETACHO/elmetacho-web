@@ -51,6 +51,27 @@ Reeditar un cantado ya publicado: los mismos comentarios en otro orden, otra can
 
 En Redis el remix solo agrega la ranura `publicado` (archivo `cantados/<id>/publicado.<ext>`, que se borra al bajar el PC, como los demás).
 
+## Cabina (2026-10-23, spec `docs/superpowers/specs/2026-10-23-admin-cabina-design.md`)
+
+Los candidatos que saca el sondeo del PC de los links de TikTok se revisan aquí, no en la Cabina local (`herramientas/cabina.py`, que queda de respaldo hasta la primera corrida real buena). **Oscar solo graba el gancho y, si quiere, cambia el orden; Claude hace el resto.**
+
+1. **Franja de las 2 p. m. (PC).** Por cada candidato: `POST /admin/api/pc/cabina` (texto: link, comentarios con likes, respuestas y si traen imagen/GIF, y las medidas de la vista previa) → `{id}`. Luego, **de a un archivo**, `POST …/<id>/subida` con `{pathname, tamano}` → `{token}` y sube con `put(pathname, archivo, {access: "private", token})` de `@vercel/blob/client`: la vista previa (`cantados/<id>/vista.mp4`, ≤ 50 MB; son los primeros 180 s del original a 480p) y cada medio (`cantados/<id>/mNN.<ext>`, NN = posición del comentario, ≤ 20 MB). Al final `POST …/<id>/publicar`: la web comprueba cada archivo contra el tamaño anunciado y lo pasa a `en_revision` con `vence` = publicada + **72 h** (se da por vencido 2 h antes, a las 70 h). La web **no avisa por candidato**: el PC manda un resumen por franja a Telegram («🎬 Cabina: N candidatos nuevos»).
+2. **Lista.** Arriba de los pedidos sale **«Cabina (N)»** con cada candidato en revisión (el que vence antes primero), sus comentarios y «sale solo en N días». Los pedidos normales no muestran candidatos.
+3. **Candidato (`/admin/cabina/<id>`).** Video de la vista previa (enlace firmado de 12 h que pide la página a `GET /admin/api/cabina/<id>/medios`) con el editor de **hasta 3 tramos**; comentarios con usuario, ♥ likes, ↩ respuestas, texto, imagen o GIF y la línea grande; ⠿ arrastrar, ↑↓, ✎ corregir, ✕ sacar, «Fuera» con ↩; subir **tu gancho** (barra y «Reintentar»; aviso si no es 1080p); destino **Reel | Story**. **Aprobar** se activa con gancho y al menos un tramo y espera el último guardado. **Descartar** pide confirmación y borra el candidato de Blob y Redis al instante.
+4. **Sin revisar en el plazo.** Se da por vencido a `vence − 2 h` (70 h; la misma holgura `HOLGURA_FRANJA_H` de los pedidos por link), así la franja de las 2 p. m. del **día 3** lo recoge. La consulta del PC (`GET /admin/api/pc/cabina`) lo pasa a `automatico` y lo recibe con el **orden propuesto** de los comentarios dentro (story corta, spec §6). Uno publicado después de las 4 p. m. del día 0 vence después de la franja del día 3 y sale en la del día 4.
+5. **Franja siguiente (PC).** `GET /admin/api/pc/cabina` → `{decididos, vivos}` (`vivos` = todos los candidatos que existen, en cualquier estado); baja el gancho firmado, `POST …/<id>/bajado` (la web borra el prefijo en Blob y deja `en_pc`) y, al entregar, `DELETE /admin/api/pc/cabina/<id>`. Los ids que el PC tenía y ya no están en `vivos` son descartados.
+6. **Purga** (en cada `GET /admin/api/pc/cabina`, **antes** de vencer): sin publicar a las 24 h y en revisión más de 7 días → se borran prefijo y registro (así, si el PC no consulta en una semana, no salen todos de golpe como stories).
+
+**Estados:** `subiendo` (el PC está subiendo; no se ve en la lista) → `en_revision` → `aprobado` (Oscar) | `automatico` (vencido a las 70 h) → `en_pc` (bajado) → borrado (entregado). Descartar = borrar (solo en `subiendo` o `en_revision`; decidido → 409).
+
+**Redis:** el candidato es un pedido con `tipo: "cabina"`, `origen: "sondeo"`, `destino`, `link`, `vista_previa: {pathname, tamano, duracion, ancho, alto}`, `propuesta` y `revision` como los pedidos por link (cada comentario con `likes`, `respuestas` y `medio: {pathname, tipo, tamano}`), `tramos` (contra la duración de la vista previa) y `gancho`. Mientras está `subiendo`, los comentarios viven en `comentarios_cabina`.
+
+**PATCH de un candidato** (`PATCH /admin/api/cantados/<id>`): solo `tramos`, `destino` y `gancho`, y solo en `en_revision` (vencido → 409). El orden y las líneas van por `PATCH …/revision` como en Revisar. La página guarda todo en **una sola fila** porque el servidor reescribe el registro entero. El gancho se sube como en los demás pedidos (multipart desde 20 MB).
+
+**El flujo por link no ve la Cabina:** `GET /admin/api/pc/aprobados` no lista ni aprueba candidatos.
+
+**Arrastre (Cabina, Revisar y pantallazos).** Con eventos de puntero desde el asa ⠿ (sirve con el dedo), raya verde donde cae y desplazamiento solo cerca de los bordes; se guarda igual que con las flechas. **Pantallazos** (Nuevo video y Subir pantallazos): cada uno a lo ancho, hasta 60 % del alto de la pantalla, número grande y nombre pequeño.
+
 ## Cómo se usa desde el celular
 
 1. Abre `elmetacho.com/admin` (o la vista previa del PR), escribe la clave y entra. La sesión dura 30 días.
@@ -94,7 +115,7 @@ Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la c
 | `POST /admin/api/cantados` | Sesión | Crea pedido `subiendo`; cuerpo `{tipo}`: `pantallazos` (por defecto), `link` o `remix` |
 | `PATCH /admin/api/cantados/<id>` | Sesión | Guarda link, tramos, título, estilo, pantallazos, archivos subidos (`original`, `gancho` y, solo en remix, `publicado`) (en `necesita_pantallazos` solo acepta pantallazos) |
 | `POST /admin/api/cantados/<id>/enviar` | Sesión | Valida, pasa a `listo`, avisa a Telegram; en `necesita_pantallazos` marca `pantallazos_listos` y avisa |
-| `DELETE /admin/api/cantados/<id>` | Sesión | Cancela: borra el prefijo en Blob y el registro (no en `en_pc`, `en_revision` ni `aprobado`); si el pedido no existe responde ok |
+| `DELETE /admin/api/cantados/<id>` | Sesión | Cancela (o descarta un candidato de la Cabina en `subiendo`/`en_revision`): borra el prefijo en Blob y el registro (no en `en_pc`, `en_revision` ni `aprobado` de un pedido normal, ni en un candidato decidido); si no existe responde ok |
 | `POST /admin/api/cantados/subir` | Sesión | `handleUpload` de Blob (tipos video/imagen); sin sesión responde 400 con el mensaje, no 401 |
 | `GET /admin/api/pc/pedidos` | Solo PC | Pedidos `listo` (con `tipo`, `link`, `estado` y `publicado` firmado en remix) y `necesita_pantallazos` con pantallazos enviados (`original`/`gancho`/`publicado` en `null`), con enlaces firmados; limpia borradores > 48 h |
 | `POST /admin/api/pc/pedidos/<id>/bajado` | Solo PC | Pasa `listo` y `necesita_pantallazos` a `en_pc`, borra sus blobs (también el publicado), deja los archivos en `null` y los pantallazos en `[]` |
@@ -107,12 +128,20 @@ Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la c
 | `GET /admin/api/pc/aprobados` | Solo PC | Aprobados (y vencidos, que se aprueban solos) y los que piden más, con su lista final |
 | `POST /admin/api/pc/pedidos/<id>/necesita-pantallazos` | Solo PC | Pedido por link o remix bloqueado por TikTok (`en_pc` → `necesita_pantallazos`): pide pantallazos con aviso. Repetido sobre un pedido que ya está en `necesita_pantallazos` → 200 sin cambios ni aviso nuevo |
 | `POST /admin/api/pc/pedidos/<id>/trae-mas-atendido` | Solo PC | Cuerpo opcional `{motivo}`: `"sin_quitados"` → aviso «No quitaste ninguno…»; si no, «No hay más comentarios para reponer…». Vuelve a revisión con 24 h nuevas |
+| `POST /admin/api/pc/cabina` | Solo PC | Crea un candidato `subiendo` `{link, comentarios, vista}` → `{id}`; 400 si los datos no sirven; 503 si no hay id libre |
+| `POST /admin/api/pc/cabina/<id>/subida` | Solo PC | `{pathname, tamano}` → `{token}` de subida de 1 h para la vista (≤ 50 MB, `video/mp4`) o un medio (≤ 20 MB, `image/*`/`video/mp4`) de ese candidato; guarda el tamaño anunciado. 400 ruta ajena o tamaño malo; 409 si no está `subiendo` |
+| `POST /admin/api/pc/cabina/<id>/publicar` | Solo PC | Comprueba los archivos y pasa a `en_revision` (`vence` = +72 h; vencido 2 h antes), sin aviso por candidato → `{ok, version, vence}`; repetido → 200 igual; faltan → 409 `{error, faltan}` |
+| `GET /admin/api/pc/cabina` | Solo PC | Purga, pasa a `automatico` los vencidos y responde `{decididos, vivos}` con el gancho firmado (12 h) |
+| `POST /admin/api/pc/cabina/<id>/bajado` | Solo PC | `aprobado`/`automatico` → `en_pc`, borra el prefijo en Blob; repetido → 200; sin decidir → 409 |
+| `DELETE /admin/api/pc/cabina/<id>` | Solo PC | Entregado: borra prefijo y registro; un id que no es de la Cabina → 404 sin borrar |
+| `GET /admin/api/cabina/<id>/medios` | Sesión | `{vista, medios: {idComentario: url}}` firmadas 12 h, solo en `en_revision` (otro estado → 409) |
 
 Sin sesión → 401 (salvo `subir`, que da 400; y el login, que puede dar 429 si está bloqueado). El token del PC no sirve en las rutas de sesión y la cookie no sirve en las del PC. No hay `proxy.js`: la sesión se verifica en `layout.jsx` y al inicio de cada API.
 
 ## Límites
 
 - Subida: **2 GB por archivo** (`maximumSizeInBytes`), tipos `video/*` e `image/*`.
+- Cabina: vista previa ≤ 50 MB, cada imagen/GIF ≤ 20 MB, hasta 80 comentarios (`likes` entero o `null`, `respuestas` entero, 0 si no se sabe; GIF como `.gif`), vence a las 70 h (72 − 2), purga a las 24 h (sin publicar) y a los 7 días (en revisión).
 - Hasta **3 tramos** de bucle, sin tope de duración (aviso a los 25 s; el PC no recorta; más de 7 s activa zooms cada 3 s).
 - Hasta **40 pantallazos** por pedido.
 - Borradores sin enviar: 48 h.
@@ -127,6 +156,8 @@ Verificado en los tipos instalados y con `build` (Task 6):
 - Pruebas (2026-10-22): `npm test` 94 pasan, 0 fallan; `eslint` sin salida; `npm run build` OK. El build no necesita variables.
 - Fase 2 por link (2026-10-22): `npm test` 139 pasan, 0 fallan; `npx eslint --ignore-pattern ".claude/**"` sin salida; `npm run build` OK.
 - Remix (2026-10-22): `npm test` 149 pasan, 0 fallan; `npx eslint --ignore-pattern ".claude/**"` sin salida; `npm run build` OK.
+- `generateClientTokenFromReadWriteToken({pathname, maximumSizeInBytes, allowedContentTypes, allowOverwrite, addRandomSuffix, validUntil})` exportada desde `@vercel/blob/client`; sin `token` usa `BLOB_READ_WRITE_TOKEN` (dist/client.js). Tamaño máximo de un blob: 5 TB; multipart solo recomendado desde 100 MB (docs «Vercel Blob Pricing», actualizadas 2026-09-23).
+- Cabina (2026-10-23): `npm test` 202 pasan, 0 fallan; `npx eslint --ignore-pattern ".claude/**" src/app/admin` sin salida; `npm run build` OK.
 
 ## Lo que NO se ha probado
 
@@ -136,6 +167,7 @@ Verificado en los tipos instalados y con `build` (Task 6):
 - Vista de teléfono en la vista previa del PR.
 - **Fase 2 por link:** revisión real en el celular, aviso real del bot con el enlace y un pedido real de punta a punta.
 - **Remix:** un remix real de punta a punta (uno de un video de este sistema y uno de Premiere), la lectura de tarjetas sobre videos nuevos, el emparejamiento con TikTok real, la pantalla de remix en el celular y el remix por tarjetas con estilo y color por turno (solo se probó con dobles).
+- **Cabina:** token de subida real del PC con `put` de `@vercel/blob/client`, video firmado reproduciéndose y buscando (Range) en el celular, GIF `.gif` animado y medios `.mp4` en bucle, arrastre real con el dedo (iPhone y Android), un gancho grande (multipart desde 20 MB) por datos móviles, y un candidato de punta a punta (Task 12 del plan).
 
 ## Seguridad
 
