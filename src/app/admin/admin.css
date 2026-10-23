@@ -101,4 +101,21 @@
 .adm-pie { background: rgba(245, 245, 248, 0.85); backdrop-filter: saturate(180%) blur(16px); -webkit-backdrop-filter: saturate(180%) blur(16px); }
 .adm-miniatura { border-radius: 12px; object-fit: cover; }
 .adm-video { width: 100%; border-radius: 18px; background: #000; }
+
+/* Arrastre para ordenar (useArrastre): asa, tarjeta levantada y raya de dónde cae. Sin cambiar el alto de nada mientras se arrastra. */
+.adm-asa { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.adm-asa:active { cursor: grabbing; }
+.adm-arrastrable { position: relative; transition: opacity 0.15s, transform 0.15s; }
+.adm-arrastrable.levantado { opacity: 0.55; transform: scale(0.98); }
+.adm-arrastrable.cae-antes::before,
+.adm-arrastrable.cae-despues::after {
+  content: ""; position: absolute; left: 10px; right: 10px; height: 4px; border-radius: 999px; background: var(--verde-claro);
+}
+.adm-arrastrable.cae-antes::before { top: -8px; }
+.adm-arrastrable.cae-despues::after { bottom: -8px; }
+
+/* Pantallazos y medios a lo ancho de la tarjeta, legibles en el celular */
+.adm-pantallazo { width: 100%; max-height: 60vh; object-fit: contain; border-radius: 14px; background: var(--suave); }
+.adm-medio { width: 100%; max-height: 40vh; object-fit: contain; border-radius: 14px; background: var(--suave); }
+.adm-orden { min-width: 2ch; font-size: 1.6rem; font-weight: 800; line-height: 1; color: var(--verde); }
 }
