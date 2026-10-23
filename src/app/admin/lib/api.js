@@ -1,7 +1,7 @@
 // Lógica de las API de /admin con dependencias inyectadas (las rutas pasan Redis, Blob y Telegram reales). Spec admin §6.
 import { COOKIE, claveCorrecta, cookieBorrada, cookieSesion, firmarSesion, leerCookie, sesionValida, tokenPcValido } from "./sesion.js";
 import { estaBloqueado, limpiarIntentos, registrarFallo } from "./intentos.js";
-import { EN_EL_PC, TIPOS_DISPONIBLES, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, subidaPermitida, tipoDe } from "./pedido.js";
+import { DESTINOS, EN_EL_PC, TIPOS_DISPONIBLES, TIPOS_STORY, destinoDe, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, subidaPermitida, tipoDe } from "./pedido.js";
 import { aplicarRevision, aprobarRevision, aprobarVencido, listaFinal, masAtendido, noEditable, pedirMas, publicarPropuesta, puedePublicarPropuesta, validarPropuesta, vencida, yaPublicada } from "./revision.js";
 
 const json = (d, status = 200, headers = {}) => Response.json(d, { status, headers });
@@ -45,9 +45,11 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
     },
     salir: conSesion(async () => json({ ok: true }, 200, { "set-cookie": cookieBorrada() })),
     crear: conSesion(async (req) => {
-      const { tipo = "pantallazos" } = await cuerpo(req);
+      const { tipo = "pantallazos", destino = "reel" } = await cuerpo(req);
       if (!TIPOS_DISPONIBLES.includes(tipo)) return json({ error: "Tipo de pedido no válido." }, 400);
-      const p = nuevoPedido(nuevoId(new Date(ahora()), azar()), new Date(ahora()).toISOString(), tipo);
+      if (!DESTINOS.includes(destino)) return json({ error: "Destino no válido." }, 400);
+      if (destino === "story" && !TIPOS_STORY.includes(tipo)) return json({ error: "Una story solo puede ser con pantallazos." }, 400);
+      const p = nuevoPedido(nuevoId(new Date(ahora()), azar()), new Date(ahora()).toISOString(), tipo, destino);
       await almacen.guardar(p);
       return json({ id: p.id });
     }),
@@ -84,7 +86,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
         link: "a las 2 p. m. Claude escoge los comentarios y te mando el enlace para revisarlos.",
         remix: "remix: sale a las 2 p. m., sin revisión (mismos comentarios en otro orden, con otra canción).",
       }[tipoDe(p)] ?? "sale a las 2 p. m.";
-      await avisar(`📥 Recibí: ${nombreVisible(p)} — ${cuando}`).catch(() => {});
+      await avisar(`📥 Recibí${destinoDe(p) === "story" ? " la story" : ""}: ${nombreVisible(p)} — ${cuando}`).catch(() => {});
       return json({ ok: true });
     }),
     cancelar: conSesion(async (req, id) => {
@@ -119,7 +121,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       const firmar = async (a) => (a ? { ...a, url: await blob.enlace(a.pathname) } : null);
       const paraPc = todos.filter((p) => p.estado === "listo" || (p.estado === "necesita_pantallazos" && p.pantallazos_listos));
       return json(await Promise.all(paraPc.map(async (p) => ({
-        id: p.id, estado: p.estado, tipo: tipoDe(p), link: p.link ?? null, creado: p.creado, titulo: p.titulo, estilo: p.estilo, tramos: p.tramos,
+        id: p.id, estado: p.estado, tipo: tipoDe(p), destino: destinoDe(p), link: p.link ?? null, creado: p.creado, titulo: p.titulo, estilo: p.estilo, tramos: p.tramos,
         original: await firmar(p.original), gancho: await firmar(p.gancho), publicado: await firmar(p.publicado ?? null),
         pantallazos: await Promise.all((p.pantallazos || []).map(firmar)),
       }))));

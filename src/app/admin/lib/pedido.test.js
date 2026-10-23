@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nuevoId, nuevoPedido, aplicarCambios, erroresParaEnviar, archivos, borradorVencido, prefijo, TIPOS, TIPOS_DISPONIBLES, linkValido, tipoDe, ordenarLista, subidaPermitida, tonoEstado } from "./pedido.js";
+import { nuevoId, nuevoPedido, aplicarCambios, erroresParaEnviar, archivos, borradorVencido, prefijo, TIPOS, TIPOS_DISPONIBLES, linkValido, tipoDe, ordenarLista, subidaPermitida, tonoEstado, destinoDe, pedidoDeOpcion } from "./pedido.js";
 
 const P = () => nuevoPedido("c_20261021_ab12", "2026-10-21T18:30:00.000Z");
 const arch = (n, extra = {}) => ({ pathname: `cantados/c_20261021_ab12/${n}`, tamano: 100, ...extra });
@@ -163,4 +163,17 @@ test("tono de la etiqueta de estado: ámbar si espera a Oscar, rojo si falló, m
   assert.equal(tonoEstado({ estado: "fallido" }), "error");
   assert.equal(tonoEstado({ estado: "subiendo" }), "neutro");
   for (const estado of ["listo", "aprobado", "en_pc"]) assert.equal(tonoEstado({ estado }), "camino");
+});
+
+test("destino: reel por defecto, story si se pide, los viejos sin campo son reel", () => {
+  assert.equal(nuevoPedido("c_1", "2026-10-22T00:00:00Z").destino, "reel");
+  assert.equal(nuevoPedido("c_1", "2026-10-22T00:00:00Z", "link", "story").destino, "story");
+  assert.equal(destinoDe({}), "reel");
+  assert.equal(destinoDe({ destino: "story" }), "story");
+});
+test("la opción «Story» es un pedido con pantallazos con destino story; las demás son reels", () => {
+  assert.deepEqual(pedidoDeOpcion("story"), { tipo: "pantallazos", destino: "story" });
+  assert.deepEqual(pedidoDeOpcion("pantallazos"), { tipo: "pantallazos", destino: "reel" });
+  assert.deepEqual(pedidoDeOpcion("link"), { tipo: "link", destino: "reel" });
+  assert.deepEqual(pedidoDeOpcion("remix"), { tipo: "remix", destino: "reel" });
 });

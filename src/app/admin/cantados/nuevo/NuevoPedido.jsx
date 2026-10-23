@@ -7,13 +7,14 @@ import { encolarPatch } from "../cola.js";
 import { subirArchivo, usePantallazos, useTrabajos } from "../subidas.js";
 import EditorTramos from "./EditorTramos.jsx";
 import { extSegura } from "../../lib/editor.js";
-import { ESTILOS, TIPOS_DISPONIBLES, linkValido } from "../../lib/pedido.js";
+import { ESTILOS, TIPOS_DISPONIBLES, linkValido, pedidoDeOpcion } from "../../lib/pedido.js";
 
 const boton = "adm-btn primario grande";
 const OPCIONES = [
   { tipo: "pantallazos", titulo: "Con pantallazos", detalle: "Tú escoges los comentarios y subes las fotos." },
   { tipo: "link", titulo: "Por link", detalle: "Claude escoge los comentarios de TikTok y tú los revisas aquí." },
   { tipo: "remix", titulo: "Remix", detalle: "Reeditar un cantado ya publicado: mismos comentarios en otro orden, otra canción. Sin revisión." },
+  { tipo: "story", titulo: "Story", detalle: "Igual que con pantallazos, pero sale como story de Facebook: un solo video, sin corto de YouTube." },
 ];
 // Orden de las secciones de cada tipo (los números de los títulos salen de aquí).
 const SECCIONES = {
@@ -26,6 +27,7 @@ const LISTO = {
   link: "Listo: a las 2 p. m. Claude escoge los comentarios y te llega el enlace para revisarlos.",
   remix: "Listo: el remix sale a las 2 p. m., sin revisión.",
 };
+const LISTO_STORY = "Listo: la story sale a las 2 p. m. y te llega por Telegram.";
 
 // Lee duración y tamaño en píxeles de un video local.
 function leerMeta(url) {
@@ -50,6 +52,7 @@ export default function NuevoPedido() {
   const router = useRouter();
   const [id, setId] = useState(null);
   const [tipo, setTipo] = useState(null);
+  const [story, setStory] = useState(false);
   const [link, setLink] = useState("");
   const [linkGuardado, setLinkGuardado] = useState(false);
   const [errorGlobal, setErrorGlobal] = useState("");
@@ -82,14 +85,16 @@ export default function NuevoPedido() {
   }, []);
 
   // El tipo se elige primero: con él se crea el pedido (spec fase 2 §4).
-  async function elegirTipo(t) {
+  async function elegirTipo(opcion) {
+    const { tipo: t, destino } = pedidoDeOpcion(opcion);   // «Story» = con pantallazos + destino story
     setTipo(t);
+    setStory(destino === "story");
     setErrorGlobal("");
     try {
       const r = await fetch("/admin/api/cantados", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ tipo: t }),
+        body: JSON.stringify({ tipo: t, destino }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.id) throw new Error(d.error || "sin id");
@@ -258,7 +263,7 @@ export default function NuevoPedido() {
   const falta = !id || faltan.length > 0;
   const num = (s) => (SECCIONES[tipo] || []).indexOf(s) + 1;
 
-  if (listo) return <p className="adm-tarjeta mt-10 p-6 text-center text-xl font-bold text-[var(--verde)]">{LISTO[tipo]}</p>;
+  if (listo) return <p className="adm-tarjeta mt-10 p-6 text-center text-xl font-bold text-[var(--verde)]">{story ? LISTO_STORY : LISTO[tipo]}</p>;
 
   if (!tipo)
     return (
@@ -274,7 +279,7 @@ export default function NuevoPedido() {
           <button
             key={o.tipo}
             onClick={() => elegirTipo(o.tipo)}
-            disabled={!TIPOS_DISPONIBLES.includes(o.tipo)}
+            disabled={!TIPOS_DISPONIBLES.includes(pedidoDeOpcion(o.tipo).tipo)}
             className="adm-opcion flex flex-col gap-1"
           >
             <span className="text-lg font-bold">{o.titulo}</span>
@@ -287,7 +292,7 @@ export default function NuevoPedido() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="adm-titulo">{esRemix ? "Remix" : "Nuevo video"}</h1>
+        <h1 className="adm-titulo">{esRemix ? "Remix" : story ? "Story" : "Nuevo video"}</h1>
         <a href="/admin" className="adm-btn secundario chico">
           Volver
         </a>
