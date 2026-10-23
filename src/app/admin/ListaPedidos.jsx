@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { textoDias } from "./lib/cabina.js";
 import { EN_EL_PC, tonoEstado } from "./lib/pedido.js";
 
 const ETIQUETA = {
@@ -16,7 +17,7 @@ const fecha = (iso) =>
   new Date(iso)
     .toLocaleString("es-CO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Bogota" });
 
-export default function ListaPedidos({ pedidos, error }) {
+export default function ListaPedidos({ pedidos, cabina = [], error }) {
   const [msg, setMsg] = useState("");
 
   async function cancelar(id) {
@@ -46,6 +47,24 @@ export default function ListaPedidos({ pedidos, error }) {
       </a>
       {error && <p className="adm-error">{error}</p>}
       {msg && <p className="adm-error">{msg}</p>}
+      {cabina.length > 0 && (
+        <section className="flex flex-col gap-2" aria-labelledby="titulo-cabina">
+          <h2 id="titulo-cabina" className="adm-h2">Cabina ({cabina.length})</h2>
+          <ul className="flex flex-col gap-2">
+            {cabina.map((c) => (
+              <li key={c.id}>
+                <a href={`/admin/cabina/${c.id}`} className="adm-tarjeta flex items-center gap-3 text-inherit no-underline">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">{c.nombre}</p>
+                    <p className="adm-sub text-xs">{c.comentarios} comentarios</p>
+                  </div>
+                  <span className={`adm-etq shrink-0 ${c.dias <= 1 ? "espera" : "camino"}`}>{textoDias(c.dias)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {!error && pedidos.length === 0 && <p className="adm-sub text-center">No hay pedidos.</p>}
       <ul className="flex flex-col gap-3">
         {pedidos.map((p) => (
