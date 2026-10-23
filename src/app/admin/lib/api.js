@@ -1,7 +1,7 @@
 // Lógica de las API de /admin con dependencias inyectadas (las rutas pasan Redis, Blob y Telegram reales). Spec admin §6.
 import { COOKIE, claveCorrecta, cookieBorrada, cookieSesion, firmarSesion, leerCookie, sesionValida, tokenPcValido } from "./sesion.js";
 import { estaBloqueado, limpiarIntentos, registrarFallo } from "./intentos.js";
-import { DESTINOS, EN_EL_PC, TIPOS_DISPONIBLES, TIPOS_STORY, destinoDe, esCabina, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, subidaPermitida, tipoDe } from "./pedido.js";
+import { DESTINOS, TIPOS_DISPONIBLES, TIPOS_STORY, destinoDe, esCabina, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, sePuedeCancelar, subidaPermitida, tipoDe } from "./pedido.js";
 import { aplicarRevision, aprobarRevision, aprobarVencido, listaFinal, masAtendido, noEditable, pedirMas, publicarPropuesta, puedePublicarPropuesta, validarPropuesta, vencida, yaPublicada } from "./revision.js";
 import { rutasCabina } from "./api-cabina.js";
 
@@ -29,8 +29,8 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
     const p = await almacen.leer(id);
     if (!p) return json({ error: "Ese pedido no existe." }, 404);
     const { version } = await cuerpo(req);
-    const { pedido, errores } = paso(p, ahora(), version);
-    if (errores.length) return json({ error: errores.join(" ") }, 409);
+    const { pedido, errores, faltan } = paso(p, ahora(), version);
+    if (errores.length) return json({ error: errores.join(" ") }, faltan ? 400 : 409);   // «Falta: …» no es un conflicto de versión
     await almacen.guardar(pedido);
     return json({ ok: true });
   }
@@ -58,6 +58,10 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
     cambiar: conSesion(async (req, id) => {
       const p = await almacen.leer(id);
       if (!p) return json({ error: "Ese pedido no existe." }, 404);
+      if (esCabina(p)) {
+        const no = noEditable(p, ahora());   // plazo vencido, aprobado o ya en el PC
+        if (no) return json({ error: no }, 409);
+      }
       const c = await cuerpo(req);
       const { pedido, errores } = aplicarCambios(p, c);
       if (errores.length) return json({ error: errores.join(" ") }, 400);
@@ -94,7 +98,8 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
     cancelar: conSesion(async (req, id) => {
       const p = await almacen.leer(id);
       if (!p) return json({ ok: true });
-      if (EN_EL_PC.includes(p.estado)) return json({ error: "El PC lo está haciendo; ya no se puede cancelar." }, 409);
+      if (!sePuedeCancelar(p))
+        return json({ error: esCabina(p) ? "Ese candidato ya está decidido: lo tiene el PC." : "El PC lo está haciendo; ya no se puede cancelar." }, 409);
       await blob.borrarPrefijo(prefijo(p.id));
       await almacen.borrar(id);
       return json({ ok: true });

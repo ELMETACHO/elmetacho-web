@@ -6,7 +6,7 @@ import { aPurgar, anotarTamano, archivosDelCandidato, nuevoCandidato, paraElPc, 
 
 const INTENTOS_ID = 5;
 
-export function rutasCabina({ almacen, blob, ahora, azar, json, cuerpo, delPc }) {
+export function rutasCabina({ almacen, blob, ahora, azar, json, cuerpo, conSesion, delPc }) {
   const leerCandidato = async (id) => {
     const p = await almacen.leer(String(id || ""));
     return esCabina(p) ? p : null;
@@ -16,6 +16,15 @@ export function rutasCabina({ almacen, blob, ahora, azar, json, cuerpo, delPc })
     (g ? { pathname: g.pathname, tamano: g.tamano, ancho: g.ancho ?? null, alto: g.alto ?? null, duracion: g.duracion ?? null, url: await blob.enlace(g.pathname) } : null);
 
   return {
+    // Con sesión: URLs de lectura (12 h) de la vista previa y de las imágenes/GIF, para la página /admin/cabina/<id>.
+    cabinaMedios: conSesion(async (req, id) => {
+      const p = await leerCandidato(id);
+      if (!p) return noExiste();
+      if (p.estado !== "en_revision" || !p.vista_previa || !p.propuesta) return json({ error: "Este candidato ya no está en la Cabina." }, 409);
+      const conMedio = p.propuesta.comentarios.filter((c) => c.medio?.pathname);
+      const [vista, ...urls] = await Promise.all([blob.enlace(p.vista_previa.pathname), ...conMedio.map((c) => blob.enlace(c.medio.pathname))]);
+      return json({ vista, medios: Object.fromEntries(conMedio.map((c, k) => [c.id, urls[k]])) });
+    }),
     pcCabinaCrear: delPc(async (req) => {
       const c = await cuerpo(req);
       let id = null;

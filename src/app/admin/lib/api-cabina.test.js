@@ -294,3 +294,60 @@ test("el flujo por link no ve la Cabina: pcAprobados no lista ni aprueba candida
   assert.deepEqual(await (await m.api.pcAprobados(pc(undefined, "GET"))).json(), []);
   assert.equal((await m.almacen.leer(b)).estado, "en_revision");   // solo GET pc/cabina lo pasa a automatico
 });
+
+test("medios: sesión obligatoria; URLs firmadas de la vista y de cada medio mientras está en revisión", async () => {
+  const m = montar();
+  const id = await publicado(m);
+  assert.equal((await m.api.cabinaMedios(sinSesion(), id)).status, 401);
+  assert.equal((await m.api.cabinaMedios(pc(undefined, "GET"), id)).status, 401);
+  const r = await m.api.cabinaMedios(sesion(undefined, "GET"), id);
+  assert.equal(r.status, 200);
+  assert.deepEqual(await r.json(), { vista: `https://firmado/cantados/${id}/vista.mp4`,
+    medios: { c1: `https://firmado/cantados/${id}/m01.jpg`, c3: `https://firmado/cantados/${id}/m03.mp4` } });
+  assert.equal((await m.api.cabinaMedios(sesion(undefined, "GET"), "no_existe")).status, 404);
+  await aprobadoAMano(m, id);
+  assert.equal((await m.api.cabinaMedios(sesion(undefined, "GET"), id)).status, 409);
+});
+
+test("Oscar ordena, marca tramos, cambia destino, sube el gancho y aprueba; el PC lo recibe así", async () => {
+  const m = montar();
+  const id = await publicado(m), base = `cantados/${id}/`;
+  await m.api.autorizarSubida(sesion(), base + "gancho.mov", id);
+  await assert.rejects(m.api.autorizarSubida(sesion(), base + "vista.mp4", id));
+  assert.equal((await m.api.cambiar(sesion({ tramos: [[2, 9]], destino: "story" }, "PATCH"), id)).status, 200);
+  assert.equal((await m.api.revision(sesion({ orden: ["c2", "c1"], fuera: ["c3"], lineas: { c1: "ja," }, version: 1 }, "PATCH"), id)).status, 200);
+  const sinGancho = await m.api.aprobar(sesion({ version: 1 }), id);
+  assert.equal(sinGancho.status, 400);
+  assert.match((await sinGancho.json()).error, /^Falta: tu gancho\.$/);
+  m.tamanos.set(base + "gancho.mov", 300);
+  assert.equal((await m.api.cambiar(sesion({ gancho: { pathname: base + "gancho.mov", tamano: 300, duracion: 4, ancho: 1080, alto: 1920 } }, "PATCH"), id)).status, 200);
+  assert.equal((await m.api.aprobar(sesion({ version: 1 }), id)).status, 200);
+  const [d] = (await lista(m)).decididos;
+  assert.deepEqual([d.estado, d.destino, d.tramos, d.orden, d.fuera, d.gancho.url],
+    ["aprobado", "story", [[2, 9]], [{ id: "c2", linea: "uy no," }, { id: "c1", linea: "ja," }], ["c3"], `https://firmado/${base}gancho.mov`]);
+});
+
+test("descartar: en revisión borra Blob y registro y el PC deja de verlo; decidido = 409", async () => {
+  const m = montar();
+  const a = await publicado(m), b = await publicado(m);
+  assert.equal((await m.api.cancelar(sesion(undefined, "DELETE"), a)).status, 200);
+  assert.deepEqual([await m.almacen.leer(a), m.borrados], [null, [`cantados/${a}/`]]);
+  await aprobadoAMano(m, b);
+  assert.equal((await m.api.cancelar(sesion(undefined, "DELETE"), b)).status, 409);
+  await m.almacen.guardar({ ...(await m.almacen.leer(b)), estado: "automatico" });
+  assert.equal((await m.api.cancelar(sesion(undefined, "DELETE"), b)).status, 409);
+  assert.deepEqual((await lista(m)).vivos, [b]);
+});
+
+test("vencido el plazo, la página vieja no cambia nada: 409 en tramos, revisión, aprobar y trae más", async () => {
+  const reloj = { t: T };
+  const m = montar(reloj);
+  const id = await publicado(m);
+  const antes = JSON.stringify(await m.almacen.leer(id));
+  reloj.t = T + 72 * H;
+  assert.equal((await m.api.cambiar(sesion({ tramos: [[0, 4]] }, "PATCH"), id)).status, 409);
+  assert.equal((await m.api.revision(sesion({ orden: ["c2", "c1"], fuera: ["c3"], version: 1 }, "PATCH"), id)).status, 409);
+  assert.equal((await m.api.aprobar(sesion({ version: 1 }), id)).status, 409);
+  assert.equal((await m.api.traeMas(sesion({ version: 1 }), id)).status, 409);
+  assert.equal(JSON.stringify(await m.almacen.leer(id)), antes);
+});
