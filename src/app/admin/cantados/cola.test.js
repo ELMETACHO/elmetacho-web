@@ -37,3 +37,22 @@ test("un fallo en el último guardado se ve aunque llegue durante la espera", as
 test("sin guardados, todo bien", async () => {
   assert.equal((await esperarGuardado({ current: null })).ok, true);
 });
+
+test("dos rutas distintas en la misma fila no se pisan: la segunda espera a la primera", async () => {
+  const { cola, ultimo } = refs();
+  let enVuelo = 0, maximo = 0;
+  const urls = [];
+  globalThis.fetch = async (url) => {
+    enVuelo += 1;
+    maximo = Math.max(maximo, enVuelo);
+    urls.push(url);
+    await new Promise((s) => setTimeout(s, 5));
+    enVuelo -= 1;
+    return { ok: true, status: 200, json: async () => ({}) };
+  };
+  guardarEnFila(cola, ultimo, "/admin/api/cantados/c/revision", { orden: ["a"] });
+  guardarEnFila(cola, ultimo, "/admin/api/cantados/c", { tramos: [[0, 4]] });
+  assert.deepEqual(await esperarGuardado(ultimo), { ok: true });
+  assert.equal(maximo, 1);
+  assert.deepEqual(urls, ["/admin/api/cantados/c/revision", "/admin/api/cantados/c"]);
+});
