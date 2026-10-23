@@ -24,9 +24,14 @@ export const EN_EL_PC = ["en_pc", "en_revision", "aprobado"];   // el PC ya tien
 const LINK = /^https:\/\/(www\.|vm\.|vt\.)tiktok\.com\/\S+$/;
 const MAX_LINK = 300;
 export const tipoDe = (p) => p.tipo || "pantallazos";      // pedidos de la fase 1 no traen tipo
+// Destino (spec stories 2026-10-22 §6): las stories de Facebook van en su propia sección. Sin campo = reel.
+export const DESTINOS = ["reel", "story"];
+export const TIPOS_STORY = ["pantallazos", "link"];          // el remix re-edita algo ya publicado: no va a story
+export const destinoDe = (p) => (p.destino === "story" ? "story" : "reel");
+export const deDestino = (lista, d) => lista.filter((p) => destinoDe(p) === d);
 export const linkValido = (x) => typeof x === "string" && x.trim().length <= MAX_LINK && LINK.test(x.trim());
-export const nuevoPedido = (id, creado, tipo = "pantallazos") => ({
-  id, creado, tipo, estado: "subiendo", titulo: null, estilo: ESTILOS[0], tramos: [],
+export const nuevoPedido = (id, creado, tipo = "pantallazos", destino = "reel") => ({
+  id, creado, tipo, destino, estado: "subiendo", titulo: null, estilo: ESTILOS[0], tramos: [],
   original: null, gancho: null, pantallazos: [], link: null, publicado: null, motivo: null,
 });
 

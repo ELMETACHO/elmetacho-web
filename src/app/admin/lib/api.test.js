@@ -514,3 +514,35 @@ test("necesita-pantallazos: también para un remix en el PC; repetido no avisa o
   await enPc(almacen, { tipo: "pantallazos" });
   assert.equal((await api.pcNecesitaPantallazos(pcCon({}), id)).status, 409);
 });
+
+test("crear una story: guarda destino; remix como story o destino raro → 400", async () => {
+  const { api, almacen } = montar();
+  const { id } = await (await api.crear(conSesion({ tipo: "pantallazos", destino: "story" }))).json();
+  assert.equal((await almacen.leer(id)).destino, "story");
+  assert.equal((await api.crear(conSesion({ tipo: "remix", destino: "story" }))).status, 400);
+  for (const d of ["Story", "", 3, null]) assert.equal((await api.crear(conSesion({ tipo: "pantallazos", destino: d }))).status, 400, String(d));
+  const reel = await (await api.crear(conSesion({ tipo: "remix" }))).json();
+  assert.equal((await almacen.leer(reel.id)).destino, "reel");
+});
+test("una story enviada: el aviso dice story y el PC recibe el destino", async () => {
+  const { api, avisos, tamanos } = montar();
+  const { id } = await (await api.crear(conSesion({ tipo: "pantallazos", destino: "story" }))).json();
+  const base = `cantados/${id}/`;
+  for (const [n, t] of [["original.mp4", 500], ["gancho.mov", 300], ["p01.jpg", 10]]) tamanos.set(base + n, t);
+  const r = await api.cambiar(conSesion({ original: { pathname: base + "original.mp4", tamano: 500, duracion: 28 }, tramos: [[0, 4]],
+    gancho: { pathname: base + "gancho.mov", tamano: 300 }, pantallazos: [{ pathname: base + "p01.jpg", tamano: 10 }] }, "PATCH"), id);
+  assert.equal(r.status, 200);
+  assert.equal((await api.enviar(conSesion(), id)).status, 200);
+  assert.match(avisos.at(-1), /^📥 Recibí la story: /);
+  const lista = await (await api.pcPedidos(pc())).json();
+  assert.equal(lista[0].destino, "story");
+});
+test("un reel: el aviso no cambia y el PC recibe reel aunque el pedido sea viejo (sin campo)", async () => {
+  const { api, almacen, avisos } = montar();
+  const id = "c_20261021_ab12", base = `cantados/${id}/`;
+  await almacen.guardar({ id, creado: new Date(T).toISOString(), estado: "listo", titulo: null, estilo: "Salsa", tramos: [[0, 4]],
+    original: { pathname: base + "original.mp4", tamano: 5 }, gancho: { pathname: base + "g.mov", tamano: 5 }, pantallazos: [{ pathname: base + "p01.jpg", tamano: 5 }] });
+  const lista = await (await api.pcPedidos(pc())).json();
+  assert.equal(lista[0].destino, "reel");
+  assert.equal(avisos.length, 0);
+});
