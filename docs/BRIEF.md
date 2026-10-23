@@ -9,6 +9,7 @@
 - **B.** Venta y entrega automática: webhook de Bold → correo con descarga y licencia (Resend), términos de venta, derecho de retracto, factura electrónica.
 - **C.** Producto: Creador de carruseles con Claude (plugin de Claude Code + beta de 3–5 personas).
 - **D.** Producto: Editor automático de video con Claude (plugin + "doctor" de instalación + beta).
+- **Admin privado (publicado el 2026-10-22, PR #8 y #9)** `elmetacho.com/admin`: pedidos de comentarios cantados desde el celular; el PC los recoge a las 2 p. m. Spec: `docs/superpowers/specs/2026-10-21-admin-design.md` (§10 = fases siguientes). Uso y variables: `docs/admin.md`.
 
 ## Decisiones tomadas
 - Sin login por ahora: la entrega de productos será por correo.
@@ -25,6 +26,7 @@
 - **Orígenes de los leads** (lista `mlabs:leads` en Redis + aviso a Telegram): `guia-<slug>`, `preventa-<slug>`, `instalar-<slug>` (CTA «Lo instalamos por ti»), `novedades-AAAA-MM-DD`, `mlabs-inicio`.
 - **Componentes de cliente:** no pueden importar `contenido/index.js` ni `MlabsMarco.jsx`, porque meterían todo el contenido en el JS que baja el teléfono. Los enlaces de contacto están en `src/app/mlabs/enlaces.js`, y al catálogo se le pasa `tarjetasGuias`, que no lleva el texto de las guías.
 - **Vista previa de un PR en Vercel:** está protegida (pide iniciar sesión en Vercel) y no usa el subdominio. Las páginas de MLABS se abren con `/mlabs` adelante (p. ej. `…vercel.app/mlabs/recursos/resena`), y ahí los enlaces internos dan 404. Las variables tienen que estar marcadas también para **Preview**.
+- **Admin (`src/app/admin/`):** clave `ADMIN_CLAVE` + cookie firmada (sin `proxy.js`; cada API y la lista verifican la sesión). El PC usa `ADMIN_PC_TOKEN` en `/admin/api/pc/*`. Archivos en Vercel Blob privado (`elmetacho-web-blob`, subida directa del navegador), datos en el mismo Redis (`admin:cantados:*`). Se borra todo `cantados/<id>/` al bajarlo el PC, al cancelar, al fallar y a las 48 h si quedó sin enviar; el registro, al entregar. Lógica pura en `src/app/admin/lib/` con pruebas. Lado del PC: `PREMIERE-CLAUDE/cantados/herramientas/web.py` y `docs/runbook-pasada.md`.
 - **Pasos para publicar** (además de la regla 5): `npm test`, `npx eslint --ignore-pattern ".claude/**"` (ver aprendizajes), `npm run build`, probar los leads en la vista previa, fusionar y revisar la URL en vivo.
 
 ## Aprendizajes técnicos
@@ -37,6 +39,9 @@
   - Turbopack no acepta `node_modules` enlazado con junction; hay que correr `npm ci` en la copia.
   - En un heredoc de bash, `\\n` dentro de código Python puede terminar como un salto de línea real; mejor usar la herramienta de edición.
   - El Python de Windows no entiende rutas `/c/...`.
+- **Vercel Blob:** al crear el almacén hay que marcar «Add a read-write token env var»; sin `BLOB_READ_WRITE_TOKEN`, `handleUpload` no puede autorizar subidas desde el navegador. `head`, `del` y `list` de `@vercel/blob` 2.8.2 aceptan el pathname.
+- **La vista previa protegida también bloquea al PC:** las API con token propio (`/admin/api/pc/*`) no se pueden probar desde fuera en la vista previa; se prueban en producción.
+- **Node 24:** `node --test <carpeta>` falla; usar el glob `"src/**/*.test.js"`.
 - **Guías:** todo lo que se diga de las herramientas del dueño se verifica en su código. Por ejemplo, `limpiar_v7.py` solo usa texto y audio; no detecta hacia dónde mira la persona.
 
 ## Resumen de sesiones
@@ -85,3 +90,6 @@
     - `npm test` muestra el aviso `MODULE_TYPELESS_PACKAGE_JSON`.
   - Sigue: la Parte B (cobro con Bold y entrega automática por correo), empezando por lluvia de ideas y spec.
   - Ramas que ya se fusionaron y se pueden borrar: `spec/mlabs-parte-a`, `feat/mlabs-parte-a`, `fix/next-seguridad`, `fix/apple-icon` y `fix/guias-confidenciales`. La rama `docs/brief-parte-a-publicada` quedó reemplazada por esta entrada.
+- **2026-10-21/22 (admin de cantados):** lluvia de ideas → spec → plan (13 tareas) ejecutado con subagentes y revisión por tarea + revisión final de toda la rama. Publicado `elmetacho.com/admin` (PR #8) y `Disallow: /admin` (PR #9); comprobado en vivo (portada, MLABS, robots, `/admin` pide clave, API sin clave = 401) y el PC ya lee los pedidos desde producción. El dueño creó el Blob privado y puso `ADMIN_CLAVE`/`ADMIN_PC_TOKEN`; primer pedido real subido desde el admin y en producción en una sesión aparte. Decisiones: franja de las 2 p. m.; sin aprobación de letra en pedidos web; bucle sin tope con aviso > 25 s; Telegram queda de respaldo sin rehacer repetidos; nada vive en la nube tras bajar. Riesgo conocido: un pedido atascado en «el PC lo está haciendo» no se cancela desde la web (ver `docs/admin.md`).
+  - Sigue: fase 2 del admin (subir video + gancho, Claude escoge comentarios y Oscar los revisa en la web), investigación de la política de Meta para reeditar videos monetizados (fase de «remix»), revisión de las 5 vulnerabilidades altas de npm (sesión aparte) y Parte B (sesión aparte).
+- **2026-10-22 (madrugada, fase 2 y remix):** con autorización del dueño («vayas avanzando y publiques») se construyeron y publicaron la fase 2 «por link» (PR #11: propuesta de comentarios que Oscar revisa en `/admin/cantados/<id>/revisar`, pantallazos cuando TikTok bloquea) y el **remix** (PR #13: rehacer un cantado publicado con los mismos comentarios reales, otro orden y otra canción). Spec y planes en el PR #12 (lo aprueba el dueño). Comprobado en vivo: portada, MLABS, `/admin` y API sin credencial = 401. Pendiente: un pedido real por link y un remix real de punta a punta; mirar las pantallas nuevas en el celular; el primer remix es la prueba de monetización (panel de riesgo de Meta).
