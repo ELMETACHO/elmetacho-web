@@ -1,5 +1,6 @@
 // Propuesta de comentarios de los pedidos por link y la revisión de Oscar en /admin. Spec fase 2 §4.
 import { mover } from "./editor.js";
+import { moverA } from "./arrastre.js";
 
 export const HORAS_REVISION = 24;
 export const HOLGURA_FRANJA_H = 2;   // vence 2 h antes: así la franja de las 2 p. m. del día siguiente la recoge
@@ -120,6 +121,10 @@ export const quitar = (rev, id) =>
 export const meter = (rev, id) =>
   !rev.fuera.includes(id) ? rev : { ...rev, fuera: rev.fuera.filter((x) => x !== id), orden: [...rev.orden, id] };
 export const moverEn = (rev, i, paso) => ({ ...rev, orden: mover(rev.orden, i, paso) });
+export function moverAEn(rev, de, a) {
+  const orden = moverA(rev.orden, de, a);
+  return orden === rev.orden ? rev : { ...rev, orden };
+}
 export function editarLinea(rev, id, texto, original) {
   const lineas = { ...rev.lineas };
   if (id === "__proto__") return rev;
