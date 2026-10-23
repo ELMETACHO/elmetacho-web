@@ -34,3 +34,6 @@ export function velocidadBorde(y, alto, margen = 80, max = 18) {
   if (y > alto - margen) return Math.ceil(((Math.min(alto, y) - (alto - margen)) / margen) * max);
   return 0;
 }
+
+// ¿El evento de puntero es del dedo que empezó el arrastre vivo? Un segundo dedo no lo suelta ni lo cancela.
+export const esDelArrastre = (vivo, pointerId) => vivo != null && vivo.pointerId === pointerId;

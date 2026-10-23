@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { destinoDeHueco, huecoEn, marcaDe, moverA, velocidadBorde } from "./arrastre.js";
+import { destinoDeHueco, esDelArrastre, huecoEn, marcaDe, moverA, velocidadBorde } from "./arrastre.js";
 import { moverAEn } from "./revision.js";
 
 test("moverA lleva el elemento a su posición final, hacia abajo y hacia arriba", () => {
@@ -48,4 +48,11 @@ test("moverAEn cambia el orden de la revisión; sin cambio devuelve la misma rev
   const rev = { orden: ["a", "b", "c"], fuera: ["z"], lineas: { a: "x," } };
   assert.deepEqual(moverAEn(rev, 2, 0), { orden: ["c", "a", "b"], fuera: ["z"], lineas: { a: "x," } });
   assert.equal(moverAEn(rev, 1, 1), rev);
+});
+
+test("esDelArrastre: solo el dedo que empezó el arrastre lo suelta o lo cancela", () => {
+  assert.equal(esDelArrastre({ de: 0, pointerId: 7 }, 7), true);
+  assert.equal(esDelArrastre({ de: 0, pointerId: 7 }, 8), false);   // un segundo dedo
+  assert.equal(esDelArrastre(null, 7), false);                       // sin arrastre vivo
+  assert.equal(esDelArrastre({ de: 0, pointerId: 0 }, 0), true);      // el id 0 también vale
 });

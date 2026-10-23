@@ -103,7 +103,7 @@
 .adm-video { width: 100%; border-radius: 18px; background: #000; }
 
 /* Arrastre para ordenar (useArrastre): asa, tarjeta levantada y raya de dónde cae. Sin cambiar el alto de nada mientras se arrastra. */
-.adm-asa { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.adm-asa { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .adm-asa:active { cursor: grabbing; }
 .adm-arrastrable { position: relative; transition: opacity 0.15s, transform 0.15s; }
 .adm-arrastrable.levantado { opacity: 0.55; transform: scale(0.98); }
