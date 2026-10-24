@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { almacenRedis } from "./lib/almacen.js";
 import { urlRedisDirecta } from "../api/lead/config.js";
+import { separarCabina } from "./lib/cabina.js";
 import { destinoDe, nombreVisible, ordenarLista, tipoDe } from "./lib/pedido.js";
 import { COOKIE, sesionValida } from "./lib/sesion.js";
 import ListaPedidos from "./ListaPedidos.jsx";
@@ -14,13 +15,16 @@ export default async function Admin() {
   if (!sesionValida(valor, process.env.ADMIN_CLAVE, ahora())) return null;
 
   let pedidos = [];
+  let cabina = [];
   let error = "";
   let almacen;
   try {
     const url = urlRedisDirecta(process.env);
     if (!url) throw new Error("sin url");
     almacen = await almacenRedis(url);
-    pedidos = ordenarLista(await almacen.listar()).map((p) => ({
+    const separados = separarCabina(await almacen.listar(), ahora());   // los candidatos no salen entre los pedidos
+    cabina = separados.cabina;
+    pedidos = ordenarLista(separados.pedidos).map((p) => ({
       id: p.id, nombre: nombreVisible(p), creado: p.creado, estado: p.estado, motivo: p.motivo ?? null,
       tipo: tipoDe(p), listos: Boolean(p.pantallazos_listos), story: destinoDe(p) === "story",
     }));
@@ -29,5 +33,5 @@ export default async function Admin() {
   } finally {
     await almacen?.cerrar();
   }
-  return <ListaPedidos pedidos={pedidos} error={error} />;
+  return <ListaPedidos pedidos={pedidos} cabina={cabina} error={error} />;
 }

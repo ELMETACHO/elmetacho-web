@@ -1,8 +1,10 @@
 // Propuesta de comentarios de los pedidos por link y la revisión de Oscar en /admin. Spec fase 2 §4.
 import { mover } from "./editor.js";
+import { moverA } from "./arrastre.js";
+import { esCabina } from "./pedido.js";
 
 export const HORAS_REVISION = 24;
-export const HOLGURA_FRANJA_H = 2;   // vence 2 h antes: así la franja de las 2 p. m. del día siguiente la recoge
+export const HOLGURA_FRANJA_H = 2;   // vence 2 h antes: así la franja de las 5 a. m. del día siguiente la recoge
 const MAX_COMENTARIOS = 80;
 const ID = /^[A-Za-z0-9_-]{1,40}$/;
 const iso = (ms) => new Date(ms).toISOString();
@@ -33,10 +35,10 @@ export function validarPropuesta(lista) {
   return { comentarios, errores: [] };
 }
 
-export function publicarPropuesta(p, comentarios, ahoraMs) {
+export function publicarPropuesta(p, comentarios, ahoraMs, horas = HORAS_REVISION) {
   return {
     ...p, estado: "en_revision", automatico: false,
-    propuesta: { publicada: iso(ahoraMs), vence: iso(ahoraMs + HORAS_REVISION * 3600e3), version: (p.propuesta?.version || 0) + 1, comentarios },
+    propuesta: { publicada: iso(ahoraMs), vence: iso(ahoraMs + horas * 3600e3), version: (p.propuesta?.version || 0) + 1, comentarios },
     revision: { orden: comentarios.filter((c) => c.dentro).map((c) => c.id), fuera: comentarios.filter((c) => !c.dentro).map((c) => c.id),
                 lineas: {}, trae_mas: false, aprobada_en: null },
   };
@@ -63,8 +65,9 @@ const versionVieja = (p, version) => version !== p.propuesta.version;
 
 export function noEditable(p, ahoraMs) {
   if (p.estado !== "en_revision" || !p.propuesta || !p.revision) return "Este pedido no está en revisión.";
-  if (p.revision.trae_mas) return "Ya pediste más comentarios: llegan en la franja de las 2 p. m.";
-  if (vencida(p, ahoraMs)) return "Se venció el plazo: se aprueba solo con la lista como está.";
+  if (p.revision.trae_mas) return "Ya pediste más comentarios: llegan en la franja de las 5 a. m.";
+  if (vencida(p, ahoraMs))
+    return esCabina(p) ? "Se venció el plazo: sale solo como story corta." : "Se venció el plazo: se aprueba solo con la lista como está.";
   return null;
 }
 
@@ -90,14 +93,21 @@ export function aplicarRevision(p, c, ahoraMs) {
   return { pedido: { ...p, revision: { ...p.revision, orden, fuera, lineas: { ...lineas } } }, errores: [] };
 }
 
+// Spec cabina §4: un candidato se aprueba con su gancho subido y al menos un tramo.
+export const faltaParaAprobar = (p) =>
+  (esCabina(p) ? [!(p.gancho?.tamano > 0) && "tu gancho", !p.tramos?.length && "marcar al menos un tramo"].filter(Boolean) : []);
+
 // version: la de la propuesta que vio el navegador (obligatoria; si no coincide, error).
 export function aprobarRevision(p, ahoraMs, version) {
   const no = noEditable(p, ahoraMs);
   if (no) return { pedido: p, errores: [no] };
   if (versionVieja(p, version)) return { pedido: p, errores: [VIEJA], conflicto: true };
+  const falta = faltaParaAprobar(p);
+  if (falta.length) return { pedido: p, errores: [`Falta: ${falta.join(", ")}.`], faltan: true };
   return { pedido: { ...p, estado: "aprobado", automatico: false, revision: { ...p.revision, aprobada_en: iso(ahoraMs) } }, errores: [] };
 }
 export function pedirMas(p, ahoraMs, version) {
+  if (esCabina(p)) return { pedido: p, errores: ["La Cabina no tiene «Trae más»."] };
   const no = noEditable(p, ahoraMs);
   if (no) return { pedido: p, errores: [no] };
   if (versionVieja(p, version)) return { pedido: p, errores: [VIEJA], conflicto: true };
@@ -120,6 +130,10 @@ export const quitar = (rev, id) =>
 export const meter = (rev, id) =>
   !rev.fuera.includes(id) ? rev : { ...rev, fuera: rev.fuera.filter((x) => x !== id), orden: [...rev.orden, id] };
 export const moverEn = (rev, i, paso) => ({ ...rev, orden: mover(rev.orden, i, paso) });
+export function moverAEn(rev, de, a) {
+  const orden = moverA(rev.orden, de, a);
+  return orden === rev.orden ? rev : { ...rev, orden };
+}
 export function editarLinea(rev, id, texto, original) {
   const lineas = { ...rev.lineas };
   if (id === "__proto__") return rev;

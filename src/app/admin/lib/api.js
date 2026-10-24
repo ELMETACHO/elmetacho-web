@@ -1,8 +1,9 @@
 // Lógica de las API de /admin con dependencias inyectadas (las rutas pasan Redis, Blob y Telegram reales). Spec admin §6.
 import { COOKIE, claveCorrecta, cookieBorrada, cookieSesion, firmarSesion, leerCookie, sesionValida, tokenPcValido } from "./sesion.js";
 import { estaBloqueado, limpiarIntentos, registrarFallo } from "./intentos.js";
-import { DESTINOS, EN_EL_PC, TIPOS_DISPONIBLES, TIPOS_STORY, destinoDe, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, subidaPermitida, tipoDe } from "./pedido.js";
+import { DESTINOS, TIPOS_DISPONIBLES, TIPOS_STORY, destinoDe, esCabina, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, sePuedeCancelar, subidaPermitida, tipoDe } from "./pedido.js";
 import { aplicarRevision, aprobarRevision, aprobarVencido, listaFinal, masAtendido, noEditable, pedirMas, publicarPropuesta, puedePublicarPropuesta, validarPropuesta, vencida, yaPublicada } from "./revision.js";
+import { rutasCabina } from "./api-cabina.js";
 
 const json = (d, status = 200, headers = {}) => Response.json(d, { status, headers });
 const NO = () => json({ error: "No autorizado." }, 401);
@@ -28,13 +29,14 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
     const p = await almacen.leer(id);
     if (!p) return json({ error: "Ese pedido no existe." }, 404);
     const { version } = await cuerpo(req);
-    const { pedido, errores } = paso(p, ahora(), version);
-    if (errores.length) return json({ error: errores.join(" ") }, 409);
+    const { pedido, errores, faltan } = paso(p, ahora(), version);
+    if (errores.length) return json({ error: errores.join(" ") }, faltan ? 400 : 409);   // «Falta: …» no es un conflicto de versión
     await almacen.guardar(pedido);
     return json({ ok: true });
   }
 
   return {
+    ...rutasCabina({ almacen, blob, ahora, azar, json, cuerpo, conSesion, delPc }),
     sesionDe,
     entrar: async (req) => {
       if (await estaBloqueado(almacen, ip(req))) return json({ error: "Demasiados intentos. Espera 15 minutos." }, 429);
@@ -56,6 +58,10 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
     cambiar: conSesion(async (req, id) => {
       const p = await almacen.leer(id);
       if (!p) return json({ error: "Ese pedido no existe." }, 404);
+      if (esCabina(p)) {
+        const no = noEditable(p, ahora());   // plazo vencido, aprobado o ya en el PC
+        if (no) return json({ error: no }, 409);
+      }
       const c = await cuerpo(req);
       const { pedido, errores } = aplicarCambios(p, c);
       if (errores.length) return json({ error: errores.join(" ") }, 400);
@@ -73,7 +79,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
         const malo = await verificarArchivos(p);
         if (malo) return json({ error: malo }, 400);
         await almacen.guardar({ ...p, pantallazos_listos: true });
-        await avisar(`📥 Recibí los pantallazos de ${nombreVisible(p)} — sale a las 2 p. m.`).catch(() => {});
+        await avisar(`📥 Recibí los pantallazos de ${nombreVisible(p)} — sale a las 5 a. m.`).catch(() => {});
         return json({ ok: true });
       }
       if (p.estado !== "subiendo") return json({ error: "Ya estaba enviado." }, 409);
@@ -83,16 +89,17 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       if (malo) return json({ error: malo }, 400);
       await almacen.guardar({ ...p, estado: "listo" });
       const cuando = {
-        link: "a las 2 p. m. Claude escoge los comentarios y te mando el enlace para revisarlos.",
-        remix: "remix: sale a las 2 p. m., sin revisión (mismos comentarios en otro orden, con otra canción).",
-      }[tipoDe(p)] ?? "sale a las 2 p. m.";
+        link: "a las 5 a. m. Claude escoge los comentarios y te mando el enlace para revisarlos.",
+        remix: "remix: sale a las 5 a. m., sin revisión (mismos comentarios en otro orden, con otra canción).",
+      }[tipoDe(p)] ?? "sale a las 5 a. m.";
       await avisar(`📥 Recibí${destinoDe(p) === "story" ? " la story" : ""}: ${nombreVisible(p)} — ${cuando}`).catch(() => {});
       return json({ ok: true });
     }),
     cancelar: conSesion(async (req, id) => {
       const p = await almacen.leer(id);
       if (!p) return json({ ok: true });
-      if (EN_EL_PC.includes(p.estado)) return json({ error: "El PC lo está haciendo; ya no se puede cancelar." }, 409);
+      if (!sePuedeCancelar(p))
+        return json({ error: esCabina(p) ? "Ese candidato ya está decidido: lo tiene el PC." : "El PC lo está haciendo; ya no se puede cancelar." }, 409);
       await blob.borrarPrefijo(prefijo(p.id));
       await almacen.borrar(id);
       return json({ ok: true });
@@ -165,7 +172,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       return json({ ok: true, version: nuevo.propuesta.version, vence: nuevo.propuesta.vence });
     }),
     pcAprobados: delPc(async () => {
-      const todos = await almacen.listar();
+      const todos = (await almacen.listar()).filter((p) => !esCabina(p));   // la Cabina tiene su ruta: GET /admin/api/pc/cabina
       for (const [k, p] of todos.entries()) {
         if (vencida(p, ahora())) {
           todos[k] = aprobarVencido(p, ahora());
