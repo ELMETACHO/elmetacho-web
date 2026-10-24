@@ -5,10 +5,10 @@ import { EN_EL_PC, tonoEstado } from "./lib/pedido.js";
 
 const ETIQUETA = {
   subiendo: () => "Sin enviar",
-  listo: () => "Listo para las 2 p. m.",
+  listo: () => "Listo para las 5 a. m.",
   en_revision: () => "Esperando tu revisión",
-  aprobado: () => "Aprobado: se edita en la franja de las 2 p. m.",
-  necesita_pantallazos: (p) => (p.listos ? "Pantallazos recibidos: sale a las 2 p. m." : "TikTok no dejó leer los comentarios: sube pantallazos"),
+  aprobado: () => "Aprobado: se edita en la franja de las 5 a. m.",
+  necesita_pantallazos: (p) => (p.listos ? "Pantallazos recibidos: sale a las 5 a. m." : "TikTok no dejó leer los comentarios: sube pantallazos"),
   en_pc: () => "El PC lo está haciendo",
   fallido: (p) => `Falló: ${p.motivo || "sin detalle"}`,
 };
@@ -56,7 +56,7 @@ export default function ListaPedidos({ pedidos, cabina = [], error }) {
                 <a href={`/admin/cabina/${c.id}`} className="adm-tarjeta flex items-center gap-3 text-inherit no-underline">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{c.nombre}</p>
-                    <p className="adm-sub text-xs">{c.comentarios} comentarios</p>
+                    <p className="adm-sub text-xs">{c.comentarios} {c.comentarios === 1 ? "comentario" : "comentarios"}</p>
                   </div>
                   <span className={`adm-etq shrink-0 ${c.dias <= 1 ? "espera" : "camino"}`}>{textoDias(c.dias)}</span>
                 </a>

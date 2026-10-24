@@ -23,11 +23,11 @@ const SECCIONES = {
   remix: ["link", "publicado", "original", "gancho", "estilo"],
 };
 const LISTO = {
-  pantallazos: "Listo: sale a las 2 p. m.",
-  link: "Listo: a las 2 p. m. Claude escoge los comentarios y te llega el enlace para revisarlos.",
-  remix: "Listo: el remix sale a las 2 p. m., sin revisión.",
+  pantallazos: "Listo: sale a las 5 a. m.",
+  link: "Listo: a las 5 a. m. Claude escoge los comentarios y te llega el enlace para revisarlos.",
+  remix: "Listo: el remix sale a las 5 a. m., sin revisión.",
 };
-const LISTO_STORY = "Listo: la story sale a las 2 p. m. y te llega por Telegram.";
+const LISTO_STORY = "Listo: la story sale a las 5 a. m. y te llega por Telegram.";
 
 const Seccion = ({ titulo, children }) => (
   <section className="adm-tarjeta flex flex-col gap-3">

@@ -48,7 +48,7 @@ export default function SubirPantallazos({ id, nombre, motivo, remix = false }) 
     return (
       <div className="adm-tarjeta mt-10 flex flex-col items-center gap-4 p-6 text-center">
         <p className="text-xl font-bold text-[var(--verde)]">
-          {remix ? "Listo: el remix sale a las 2 p. m. con estos pantallazos." : "Listo: sale a las 2 p. m. como pedido con pantallazos."}
+          {remix ? "Listo: el remix sale a las 5 a. m. con estos pantallazos." : "Listo: sale a las 5 a. m. como pedido con pantallazos."}
         </p>
         <a href="/admin" className="adm-btn secundario">Volver a la lista</a>
       </div>

@@ -74,8 +74,10 @@ export function rutasCabina({ almacen, blob, ahora, azar, json, cuerpo, conSesio
       for (const leido of await almacen.listar()) {
         if (!esCabina(leido)) continue;
         if (aPurgar(leido, t)) {
-          await blob.borrarPrefijo(prefijo(leido.id));
-          await almacen.borrar(leido.id);
+          try {
+            await blob.borrarPrefijo(prefijo(leido.id));
+            await almacen.borrar(leido.id);
+          } catch { /* un fallo de Blob no tumba la respuesta: se reintenta en la siguiente consulta */ }
           continue;
         }
         const p = vencerCandidato(leido, t);

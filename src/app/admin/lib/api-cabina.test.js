@@ -234,6 +234,29 @@ test("lista: purga lo no publicado en 24 h y lo que lleva 7 dÃ­as en revisiÃ³n, 
   assert.deepEqual(m.borrados, [`cantados/${sinPublicar}/`, `cantados/${olvidado}/`]);
 });
 
+test("lista: un borrarPrefijo que lanza en un candidato a purgar no tumba el GET; se reintenta después", async () => {
+  const reloj = { t: T };
+  const m = montar(reloj);
+  const viejo = await crear(m);
+  const decidido = await publicado(m);
+  await aprobadoAMano(m, decidido);
+  reloj.t = T + 24 * H + 1000;   // `viejo` (sin publicar) toca purgar
+  let falla = true;
+  const api = crearApi({
+    almacen: m.almacen, env: { ADMIN_CLAVE: "secreta", ADMIN_PC_TOKEN: "pc-tok" }, ahora: () => reloj.t,
+    blob: { tamano: async () => null, enlace: async (p) => `https://firmado/${p}`, tokenSubida: async () => "t",
+      borrarPrefijo: async (pre) => { if (falla) throw new Error("Blob caído"); m.borrados.push(pre); } },
+    avisar: async () => {},
+  });
+  const r = await api.pcCabinaLista(pc(undefined, "GET"));
+  assert.equal(r.status, 200);
+  assert.deepEqual((await r.json()).decididos.map((d) => d.id), [decidido]);
+  assert.notEqual(await m.almacen.leer(viejo), null);   // sigue ahí: se reintenta
+  falla = false;
+  assert.equal((await api.pcCabinaLista(pc(undefined, "GET"))).status, 200);
+  assert.equal(await m.almacen.leer(viejo), null);
+});
+
 test("bajado: aprobado â†’ en_pc, borra el Blob y deja los archivos en null; repetido = 200; sin decidir = 409", async () => {
   const m = montar();
   const id = await publicado(m);

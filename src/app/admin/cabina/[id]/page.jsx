@@ -16,7 +16,7 @@ export default async function PaginaCabina({ params }) {
   // noEditable usa `vencida` de revision.js (vence − holgura = 70 h): vencido, la página lo dice y no deja editar.
   const aviso = !esCabina(p) || !p.propuesta || !p.vista_previa
     ? "Este candidato ya no está en la Cabina."
-    : p.estado === "aprobado" ? "Ya está aprobado: sale en la franja de las 2 p. m." : noEditable(p, t);
+    : p.estado === "aprobado" ? "Ya está aprobado: sale en la franja de las 5 a. m." : noEditable(p, t);
   if (aviso)
     return (
       <div className="adm-tarjeta mt-10 flex flex-col items-center gap-4 p-6 text-center">

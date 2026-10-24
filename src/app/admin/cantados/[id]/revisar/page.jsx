@@ -19,7 +19,7 @@ export default async function PaginaRevisar({ params }) {
         <a href="/admin" className="adm-btn secundario">Volver a la lista</a>
       </div>
     );
-  const aviso = p.estado === "aprobado" ? "Ya está aprobado: se edita en la franja de las 2 p. m." : noEditable(p, t);
+  const aviso = p.estado === "aprobado" ? "Ya está aprobado: se edita en la franja de las 5 a. m." : noEditable(p, t);
   const rev = p.revision ?? { orden: [], fuera: [], lineas: {} };
   return (
     <Revisar id={p.id} nombre={nombreVisible(p)} comentarios={p.propuesta.comentarios} version={p.propuesta.version}

@@ -120,7 +120,7 @@ export default function Cabina({ id, nombre, link, comentarios, version, revisio
   const faltan = [!gancho && "tu gancho", tramos.length === 0 && "marcar al menos un tramo"].filter(Boolean);
 
   async function aprobar() {
-    if (enviandoRef.current || faltan.length || subiendo) return;
+    if (enviandoRef.current || faltan.length || subiendo || recargar) return;   // recargar = hay un guardado fallido sin reponer
     enviandoRef.current = true;
     setEnviando(true);
     setError("");
@@ -135,7 +135,7 @@ export default function Cabina({ id, nombre, link, comentarios, version, revisio
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw Object.assign(new Error(d.error || "No se pudo aprobar."), { status: r.status });
-      setCerrada("Aprobado: sale en la franja de las 2 p. m.");
+      setCerrada("Aprobado: sale en la franja de las 5 a. m.");
     } catch (e) {
       if (e.status === 409) {
         viejaRef.current = true;
@@ -237,7 +237,7 @@ export default function Cabina({ id, nombre, link, comentarios, version, revisio
           <button disabled={bloqueado || subiendo} className="adm-btn peligro grande" onClick={descartar}>
             Descartar
           </button>
-          <button disabled={bloqueado || subiendo || faltan.length > 0} className="adm-btn primario grande" onClick={aprobar}>
+          <button disabled={bloqueado || subiendo || recargar || faltan.length > 0} className="adm-btn primario grande" onClick={aprobar}>
             {enviando ? "Guardando…" : subiendo ? "Subiendo…" : "Aprobar"}
           </button>
         </div>

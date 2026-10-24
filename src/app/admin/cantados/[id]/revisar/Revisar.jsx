@@ -84,7 +84,7 @@ export default function Revisar({ id, nombre, comentarios, version, revisionInic
         <a href="/admin" className={enlace}>Volver</a>
       </div>
       <p className="adm-aviso">
-        Se aprueba solo en {horas} h (en la franja de las 2 p. m.). Cada cambio se guarda solo. Arrastra desde ⠿ o usa las flechas.
+        Se aprueba solo en {horas} h (en la franja de las 5 a. m.). Cada cambio se guarda solo. Arrastra desde ⠿ o usa las flechas.
       </p>
       {error && (
         <div className="adm-error flex flex-col gap-2">
@@ -105,12 +105,12 @@ export default function Revisar({ id, nombre, comentarios, version, revisionInic
         onError={setError} />
       <div className="adm-pie fixed inset-x-0 bottom-0 mx-auto grid max-w-[480px] grid-cols-2 gap-2 p-4">
         <button disabled={bloqueado} className="adm-btn contorno grande"
-          onClick={() => confirm("¿Pedir otros comentarios en lugar de los que quitaste? Llegan en la franja de las 2 p. m.")
-            && cerrar("trae-mas", "Listo: en la franja de las 2 p. m. Claude pone otros en lugar de los que quitaste y te llega el enlace otra vez.")}>
+          onClick={() => confirm("¿Pedir otros comentarios en lugar de los que quitaste? Llegan en la franja de las 5 a. m.")
+            && cerrar("trae-mas", "Listo: en la franja de las 5 a. m. Claude pone otros en lugar de los que quitaste y te llega el enlace otra vez.")}>
           Trae más
         </button>
         <button disabled={bloqueado} className="adm-btn primario grande"
-          onClick={() => cerrar("aprobar", "Aprobado: se edita en la franja de las 2 p. m.")}>
+          onClick={() => cerrar("aprobar", "Aprobado: se edita en la franja de las 5 a. m.")}>
           Aprobar
         </button>
       </div>

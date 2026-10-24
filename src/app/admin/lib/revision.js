@@ -4,7 +4,7 @@ import { moverA } from "./arrastre.js";
 import { esCabina } from "./pedido.js";
 
 export const HORAS_REVISION = 24;
-export const HOLGURA_FRANJA_H = 2;   // vence 2 h antes: así la franja de las 2 p. m. del día siguiente la recoge
+export const HOLGURA_FRANJA_H = 2;   // vence 2 h antes: así la franja de las 5 a. m. del día siguiente la recoge
 const MAX_COMENTARIOS = 80;
 const ID = /^[A-Za-z0-9_-]{1,40}$/;
 const iso = (ms) => new Date(ms).toISOString();
@@ -65,7 +65,7 @@ const versionVieja = (p, version) => version !== p.propuesta.version;
 
 export function noEditable(p, ahoraMs) {
   if (p.estado !== "en_revision" || !p.propuesta || !p.revision) return "Este pedido no está en revisión.";
-  if (p.revision.trae_mas) return "Ya pediste más comentarios: llegan en la franja de las 2 p. m.";
+  if (p.revision.trae_mas) return "Ya pediste más comentarios: llegan en la franja de las 5 a. m.";
   if (vencida(p, ahoraMs))
     return esCabina(p) ? "Se venció el plazo: sale solo como story corta." : "Se venció el plazo: se aprueba solo con la lista como está.";
   return null;
