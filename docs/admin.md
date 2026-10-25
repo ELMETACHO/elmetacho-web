@@ -97,6 +97,8 @@ Las pone Oscar; nunca se escriben en el repo (es público) ni las abre Claude.
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Ya existen en Vercel | Aviso "Recibí…" al enviar un pedido |
 | `IG_WEBHOOK_VERIFY_TOKEN` | Vercel (Production) | Frase que se inventa Oscar y pega también en Meta (app «M LABS REPLY» → webhooks → «Identificador de verificación») |
 | `IG_APP_SECRET`, `META_APP_SECRET` | Vercel (Production) | Claves secretas de la app de Instagram y de la app de Meta, para comprobar la firma de cada aviso del webhook |
+| `IG_CUENTA_CABINA` | Vercel (Production) | Id de elmetacho_ (`17841402790807435`): los DM que llegan a esa cuenta van a la cola de la Cabina |
+| `IG_CUENTA_PALABRAS` | Vercel (Production) | Id de metacholabs (`17841480070378472`): comentarios y mensajes para las palabras clave |
 
 **Recomendación:** `ADMIN_CLAVE` larga y aleatoria (**20 caracteres o más**). Si alguien roba la cookie, puede intentar adivinar la clave sin conexión (la cookie va firmada con una llave derivada de ella); el límite de 5 intentos no lo frena. Lo mismo para `ADMIN_PC_TOKEN`. Genéralas con un administrador de contraseñas.
 
@@ -139,6 +141,8 @@ Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la c
 | `GET /admin/api/cabina/<id>/medios` | Sesión | `{vista, medios: {idComentario: url}}` firmadas 12 h, solo en `en_revision` (otro estado → 409) |
 | `GET /api/instagram/webhook` | Meta | Verificación del webhook: devuelve `hub.challenge` si `hub.verify_token` es `IG_WEBHOOK_VERIFY_TOKEN`; si no, 403 |
 | `POST /api/instagram/webhook` | Meta (firma `X-Hub-Signature-256`) | Avisos de DM: saca los reels compartidos (`ig_reel`) y los links de TikTok/Instagram del texto, sin `?…`, y los pone en la cola `cabina:dm:links` (`{link, recibido}`) si no están en `cabina:dm:vistos`. No guarda el mensaje ni quién lo mandó. Firma mala → 401; Redis caído → 500 (Meta reintenta hasta 36 h) |
+| `GET /admin/api/pc/dm-links` | Solo PC | `{links}`: links de DM aún no confirmados, más viejo primero (no marca nada) |
+| `POST /admin/api/pc/dm-links/recibidos` | Solo PC | `{links}` → los marca entregados (`cabina:dm:entregados`) → `{ok, confirmados}` |
 
 Sin sesión → 401 (salvo `subir`, que da 400; y el login, que puede dar 429 si está bloqueado). El token del PC no sirve en las rutas de sesión y la cookie no sirve en las del PC. No hay `proxy.js`: la sesión se verifica en `layout.jsx` y al inicio de cada API.
 
