@@ -29,7 +29,7 @@ const blob = {
     validUntil: Date.now() + 3600e3,
   }),
 };
-async function avisar(texto) {
+export async function avisar(texto) {
   const { TELEGRAM_BOT_TOKEN: t, TELEGRAM_CHAT_ID: chat } = process.env;
   if (!t || !chat) return;
   await fetch(`https://api.telegram.org/bot${t}/sendMessage`, {

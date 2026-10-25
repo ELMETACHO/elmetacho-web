@@ -1,0 +1,47 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { redisMemoria } from "./redis-memoria.js";
+import { renovarSiHaceFalta, tokenDe } from "./token.js";
+import { crearManejoDeError, enPausa } from "./estado.js";
+import { ErrorMeta } from "./graph.js";
+
+const DIA = 86400e3;
+const env = { IG_CUENTA_PALABRAS: "222", IG_TOKEN_LABS: "V" };
+
+test("token: Redis gana sobre la variable; otra cuenta no tiene", async () => {
+  const r = redisMemoria();
+  assert.equal(await tokenDe(r, env, "222"), "V");
+  assert.equal(await tokenDe(r, env, "111"), null);
+  await r.set("ig:222:token", JSON.stringify({ token: "N", vence: 1 }));
+  assert.equal(await tokenDe(r, env, "222"), "N");
+});
+
+test("renovar: vigente no llama; cerca de vencer renueva; error avisa con explicación", async () => {
+  const r = redisMemoria(), avisos = [], ahora = () => 1000 * DIA;
+  let llamadas = 0;
+  const renovar = async () => { llamadas++; return { access_token: "N", expires_in: 60 * 86400 }; };
+  assert.equal(await renovarSiHaceFalta({ r, env, cuenta: "222", ahora, renovar, avisar: async (t) => avisos.push(t) }), "renovado");
+  assert.equal(JSON.parse(await r.get("ig:222:token")).token, "N");
+  assert.equal(await renovarSiHaceFalta({ r, env, cuenta: "222", ahora, renovar, avisar: async (t) => avisos.push(t) }), "vigente");
+  assert.equal(llamadas, 1);
+  const falla = async () => { throw new Error("token demasiado nuevo"); };
+  assert.equal(await renovarSiHaceFalta({ r: redisMemoria(), env, cuenta: "222", ahora, renovar: falla, avisar: async (t) => avisos.push(t) }), "error");
+  assert.match(avisos.at(-1), /menos de 24 h/);
+  assert.equal(await renovarSiHaceFalta({ r: redisMemoria(), env: {}, cuenta: "222", ahora, renovar, avisar: async (t) => avisos.push(t) }), "sin token");
+});
+
+test("errores: token inválido pausa 6 h y borra el token guardado; 3 fallos en una hora avisan una vez", async () => {
+  const reloj = { t: 0 }, r = redisMemoria(() => reloj.t), avisos = [];
+  const manejar = crearManejoDeError({ r, cuenta: "222", ahora: () => reloj.t, avisar: async (t) => avisos.push(t) });
+  await r.set("ig:222:token", JSON.stringify({ token: "N", vence: 1 }));
+  await manejar(new ErrorMeta("Invalid OAuth", 190));
+  await manejar(new ErrorMeta("Invalid OAuth", 190));
+  assert.equal(await enPausa(r, "222"), true);
+  assert.equal(await r.get("ig:222:token"), null);
+  assert.equal(avisos.length, 1);
+  reloj.t = 6 * 3600e3 + 1;
+  assert.equal(await enPausa(r, "222"), false);
+  for (let k = 0; k < 4; k++) await manejar(new ErrorMeta("otro", 10));
+  assert.equal(avisos.length, 2);
+  assert.match(avisos[1], /3 fallos/);
+});
