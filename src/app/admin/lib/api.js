@@ -200,10 +200,10 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       const p = await almacen.leer(id);
       if (!p) return json({ error: "Ese pedido no existe." }, 404);
       // Repetición del PC (se perdió la respuesta): ya los está pidiendo; no se borra lo subido ni se avisa otra vez.
-      const conLink = ["link", "remix"].includes(tipoDe(p));   // remix: los pantallazos reemplazan la búsqueda en TikTok
+      const conLink = ["link", "remix"].includes(tipoDe(p));   // remix: los pantallazos reemplazan la búsqueda en TikTok o Instagram
       if (conLink && p.estado === "necesita_pantallazos") return json({ ok: true });
       if (!conLink || p.estado !== "en_pc") return json({ error: "Ese pedido no puede pasar a pantallazos." }, 409);
-      const motivo = String((await cuerpo(req)).motivo || "TikTok no dejó leer los comentarios").slice(0, 300);
+      const motivo = String((await cuerpo(req)).motivo || "No se pudieron leer los comentarios (TikTok o Instagram)").slice(0, 300);
       await almacen.guardar({ ...p, estado: "necesita_pantallazos", pantallazos: [], pantallazos_listos: false, motivo });
       await avisar(`📸 ${nombreVisible(p)}: ${motivo}. Sube los pantallazos aquí: ${enlace(req, p.id, "pantallazos")}`).catch(() => {});
       return json({ ok: true });

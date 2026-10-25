@@ -153,6 +153,15 @@ async function pedidoLink(api, tamanos) {
   return id;
 }
 
+test("pedido por link con Instagram: el link se guarda canónico y el PC lo recibe así", async () => {
+  const { api, tamanos } = montar();
+  const id = await pedidoLink(api, tamanos);
+  assert.equal((await api.cambiar(conSesion({ link: "https://instagram.com/fulano/reel/DUf9yHRDRsx?igsh=abc" }, "PATCH"), id)).status, 200);
+  assert.equal((await api.enviar(conSesion(), id)).status, 200);
+  const [p] = await (await api.pcPedidos(pc())).json();
+  assert.equal(p.link, "https://www.instagram.com/reel/DUf9yHRDRsx/");
+});
+
 test("crear: el tipo viene en el cuerpo; sin cuerpo es pantallazos; remix sí; basura no", async () => {
   const { api, almacen } = montar();
   const { id } = await (await api.crear(conSesion())).json();

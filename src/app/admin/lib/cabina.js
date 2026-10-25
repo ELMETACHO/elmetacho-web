@@ -1,5 +1,5 @@
 // Candidatos de la Cabina: el sondeo del PC los crea y sube; Oscar los revisa en /admin. Spec 2026-10-23-admin-cabina-design §4.
-import { destinoDe, esCabina, linkValido, nuevoPedido, prefijo } from "./pedido.js";
+import { MSG_LINK, destinoDe, esCabina, linkValido, normalizarLink, nuevoPedido, prefijo } from "./pedido.js";
 import { HOLGURA_FRANJA_H, listaFinal, publicarPropuesta, validarPropuesta, vencida } from "./revision.js";
 
 export const HORAS_CABINA = 72;   // vence = publicada + 72 h; se da por vencido HOLGURA_FRANJA_H antes (70 h), como los pedidos por link
@@ -23,7 +23,7 @@ const entero = (x) => Number.isInteger(x) && x > 0;
 export function validarCandidato(id, c) {
   const mal = (e) => ({ errores: [e] });
   if (!c || typeof c !== "object" || Array.isArray(c)) return mal("Datos inválidos.");
-  if (!linkValido(c.link)) return mal("El link debe ser de TikTok: https://www.tiktok.com/…, https://vm.tiktok.com/… o https://vt.tiktok.com/…");
+  if (!linkValido(c.link)) return mal(MSG_LINK);
   const v = c.vista;
   if (!v || typeof v !== "object" || !positivo(v.duracion) || !entero(v.ancho) || !entero(v.alto))
     return mal("La vista previa necesita duracion (s), ancho y alto (px).");
@@ -43,7 +43,7 @@ export function validarCandidato(id, c) {
     }
     salida.push({ ...base, likes, respuestas, medio });
   }
-  return { link: c.link.trim(), vista: { duracion: v.duracion, ancho: v.ancho, alto: v.alto }, comentarios: salida, errores: [] };
+  return { link: normalizarLink(c.link), vista: { duracion: v.duracion, ancho: v.ancho, alto: v.alto }, comentarios: salida, errores: [] };
 }
 
 export const nuevoCandidato = (id, creado, d) => ({
@@ -99,7 +99,7 @@ export function aPurgar(p, ahoraMs) {
 export const diasRestantes = (p, ahoraMs) =>
   Math.max(0, Math.ceil((Date.parse(p.propuesta?.vence) - HOLGURA_FRANJA_H * 3600e3 - ahoraMs) / 864e5)) || 0;
 export const textoDias = (dias) => (dias <= 0 ? "sale solo en la próxima franja" : dias === 1 ? "sale solo en 1 día" : `sale solo en ${dias} días`);
-export const nombreCabina = (p) => String(p.link || p.id).replace(/^https:\/\/(www\.)?/, "");
+export const nombreCabina = (p) => String(p.link || p.id).replace(/^https:\/\/(www\.)?/, "").replace(/\/$/, "");
 
 // Lista de /admin: el bloque «Cabina (N)» (solo en revisión, el que vence antes primero) y los pedidos normales.
 export function separarCabina(lista, ahoraMs) {

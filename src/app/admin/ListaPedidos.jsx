@@ -8,7 +8,7 @@ const ETIQUETA = {
   listo: () => "Listo para las 5 a. m.",
   en_revision: () => "Esperando tu revisión",
   aprobado: () => "Aprobado: se edita en la franja de las 5 a. m.",
-  necesita_pantallazos: (p) => (p.listos ? "Pantallazos recibidos: sale a las 5 a. m." : "TikTok no dejó leer los comentarios: sube pantallazos"),
+  necesita_pantallazos: (p) => (p.listos ? "Pantallazos recibidos: sale a las 5 a. m." : "No se pudieron leer los comentarios (TikTok o Instagram): sube pantallazos"),
   en_pc: () => "El PC lo está haciendo",
   fallido: (p) => `Falló: ${p.motivo || "sin detalle"}`,
 };

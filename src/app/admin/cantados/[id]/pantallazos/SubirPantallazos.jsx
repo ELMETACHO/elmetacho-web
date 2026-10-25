@@ -60,7 +60,7 @@ export default function SubirPantallazos({ id, nombre, motivo, remix = false }) 
         <a href="/admin" className="adm-btn secundario chico">Volver</a>
       </div>
       <p className="adm-aviso">
-        {nombre}: {motivo || "TikTok no dejó leer los comentarios"}.{" "}
+        {nombre}: {motivo || "No se pudieron leer los comentarios (TikTok o Instagram)"}.{" "}
         {remix
           ? "Sube pantallazos de los comentarios que salen en tu video publicado, en el mismo orden en que aparecen en el video. El PC los usa para armar el remix y luego los reordena."
           : "Sube los pantallazos en el orden que quieres; el video, el bucle y el gancho ya los tiene el PC."}
