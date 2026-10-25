@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { redisMemoria } from "./redis-memoria.js";
 import { renovarSiHaceFalta, tokenDe } from "./token.js";
-import { crearManejoDeError, enPausa } from "./estado.js";
+import { crearManejoDeError, enPausa, pausar } from "./estado.js";
 import { ErrorMeta } from "./graph.js";
 
 const DIA = 86400e3;
@@ -44,4 +44,19 @@ test("errores: token inválido pausa 6 h y borra el token guardado; 3 fallos en 
   for (let k = 0; k < 4; k++) await manejar(new ErrorMeta("otro", 10));
   assert.equal(avisos.length, 2);
   assert.match(avisos[1], /3 fallos/);
+});
+
+test("renovar con token inválido (190): pausa y avisa sin el texto de «menos de 24 h»", async () => {
+  const r = redisMemoria(), avisos = [];
+  const renovar = async () => { throw new ErrorMeta("Invalid OAuth", 190); };
+  assert.equal(await renovarSiHaceFalta({ r, env, cuenta: "222", ahora: () => 1000 * DIA, renovar, avisar: async (t) => avisos.push(t) }), "error");
+  assert.equal(await enPausa(r, "222"), true);
+  assert.equal(avisos.length, 1);
+  assert.doesNotMatch(avisos[0], /menos de 24 h/);
+});
+
+test("pausar: si el aviso falla, la pausa queda puesta y no se propaga el error", async () => {
+  const r = redisMemoria();
+  await pausar(r, "222", async () => { throw new Error("Telegram caído"); }, "x");
+  assert.equal(await enPausa(r, "222"), true);
 });
