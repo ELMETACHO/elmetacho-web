@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { redisMemoria } from "./redis-memoria.js";
 import { renovarSiHaceFalta, tokenDe } from "./token.js";
-import { crearManejoDeError, enPausa, pausar } from "./estado.js";
+import { crearManejoDeError, enPausa, pausaVigente, pausar } from "./estado.js";
 import { ErrorMeta } from "./graph.js";
 
 const DIA = 86400e3;
@@ -59,4 +59,25 @@ test("pausar: si el aviso falla, la pausa queda puesta y no se propaga el error"
   const r = redisMemoria();
   await pausar(r, "222", async () => { throw new Error("Telegram caído"); }, "x");
   assert.equal(await enPausa(r, "222"), true);
+});
+
+test("la pausa termina con un token nuevo; sin token conocido dura hasta que venza", async () => {
+  const r = redisMemoria();
+  await pausar(r, "222", async () => {}, "x", "TOKEN_A");
+  assert.equal(await pausaVigente(r, "222", "TOKEN_A"), true);
+  assert.equal(await r.get("ig:222:pausa") === "TOKEN_A", false);   // no se guarda el token en claro
+  assert.equal(await pausaVigente(r, "222", "TOKEN_B"), false);
+  assert.equal(await r.get("ig:222:pausa"), null);
+  await pausar(r, "222", async () => {}, "x");
+  assert.equal(await r.get("ig:222:pausa"), "1");
+  assert.equal(await pausaVigente(r, "222", "TOKEN_B"), true);
+  assert.equal(await pausaVigente(redisMemoria(), "222", "TOKEN_B"), false);
+});
+
+test("error 190 guarda el hash del token que falló", async () => {
+  const r = redisMemoria();
+  const manejar = crearManejoDeError({ r, cuenta: "222", ahora: () => 0, avisar: async () => {}, token: "TOKEN_A" });
+  await manejar(new ErrorMeta("Invalid OAuth", 190));
+  assert.equal(await pausaVigente(r, "222", "TOKEN_A"), true);
+  assert.equal(await pausaVigente(r, "222", "TOKEN_B"), false);
 });

@@ -2,7 +2,8 @@
 // (spec 2026-10-25 §4.4–4.5). La doc de Meta no dice si una respuesta privada admite botones: por eso cualquier
 // mensaje del usuario con espera vigente cuenta como «Ya te sigo».
 import { clave } from "./claves.js";
-import { enPausa } from "./estado.js";
+import { pausaVigente } from "./estado.js";
+import { tokenInvalido } from "./graph.js";
 import { buscarDisparador, esRespuestaPropia } from "./palabras.js";
 
 export const BOTON = "Ya te sigo";
@@ -11,22 +12,24 @@ const DIA_S = 86400;
 const conBoton = (text) => ({ text, quick_replies: [{ content_type: "text", title: BOTON, payload: PAYLOAD }] });
 const conLink = (d) => ({ text: `${d.mensaje_dm}\n${d.link}` });
 
-export async function atenderComentario({ r, graph, disparadores, fallo }, a) {
+export async function atenderComentario({ r, graph, disparadores, fallo, token }, a) {
   if (!a.id || !a.usuario || a.usuario === a.cuenta) return "propio";
-  if (await enPausa(r, a.cuenta)) return "pausa";
+  if (await pausaVigente(r, a.cuenta, token)) return "pausa";
   const d = buscarDisparador(a.texto, disparadores);
   if (!d || esRespuestaPropia(a.texto, disparadores)) return "sin palabra";
   const nuevo = await r.set(clave(a.cuenta, "respondido", a.id), "1", { condition: "NX", expiration: { type: "EX", value: 8 * DIA_S } });
   if (!nuevo) return "repetido";
-  try {
-    await graph.responderComentario(a.id, d.respuesta_publica);
-  } catch (e) {
-    await fallo(e);   // p. ej. es respuesta a otro comentario: igual va el DM
+  if (!a.respuestaA) {   // Meta solo deja responder en público comentarios de primer nivel; al resto solo va el DM
+    try {
+      await graph.responderComentario(a.id, d.respuesta_publica);
+    } catch (e) {
+      await fallo(e);
+    }
   }
   try {
     if (d.pedir_seguir) {
-      await graph.privado(a.cuenta, a.id, conBoton("Para recibirlo, sígueme y toca 👇"));
-      await r.set(clave(a.cuenta, "esperando", a.usuario), d.id, { expiration: { type: "EX", value: DIA_S } });
+      await r.set(clave(a.cuenta, "esperando", a.usuario), d.id, { expiration: { type: "EX", value: DIA_S } });   // antes de enviar: el toque puede llegar enseguida
+      await privadoConRespaldo(graph, a.cuenta, a.id);
     } else {
       await graph.privado(a.cuenta, a.id, conLink(d));
     }
@@ -37,11 +40,21 @@ export async function atenderComentario({ r, graph, disparadores, fallo }, a) {
   }
 }
 
-export async function atenderMensaje({ r, graph, disparadores, fallo }, a) {
+// Si Meta rechaza el botón en la respuesta privada, se reintenta una vez con solo texto (cualquier mensaje cuenta).
+async function privadoConRespaldo(graph, cuenta, id) {
+  try {
+    await graph.privado(cuenta, id, conBoton("Para recibirlo, sígueme y toca 👇"));
+  } catch (e) {
+    if (tokenInvalido(e)) throw e;
+    await graph.privado(cuenta, id, { text: "Para recibirlo, sígueme y respóndeme cualquier mensaje 👇" });
+  }
+}
+
+export async function atenderMensaje({ r, graph, disparadores, fallo, token }, a) {
   const k = clave(a.cuenta, "esperando", a.usuario);
   const idD = a.usuario ? await r.get(k) : null;
   if (!idD) return "sin espera";
-  if (await enPausa(r, a.cuenta)) return "pausa";
+  if (await pausaVigente(r, a.cuenta, token)) return "pausa";
   const d = disparadores.find((x) => x.id === idD);
   if (!d) { await r.del(k); return "sin disparador"; }
   try {

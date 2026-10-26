@@ -22,7 +22,7 @@ export async function renovarSiHaceFalta({ r, env, cuenta, ahora, renovar, avisa
     await r.set(clave(cuenta, "token"), JSON.stringify({ token: n.access_token, vence: ahora() + n.expires_in * 1000 }));
     return "renovado";
   } catch (e) {
-    if (tokenInvalido(e)) { await pausar(r, cuenta, avisar, "el token no sirve al renovarlo"); return "error"; }
+    if (tokenInvalido(e)) { await pausar(r, cuenta, avisar, "el token no sirve al renovarlo", actual); return "error"; }
     await avisarSeguro(avisar, `⚠️ Instagram (${cuenta}): no pude renovar el token (${e.message}). Si lo generaste en Meta hace menos de 24 h es normal: sigue sirviendo y mañana se reintenta.`);
     return "error";
   }

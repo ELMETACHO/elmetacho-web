@@ -43,10 +43,10 @@ export async function POST(req) {
           console.log(`webhook instagram: ${a.links.length} link(s), ${n} nuevo(s) en la cola`);
         }
         if (a.tipo === "comentario" || a.tipo === "mensaje") {
-          const fallo = crearManejoDeError({ r, cuenta: a.cuenta, ahora: Date.now, avisar });
           const token = await tokenDe(r, process.env, a.cuenta);
           if (!token) { await pausar(r, a.cuenta, avisar, "falta IG_TOKEN_LABS"); continue; }
-          const deps = { r, graph: crearGraph({ token }), disparadores: await leerDisparadores(r, a.cuenta), fallo };
+          const fallo = crearManejoDeError({ r, cuenta: a.cuenta, ahora: Date.now, avisar, token });
+          const deps = { r, graph: crearGraph({ token }), disparadores: await leerDisparadores(r, a.cuenta), fallo, token };
           const res = a.tipo === "comentario" ? await atenderComentario(deps, a) : await atenderMensaje(deps, a);
           console.log(`webhook instagram: ${a.tipo} → ${res}`);
         }
