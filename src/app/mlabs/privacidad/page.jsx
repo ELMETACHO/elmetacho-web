@@ -67,7 +67,7 @@ export default function Privacidad() {
             <p>
               Tratamos los datos conforme a la Ley 1581 de 2012 (Habeas Data, Colombia). Puedes pedir
               acceso, rectificación o borrado de tus datos. Cómo hacerlo:{" "}
-              <Link href="/eliminar-datos" className="font-bold underline">
+              <Link href="https://mlabs.elmetacho.com/eliminar-datos" className="font-bold underline">
                 eliminar tus datos
               </Link>
               . Más información en la{" "}

@@ -30,7 +30,7 @@ export default function EliminarDatos() {
               usuario.
             </p>
             <p>
-              <Link href="/privacidad" className="font-bold underline">
+              <Link href="https://mlabs.elmetacho.com/privacidad" className="font-bold underline">
                 Ver la política de privacidad
               </Link>
             </p>

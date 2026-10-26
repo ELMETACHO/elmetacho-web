@@ -74,7 +74,7 @@ M LABS REPLY uses instagram_business_manage_comments on the account @metacholabs
 
 The business configures keywords and the public reply text in a private admin page (www.elmetacho.com/admin/palabras). When our webhook (https://mlabs.elmetacho.com/api/instagram/webhook, signature verified) receives a "comments" notification and the comment contains a configured keyword as a whole word (case and accent insensitive), the app posts one public reply to that comment with POST /{comment-id}/replies, for example "Enviado! Revisa tu DM" ("Sent! Check your DM"). Right after, it sends the private reply described under instagram_business_manage_messages. The public reply tells the commenter that the resource is waiting in their DMs.
 
-The app attempts one public reply to each comment that matches a keyword. If Instagram rejects it (for example because the comment is itself a reply), the app logs the error and still sends the private reply. It does not edit or delete comments, it does not moderate, hide or delete anyone's comments, it ignores comments written by the account itself, and it answers each comment only once. The app does not store the text of comments or usernames; it stores only a marker that a comment ID was already answered (8 days) to avoid duplicate replies when Meta resends a notification.
+The app attempts one public reply to each comment that matches a keyword. Instagram only allows public replies to top-level comments, so for a comment that is itself a reply the app skips the public reply and only sends the private message. If Instagram rejects a public reply, the app logs the error and still sends the private reply. It does not edit or delete comments, it does not moderate, hide or delete anyone's comments, it ignores comments written by the account itself, and it answers each comment only once. The app does not store the text of comments or usernames; it stores only a marker that a comment ID was already answered (8 days) to avoid duplicate replies when Meta resends a notification.
 
 Privacy policy: https://mlabs.elmetacho.com/privacidad
 Data deletion instructions: https://mlabs.elmetacho.com/eliminar-datos
@@ -93,7 +93,7 @@ Parte común al inicio de cada video (unos 20 segundos): mostrar el **inicio de 
 1. (Rótulo: «Permisos: instagram_business_basic y instagram_business_manage_messages».) Mostrar el login de Instagram de la cuenta **elmetacho_** y la pantalla de permisos concedidos.
 2. Mostrar en el panel de Meta (App Dashboard > Instagram) la cuenta **elmetacho_** conectada, con su nombre de usuario y el ID `17841402790807435`. Rótulo: «Esto se ve en el panel de Meta, no en la app; la app identifica la cuenta por el ID que llega en el aviso del webhook (entry.id)» (cubre `basic`, de la que dependen los otros dos permisos).
 3. Desde otro celular o cuenta de prueba (una cuenta con rol en la app): abrir un reel, tocar enviar y mandarlo por DM a **elmetacho_**. Que se vea el DM enviado.
-4. Cambiar al navegador: abrir `www.elmetacho.com/admin/dm-links` (con la sesión de admin iniciada) y mostrar que el link del reel apareció, con la hora. Rótulo: «La app guarda solo el link y la hora».
+4. Cambiar al navegador: abrir `www.elmetacho.com/admin/dm-links` (con la sesión de admin de Oscar iniciada; el revisor no tiene acceso, por eso se muestra aquí) y mostrar que el link del reel apareció, con la hora. Rótulo: «La app guarda solo el link y la hora».
 5. Mostrar también el aviso del webhook: en Vercel, el registro de la petición `POST /api/instagram/webhook` con código 200 (sin mostrar datos personales).
 6. Cerrar con la solicitud cURL: en el API Integration Helper, la solicitud de envío de mensaje (`POST /{ig-id}/messages`) tal como pide Meta. Rótulo: «En este flujo no se envía respuesta; el envío de mensajes se muestra en el video 2 y 3».
 
@@ -130,15 +130,15 @@ Data deletion: https://mlabs.elmetacho.com/eliminar-datos
 
 WHAT YOU NEED
 - An Instagram account with a role on the app (tester) or a Meta test account. Credentials: [OSCAR: complete here a tester account created for the reviewer, or write "use the Meta test account provided by App Review"; do not use a personal account].
-- Admin pages: www.elmetacho.com/admin/dm-links and www.elmetacho.com/admin/palabras. Admin login: [OSCAR: temporary reviewer credentials, created for this review and revoked afterwards].
+- The admin pages (www.elmetacho.com/admin/dm-links and www.elmetacho.com/admin/palabras) are private and reviewers are not given access to them (one admin password also protects unrelated tools of the business). What they show is visible in the screencasts.
 
 TEST 1 - instagram_business_basic and instagram_business_manage_messages (receiving a link)
 1. From your test Instagram account, open any reel and send it by DM to @elmetacho_ (Share > Send).
-2. Open www.elmetacho.com/admin/dm-links and sign in. Within a few seconds a new row appears with the reel link and the arrival time.
+2. The private admin page (www.elmetacho.com/admin/dm-links) lists the new row with the reel link and the arrival time within a few seconds; this is visible in the screencast.
 3. The app only stores the link and the time. No reply is sent in this flow.
 
 TEST 2 - instagram_business_manage_comments and instagram_business_manage_messages (keyword comment, no follow required)
-1. Open www.elmetacho.com/admin/palabras to see the configured keywords. The keyword "curso" is active and does not require following.
+1. The configured keywords are visible in the screencast (private page www.elmetacho.com/admin/palabras). The keyword "curso" is active and does not require following.
 2. From your test account, open any recent post of @metacholabs and comment: curso
 3. Within a few seconds, a public reply from @metacholabs appears under your comment ("Enviado! Revisa tu DM").
 4. Open your Instagram DMs: you receive one private message from @metacholabs with a link to a resource at mlabs.elmetacho.com.
@@ -172,7 +172,7 @@ En el panel de la app «M LABS REPLY» (developers.facebook.com):
 - [ ] **Instagram > Webhooks:** cambiar la URL de devolución de llamada a `https://mlabs.elmetacho.com/api/instagram/webhook` (con la frase de verificación de Vercel) y suscribir los campos `messages` y `comments`.
 - [ ] **Vercel:** variable `IG_TOKEN_LABS` (token generado con «Generar identificador» en la fila de metacholabs; no se pega en el chat) y `CRON_SECRET` (para el cron diario que renueva el token). Redesplegar después de ponerlas.
 - [ ] Hacer **al menos una llamada exitosa** con cada permiso (Meta lo exige antes de pedir acceso avanzado): comentario real y DM real con cuentas con rol.
-- [ ] Crear la cuenta de prueba y las credenciales temporales de admin para el revisor (no existe modo de solo lectura; se crean para la revisión y se quitan después), y completar los `[OSCAR: …]` de la sección D.
+- [ ] Crear la cuenta de prueba para el revisor y completar los `[OSCAR: …]` de la sección D. El revisor **no** recibe acceso a `/admin` (hay una sola `ADMIN_CLAVE` que también gobierna cantados); lo de `/admin` se muestra en los videos.
 - [ ] Palabras creadas en `/admin/palabras`: «curso» (sin pedir seguir) y una con «pedir seguir» (por ejemplo «guia»), con link al recurso.
 - [ ] Grabar los tres videos (sección C) y subirlos, cada uno al permiso que corresponde.
 - [ ] Pegar las tres descripciones de la sección B, una por permiso, sin mezclar.

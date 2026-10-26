@@ -3,21 +3,38 @@ import { useEffect, useState } from "react";
 
 const vacio = () => ({ palabra: "", respuesta_publica: "¡Enviado! Revisa tu DM 📩", mensaje_dm: "", link: "https://mlabs.elmetacho.com/recursos/", pedir_seguir: false, activa: true });
 
+const ERROR_CARGA = "No se pudo cargar (¿venció la sesión o falló el servidor?)";
+const ERROR_GUARDAR = "No se pudo guardar (¿venció la sesión o falló el servidor?)";
+
 export default function Palabras() {
   const [lista, setLista] = useState(null);
   const [pausa, setPausa] = useState(false);
   const [msg, setMsg] = useState("");
   useEffect(() => {
-    fetch("/admin/api/palabras").then((r) => r.json()).then((d) => { if (d.error) setMsg(d.error); else { setLista(d.disparadores); setPausa(d.pausa); } });
+    (async () => {
+      try {
+        const r = await fetch("/admin/api/palabras");
+        const d = await r.json();
+        if (!r.ok || d.error) return setMsg(d.error || ERROR_CARGA);
+        setLista(d.disparadores);
+        setPausa(d.pausa);
+      } catch {
+        setMsg(ERROR_CARGA);
+      }
+    })();
   }, []);
-  const cambiar = (k, campo, valor) => setLista(lista.map((d, i) => (i === k ? { ...d, [campo]: valor } : d)));
+  const cambiar = (k, campo, valor) => { setMsg(""); setLista(lista.map((d, i) => (i === k ? { ...d, [campo]: valor } : d))); };
   async function guardar() {
     setMsg("Guardando…");
-    const r = await fetch("/admin/api/palabras", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ disparadores: lista }) });
-    const d = await r.json();
-    if (!r.ok) return setMsg(d.error || "No se pudo guardar.");
-    setLista(d.disparadores);
-    setMsg("Guardado ✓");
+    try {
+      const r = await fetch("/admin/api/palabras", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ disparadores: lista }) });
+      const d = await r.json();
+      if (!r.ok) return setMsg(d.error || ERROR_GUARDAR);
+      setLista(d.disparadores);
+      setMsg("Guardado ✓");
+    } catch {
+      setMsg(ERROR_GUARDAR);
+    }
   }
   if (!lista) return <p>{msg || "Cargando…"}</p>;
   return (
@@ -34,11 +51,11 @@ export default function Palabras() {
           <label className="block">Link <input className="w-full rounded border p-1" value={d.link} onChange={(e) => cambiar(k, "link", e.target.value)} /></label>
           <label className="mr-4"><input type="checkbox" checked={d.pedir_seguir} onChange={(e) => cambiar(k, "pedir_seguir", e.target.checked)} /> Pedir que me siga</label>
           <label className="mr-4"><input type="checkbox" checked={d.activa} onChange={(e) => cambiar(k, "activa", e.target.checked)} /> Activa</label>
-          <button className="text-red-700 underline" onClick={() => setLista(lista.filter((_, i) => i !== k))}>Quitar</button>
+          <button className="text-red-700 underline" onClick={() => { setMsg(""); setLista(lista.filter((_, i) => i !== k)); }}>Quitar</button>
         </div>
       ))}
       <div className="mt-4 flex gap-3">
-        <button className="rounded border px-3 py-1" onClick={() => setLista([...lista, vacio()])}>+ Palabra</button>
+        <button className="rounded border px-3 py-1" onClick={() => { setMsg(""); setLista([...lista, vacio()]); }}>+ Palabra</button>
         <button className="rounded bg-black px-3 py-1 text-white" onClick={guardar}>Guardar</button>
       </div>
       {msg && <p className="mt-2 text-sm">{msg}</p>}
