@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { redisMemoria } from "./redis-memoria.js";
+import { pausar } from "./estado.js";
+import { ErrorMeta } from "./graph.js";
 import { atenderComentario, atenderMensaje, BOTON } from "./automatizacion.js";
 
 const curso = { id: "d1", palabra: "curso", respuesta_publica: "¡Enviado! Revisa tu DM 📩", mensaje_dm: "Aquí está el curso", link: "https://mlabs.elmetacho.com/recursos/curso", pedir_seguir: false, activa: true };
@@ -10,7 +12,12 @@ function montar({ sigue = true, falla = null } = {}) {
   const llamadas = [], fallos = [];
   const graph = {
     responderComentario: async (id, t) => { if (falla === "publica") throw new Error("no se puede"); llamadas.push(["publica", id, t]); },
-    privado: async (c, id, m) => { if (falla === "privado") throw new Error("7 días"); llamadas.push(["privado", id, m]); },
+    privado: async (c, id, m) => {
+      if (falla === "privado") throw new Error("7 días");
+      if (falla === "boton" && m.quick_replies) throw new ErrorMeta("quick_replies no permitido", 100);
+      if (falla === "token") throw new ErrorMeta("Invalid OAuth", 190);
+      llamadas.push(["privado", id, m]);
+    },
     mensaje: async (c, u, m) => llamadas.push(["mensaje", u, m]),
     sigue: async () => sigue,
   };
@@ -66,4 +73,37 @@ test("en pausa no responde nada", async () => {
   await deps.r.set("ig:222:pausa", "1");
   assert.equal(await atenderComentario(deps, com("curso")), "pausa");
   assert.equal(llamadas.length, 0);
+});
+
+test("pedir seguir: si Meta rechaza el botón, reintenta con solo texto y la espera queda", async () => {
+  const { deps, llamadas, fallos } = montar({ falla: "boton" });
+  assert.equal(await atenderComentario(deps, com("la guía")), "enviado");
+  const priv = llamadas.filter((l) => l[0] === "privado");
+  assert.equal(priv.length, 1);
+  assert.equal(priv[0][2].quick_replies, undefined);
+  assert.match(priv[0][2].text, /sígueme y respóndeme cualquier mensaje/);
+  assert.equal(await deps.r.get("ig:222:esperando:u1"), "d2");
+  assert.equal(fallos.length, 0);
+});
+
+test("pedir seguir: con token inválido no reintenta", async () => {
+  const { deps, llamadas, fallos } = montar({ falla: "token" });
+  assert.equal(await atenderComentario(deps, com("la guía")), "fallo");
+  assert.equal(llamadas.filter((l) => l[0] === "privado").length, 0);
+  assert.deepEqual(fallos, ["Invalid OAuth"]);
+});
+
+test("respuesta a otro comentario: no hay respuesta pública ni fallo, pero sí el DM", async () => {
+  const { deps, llamadas, fallos } = montar();
+  assert.equal(await atenderComentario(deps, com("curso", { respuestaA: "c0" })), "enviado");
+  assert.deepEqual(llamadas.map((l) => l[0]), ["privado"]);
+  assert.equal(fallos.length, 0);
+});
+
+test("la pausa termina al llegar un token distinto", async () => {
+  const { deps, llamadas } = montar();
+  await pausar(deps.r, "222", async () => {}, "x", "VIEJO");
+  assert.equal(await atenderComentario({ ...deps, token: "VIEJO" }, com("curso")), "pausa");
+  assert.equal(await atenderComentario({ ...deps, token: "NUEVO" }, com("curso")), "enviado");
+  assert.equal(llamadas.length, 2);
 });

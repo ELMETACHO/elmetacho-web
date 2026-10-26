@@ -28,8 +28,8 @@ test("comentarios solo de la cuenta de palabras; id como value.id o value.commen
     { id: "111", changes: [{ field: "comments", value: { id: "c4", from: { id: "4" }, text: "curso" } }] },
   ] };
   assert.deepEqual(repartir(ev, C).acciones, [
-    { tipo: "comentario", cuenta: "222", id: "c1", usuario: "7", texto: "Curso!!" },
-    { tipo: "comentario", cuenta: "222", id: "c2", usuario: "6", texto: "curso" },
+    { tipo: "comentario", cuenta: "222", id: "c1", usuario: "7", texto: "Curso!!", respuestaA: null },
+    { tipo: "comentario", cuenta: "222", id: "c2", usuario: "6", texto: "curso", respuestaA: null },
   ]);
 });
 
@@ -38,4 +38,9 @@ test("cuentas que no están en las variables quedan como desconocidas; sin varia
   assert.deepEqual(repartir(ev, C), { acciones: [], desconocidas: ["333"] });
   assert.deepEqual(repartir({ entry: [{ id: "111", messaging: [] }] }, {}).desconocidas, ["111"]);
   assert.deepEqual(repartir(null, C), { acciones: [], desconocidas: [] });
+});
+
+test("un comentario que responde a otro lleva respuestaA con el id del padre", () => {
+  const ev = { entry: [{ id: "222", changes: [{ field: "comments", value: { id: "c5", parent_id: "c1", from: { id: "7" }, text: "curso" } }] }] };
+  assert.deepEqual(repartir(ev, C).acciones, [{ tipo: "comentario", cuenta: "222", id: "c5", usuario: "7", texto: "curso", respuestaA: "c1" }]);
 });

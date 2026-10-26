@@ -21,7 +21,7 @@ export function repartir(evento, { cabina, palabras }) {
     for (const c of e.changes ?? []) {
       if (c?.field !== "comments") continue;
       const v = c.value ?? {};
-      acciones.push({ tipo: "comentario", cuenta, id: String(v.id ?? v.comment_id ?? ""), usuario: String(v.from?.id ?? ""), texto: String(v.text ?? "") });
+      acciones.push({ tipo: "comentario", cuenta, id: String(v.id ?? v.comment_id ?? ""), usuario: String(v.from?.id ?? ""), texto: String(v.text ?? ""), respuestaA: v.parent_id ?? null });
     }
   }
   return { acciones, desconocidas };
