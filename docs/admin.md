@@ -99,6 +99,8 @@ Las pone Oscar; nunca se escriben en el repo (es público) ni las abre Claude.
 | `IG_APP_SECRET`, `META_APP_SECRET` | Vercel (Production) | Claves secretas de la app de Instagram y de la app de Meta, para comprobar la firma de cada aviso del webhook |
 | `IG_CUENTA_CABINA` | Vercel (Production) | Id de elmetacho_ (`17841402790807435`): los DM que llegan a esa cuenta van a la cola de la Cabina |
 | `IG_CUENTA_PALABRAS` | Vercel (Production) | Id de metacholabs (`17841480070378472`): comentarios y mensajes para las palabras clave |
+| `IG_TOKEN_LABS` | Vercel (Production) | Token de metacholabs (Meta → metacholabs → «Generar identificador»). Lo usan las palabras clave; el cron lo renueva. Si falta o no sirve, las palabras clave se pausan 6 h y llega un aviso por Telegram |
+| `CRON_SECRET` | Vercel (Production) | Frase larga que Oscar inventa. Vercel la manda como `Authorization: Bearer …` al cron de `GET /api/instagram/renovar-token`; sin ella el cron responde 401 |
 
 **Recomendación:** `ADMIN_CLAVE` larga y aleatoria (**20 caracteres o más**). Si alguien roba la cookie, puede intentar adivinar la clave sin conexión (la cookie va firmada con una llave derivada de ella); el límite de 5 intentos no lo frena. Lo mismo para `ADMIN_PC_TOKEN`. Genéralas con un administrador de contraseñas.
 
@@ -116,6 +118,8 @@ Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la c
 |---|---|---|
 | `POST /admin/api/entrar` | Cualquiera (con límite de intentos) | Verifica la clave y pone la cookie |
 | `POST /admin/api/salir` | Sesión | Borra la cookie |
+| `GET /admin/api/palabras` | Sesión | `{cuenta, disparadores, pausa}`: la lista de palabras clave de `IG_CUENTA_PALABRAS` y si las palabras clave están en pausa. Sin `IG_CUENTA_PALABRAS` → 500 |
+| `PUT /admin/api/palabras` | Sesión | Cuerpo `{disparadores}`: reemplaza la lista completa (máximo 50; la primera activa de la lista gana). Valida palabra repetida o vacía, link `https://`, y que el mensaje con el link no pase de 1000 bytes → `{disparadores}`; si no, 400 `{error}` |
 | `POST /admin/api/cantados` | Sesión | Crea pedido `subiendo`; cuerpo `{tipo}`: `pantallazos` (por defecto), `link` o `remix` |
 | `PATCH /admin/api/cantados/<id>` | Sesión | Guarda link, tramos, título, estilo, pantallazos, archivos subidos (`original`, `gancho` y, solo en remix, `publicado`) (en `necesita_pantallazos` solo acepta pantallazos) |
 | `POST /admin/api/cantados/<id>/enviar` | Sesión | Valida, pasa a `listo`, avisa a Telegram; en `necesita_pantallazos` marca `pantallazos_listos` y avisa |
@@ -140,7 +144,8 @@ Cambia `ADMIN_CLAVE` en Vercel y haz redeploy: **todas las sesiones caen** (la c
 | `DELETE /admin/api/pc/cabina/<id>` | Solo PC | Entregado: borra prefijo y registro; un id que no es de la Cabina → 404 sin borrar |
 | `GET /admin/api/cabina/<id>/medios` | Sesión | `{vista, medios: {idComentario: url}}` firmadas 12 h, solo en `en_revision` (otro estado → 409) |
 | `GET /api/instagram/webhook` | Meta | Verificación del webhook: devuelve `hub.challenge` si `hub.verify_token` es `IG_WEBHOOK_VERIFY_TOKEN`; si no, 403 |
-| `POST /api/instagram/webhook` | Meta (firma `X-Hub-Signature-256`) | Avisos de DM: saca los reels compartidos (`ig_reel`) y los links de TikTok/Instagram del texto, sin `?…`, y los pone en la cola `cabina:dm:links` (`{link, recibido}`) si no están en `cabina:dm:vistos`. No guarda el mensaje ni quién lo mandó. Firma mala → 401; Redis caído → 500 (Meta reintenta hasta 36 h) |
+| `POST /api/instagram/webhook` | Meta (firma `X-Hub-Signature-256`) | Reparto por cuenta (`entry.id`). `IG_CUENTA_CABINA` (elmetacho_): los DM con reels compartidos (`ig_reel`) o links de TikTok/Instagram se sacan del texto, sin `?…`, y van a la cola `cabina:dm:links` (`{link, recibido}`) si no están en `cabina:dm:vistos`. `IG_CUENTA_PALABRAS` (metacholabs): un comentario con una palabra clave activa se responde en público y se manda un DM privado con el link; con «Pedir que me siga» el DM trae «Ya te sigo». Un id que no es ninguna de las dos se registra como «cuenta sin uso» en los logs y no se procesa. No guarda el texto del mensaje ni el nombre del usuario (solo su id durante la espera de 24 h). Firma mala → 401; Redis caído → 500 (Meta reintenta hasta 36 h) |
+| `GET /api/instagram/renovar-token` | Cron de Vercel (`Authorization: Bearer <CRON_SECRET>`) | Renueva el token de metacholabs si le faltan menos de 15 días → `{estado}`. Sin `CRON_SECRET` o con otra frase → 401 |
 | `GET /admin/api/pc/dm-links` | Solo PC | `{links}`: links de DM aún no confirmados, más viejo primero (no marca nada) |
 | `POST /admin/api/pc/dm-links/recibidos` | Solo PC | `{links}` → los marca entregados (`cabina:dm:entregados`) → `{ok, confirmados}` |
 
