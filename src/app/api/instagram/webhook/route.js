@@ -3,7 +3,13 @@
 // Variables en Vercel: IG_WEBHOOK_VERIFY_TOKEN (la misma frase que se pone en Meta como «Identificador de
 // verificación»), IG_APP_SECRET (clave secreta de la app de Instagram), META_APP_SECRET (clave secreta de la app),
 // IG_CUENTA_CABINA (id de la cuenta de la Cabina) e IG_CUENTA_PALABRAS (id de la cuenta de palabras clave).
+import { avisar } from "../../../admin/lib/deps.js";
+import { atenderComentario, atenderMensaje } from "../../../admin/lib/instagram/automatizacion.js";
 import { conRedis } from "../../../admin/lib/instagram/conexion.js";
+import { crearManejoDeError, pausar } from "../../../admin/lib/instagram/estado.js";
+import { crearGraph } from "../../../admin/lib/instagram/graph.js";
+import { leerDisparadores } from "../../../admin/lib/instagram/palabras.js";
+import { tokenDe } from "../../../admin/lib/instagram/token.js";
 import { firmaValida, guardarLinks, respuestaVerificacion } from "./meta.js";
 import { repartir } from "./reparto.js";
 
@@ -35,6 +41,14 @@ export async function POST(req) {
         if (a.tipo === "links") {
           const n = await guardarLinks(r, a.links);
           console.log(`webhook instagram: ${a.links.length} link(s), ${n} nuevo(s) en la cola`);
+        }
+        if (a.tipo === "comentario" || a.tipo === "mensaje") {
+          const fallo = crearManejoDeError({ r, cuenta: a.cuenta, ahora: Date.now, avisar });
+          const token = await tokenDe(r, process.env, a.cuenta);
+          if (!token) { await pausar(r, a.cuenta, avisar, "falta IG_TOKEN_LABS"); continue; }
+          const deps = { r, graph: crearGraph({ token }), disparadores: await leerDisparadores(r, a.cuenta), fallo };
+          const res = a.tipo === "comentario" ? await atenderComentario(deps, a) : await atenderMensaje(deps, a);
+          console.log(`webhook instagram: ${a.tipo} → ${res}`);
         }
       }
     });
