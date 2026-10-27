@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { HOLGURA_FRANJA_H, aplicarRevision, aprobarRevision, aprobarVencido, editarLinea, horasRestantes, lineaValida, listaFinal,
+import { HOLGURA_FRANJA_H, agregarPropio, aplicarRevision, aprobarRevision, aprobarVencido, editarLinea, horasRestantes, lineaValida, listaFinal,
   masAtendido, meter, moverEn, noEditable, pedirMas, ponerComa, publicarPropuesta, puedePublicarPropuesta, quitar, validarPropuesta, vencida } from "./revision.js";
 
 const T = Date.parse("2026-10-22T19:30:00Z");
@@ -163,4 +163,72 @@ test("lineaValida rechaza saltos de línea; vence ausente no da NaN", () => {
     assert.equal(vencida(q, T + 99 * H), false);
     assert.equal(horasRestantes(q, T), 0);
   }
+});
+
+// Comentarios propios de Oscar: solo en la Cabina.
+const cabina = () => publicarPropuesta({ ...PED(), tipo: "cabina" }, validarPropuesta([C("a"), C("b", false)]).comentarios, T);
+const conPropios = (rev, ...textos) => textos.reduce((r, t) => agregarPropio(r, t, ["a", "b"]), rev);
+
+test("propios: se agregan al final con ids o1, o2… y uno quitado no se reutiliza", () => {
+  let rev = conPropios(cabina().revision, "  qué belleza  ", "otro más");
+  assert.deepEqual(rev.orden, ["a", "o1", "o2"]);
+  assert.deepEqual(rev.propios, [{ id: "o1", texto: "qué belleza" }, { id: "o2", texto: "otro más" }]);
+  rev = quitar(rev, "o2");
+  assert.deepEqual([rev.orden, rev.fuera], [["a", "o1"], ["b", "o2"]]);
+  rev = conPropios(rev, "tercero");
+  assert.deepEqual(rev.orden, ["a", "o1", "o3"]);
+  // vacío, solo espacios, 301 caracteres o el tope de 10: no cambia nada
+  for (const t of ["", "   ", "x".repeat(301), ",", 7]) assert.equal(agregarPropio(rev, t), rev);
+  const diez = conPropios(cabina().revision, ..."0123456789".split(""));
+  assert.equal(diez.propios.length, 10);
+  assert.equal(agregarPropio(diez, "once"), diez);
+  // si el PC trajera un id «o5», el propio no choca con él
+  assert.equal(agregarPropio({ orden: ["o5"], fuera: [], lineas: {} }, "hola", ["o5"]).propios[0].id, "o6");
+});
+
+test("propios: la revisión los guarda y la lista final los marca para el PC", () => {
+  const p = cabina();
+  let rev = conPropios(p.revision, "qué belleza", "hola\ncon salto");
+  rev = moverEn(rev, 2, -1);
+  rev = editarLinea(rev, "o1", "otra cosa,", "qué belleza,");
+  const { pedido, errores } = aplicarRevision(p, { ...rev, version: 1 }, T + H);
+  assert.deepEqual(errores, []);
+  assert.deepEqual(pedido.revision.propios, [{ id: "o1", texto: "qué belleza" }, { id: "o2", texto: "hola\ncon salto" }]);
+  assert.deepEqual(listaFinal(pedido), [
+    { id: "a", linea: "linea a," },
+    { id: "o2", linea: "hola con salto,", texto: "hola\ncon salto", propio: true },
+    { id: "o1", linea: "otra cosa,", texto: "qué belleza", propio: true },
+  ]);
+  // editarLinea vuelve a la original del propio: se borra la corrección
+  assert.deepEqual(editarLinea(rev, "o1", "qué belleza,", "qué belleza,").lineas, {});
+});
+
+test("propios: validación en el servidor", () => {
+  const p = cabina();
+  const r = (c) => aplicarRevision(p, { orden: ["a", "o1"], fuera: ["b"], version: 1, ...c }, T + H).errores[0];
+  const uno = (texto, id = "o1") => [{ id, texto }];
+  assert.equal(r({ propios: uno("bien") }), undefined);
+  assert.match(r({ propios: uno("   ") }), /entre 1 y 300/);
+  assert.match(r({ propios: uno("x".repeat(301)) }), /entre 1 y 300/);
+  assert.equal(r({ propios: uno(" " + "x".repeat(300) + " ") }), undefined);
+  assert.match(r({ propios: uno(5) }), /entre 1 y 300/);
+  for (const id of ["x1", "o", "o1a", "a", 1]) assert.match(r({ propios: uno("hola", id), orden: ["a", String(id)] }), /id válido/);
+  assert.match(r({ propios: [...uno("a"), ...uno("b")] }), /repetido/);
+  const once = Array.from({ length: 11 }, (_, k) => ({ id: `o${k + 1}`, texto: "x" }));
+  assert.match(r({ propios: once, orden: ["a", ...once.map((x) => x.id)] }), /Máximo 10/);
+  assert.match(r({ propios: "o1" }), /Máximo 10/);
+  // orden + fuera deben cubrir también los propios, sin sobrar ni faltar
+  assert.match(r({ propios: uno("hola"), orden: ["a"] }), /recarga/);
+  assert.match(r({ orden: ["a", "o1"] }), /recarga/);
+  assert.match(r({ propios: uno("hola"), orden: ["a", "o1"], lineas: { o9: "x," } }), /no está en la propuesta/);
+  // los pedidos por link no aceptan propios
+  assert.match(aplicarRevision(publicado(), { orden: ["a", "b", "c", "o1"], fuera: ["d"], propios: uno("hola"), version: 1 }, T + H).errores[0], /Solo la Cabina/);
+});
+
+test("revisión vieja sin propios sigue valiendo", () => {
+  const p = cabina();
+  const { pedido, errores } = aplicarRevision(p, { orden: ["a"], fuera: ["b"], lineas: {}, version: 1 }, T + H);
+  assert.deepEqual(errores, []);
+  assert.deepEqual(pedido.revision.propios, []);
+  assert.deepEqual(listaFinal(p), [{ id: "a", linea: "linea a," }]);   // revision sin el campo propios
 });

@@ -6,7 +6,8 @@ import { useArrastre } from "./useArrastre.js";
 
 // Tarjetas de comentarios en orden (✓ n, asa ⠿ para arrastrar, ↑↓, ✎, ✕) y la sección «Fuera» con ↩.
 // La usan Revisar (pedidos por link) y la Cabina. `medios`: { idComentario: url firmada } (solo la Cabina).
-export default function ListaComentarios({ porId, rev, bloqueado, medios = {}, onMover, onMoverA, onQuitar, onMeter, onLinea, onError }) {
+// `children`: lo que va debajo de la lista y antes de «Fuera» (la Cabina pone ahí «Agregar mi comentario»).
+export default function ListaComentarios({ porId, rev, bloqueado, medios = {}, onMover, onMoverA, onQuitar, onMeter, onLinea, onError, children }) {
   const [editando, setEditando] = useState(null); // { id, texto }
   const { registrar, asa, de, hueco } = useArrastre(rev.orden.length, onMoverA, bloqueado);
   const linea = (cid) => rev.lineas[cid] ?? porId[cid].linea;
@@ -30,7 +31,7 @@ export default function ListaComentarios({ porId, rev, bloqueado, medios = {}, o
                 <span className="adm-etq numero shrink-0" aria-label="Dentro">✓ {i + 1}</span>
                 <div className="min-w-0 flex-1">
                   <p className="adm-sub text-xs">
-                    {c.usuario}
+                    {c.propio ? <span className="adm-etq neutro">Tuyo</span> : c.usuario}
                     {c.likes != null ? ` · ${c.likes} ♥` : ""}
                     {c.respuestas != null ? ` · ${c.respuestas} ↩` : ""}
                   </p>
@@ -61,6 +62,7 @@ export default function ListaComentarios({ porId, rev, bloqueado, medios = {}, o
           );
         })}
       </ol>
+      {children}
       {rev.fuera.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="adm-h2">Fuera</h2>

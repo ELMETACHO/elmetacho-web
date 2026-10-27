@@ -374,3 +374,18 @@ test("vencido el plazo, la página vieja no cambia nada: 409 en tramos, revisió
   assert.equal((await m.api.traeMas(sesion({ version: 1 }), id)).status, 409);
   assert.equal(JSON.stringify(await m.almacen.leer(id)), antes);
 });
+
+test("Oscar agrega un comentario suyo: se guarda con la revisión y el PC lo recibe marcado", async () => {
+  const m = montar();
+  const id = await publicado(m);
+  const propios = [{ id: "o1", texto: "mi comentario" }];
+  assert.equal((await m.api.revision(sesion({ orden: ["o1", "c1"], fuera: ["c3", "c2"], lineas: {}, propios, version: 1 }, "PATCH"), id)).status, 200);
+  assert.deepEqual((await m.almacen.leer(id)).revision.propios, propios);
+  const mal = await m.api.revision(sesion({ orden: ["c1"], fuera: ["c3", "c2"], propios, version: 1 }, "PATCH"), id);
+  assert.equal(mal.status, 400);
+  await aprobadoAMano(m, id);
+  const p = await m.almacen.leer(id);
+  await m.almacen.guardar({ ...p, revision: { ...p.revision, orden: ["o1", "c2"], fuera: ["c1", "c3"], lineas: {}, propios } });
+  const [d] = (await lista(m)).decididos;
+  assert.deepEqual(d.orden, [{ id: "o1", linea: "mi comentario,", texto: "mi comentario", propio: true }, { id: "c2", linea: "uy no," }]);
+});

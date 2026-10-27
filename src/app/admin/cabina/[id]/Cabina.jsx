@@ -7,7 +7,8 @@ import { esperarGuardado, guardarEnFila } from "../../cantados/cola.js";
 import { leerMeta, subirArchivo, useTrabajos } from "../../cantados/subidas.js";
 import { textoDias } from "../../lib/cabina.js";
 import { extSegura } from "../../lib/editor.js";
-import { editarLinea, meter, moverAEn, moverEn, quitar } from "../../lib/revision.js";
+import { MAX_PROPIOS, MAX_TEXTO_PROPIO, agregarPropio, editarLinea, lineaDePropio, meter, moverAEn, moverEn, quitar,
+  textoPropioValido } from "../../lib/revision.js";
 
 const chico = "adm-btn secundario chico shrink-0";
 const Seccion = ({ titulo, children }) => (
@@ -18,8 +19,13 @@ const Seccion = ({ titulo, children }) => (
 );
 
 export default function Cabina({ id, nombre, link, comentarios, version, revisionInicial, vista, tramosIniciales, destinoInicial, ganchoInicial, dias }) {
-  const porId = Object.fromEntries(comentarios.map((c) => [c.id, c]));
   const [rev, setRev] = useState(revisionInicial);
+  // Los propios se ven como los demás, con «Tuyo» y sin likes ni medio; su línea original es su texto con coma.
+  const porId = Object.fromEntries([
+    ...comentarios.map((c) => [c.id, c]),
+    ...rev.propios.map((x) => [x.id, { id: x.id, texto: x.texto, linea: lineaDePropio(x.texto), propio: true }]),
+  ]);
+  const [propio, setPropio] = useState("");
   const [tramos, setTramos] = useState(tramosIniciales);
   const [destino, setDestino] = useState(destinoInicial);
   const [gancho, setGancho] = useState(ganchoInicial);
@@ -78,6 +84,12 @@ export default function Cabina({ id, nombre, link, comentarios, version, revisio
   function quitarUno(cid) {
     if (rev.orden.length <= 1) return setError("Deja al menos un comentario.");
     guardarRev(quitar(rev, cid));
+  }
+  function agregarMio() {
+    const nueva = agregarPropio(rev, propio, comentarios.map((c) => c.id));
+    if (nueva === rev) return setError(`Tu comentario debe tener entre 1 y ${MAX_TEXTO_PROPIO} caracteres (máximo ${MAX_PROPIOS}).`);
+    guardarRev(nueva);
+    setPropio("");
   }
   function cambioTramos(nuevos) {
     if (!puedeGuardar()) return;   // bloqueado: no se cambia en pantalla lo que no se va a guardar
@@ -210,7 +222,17 @@ export default function Cabina({ id, nombre, link, comentarios, version, revisio
           onQuitar={quitarUno}
           onMeter={(cid) => guardarRev(meter(rev, cid))}
           onLinea={(cid, t) => guardarRev(editarLinea(rev, cid, t, porId[cid].linea))}
-          onError={setError} />
+          onError={setError}>
+          <div className="flex flex-col gap-2">
+            <textarea value={propio} rows={2} maxLength={MAX_TEXTO_PROPIO} className="adm-campo" disabled={bloqueado || rev.propios.length >= MAX_PROPIOS}
+              placeholder="Agregar mi comentario" aria-label="Agregar mi comentario" onChange={(e) => setPropio(e.target.value)} />
+            <button onClick={agregarMio} disabled={bloqueado || !textoPropioValido(propio) || rev.propios.length >= MAX_PROPIOS}
+              className="adm-btn secundario">
+              Agregar
+            </button>
+            {rev.propios.length >= MAX_PROPIOS && <p className="adm-sub text-sm">Ya agregaste {MAX_PROPIOS} comentarios tuyos.</p>}
+          </div>
+        </ListaComentarios>
       </Seccion>
 
       <Seccion titulo="3. Tu gancho">
