@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { respuestaVerificacion, firmaValida, linksDe, guardarLinks } from "./meta.js";
+import { respuestaVerificacion, firmaValida, linksDe, guardarLinks, huellaDe } from "./meta.js";
 
 const firma = (cuerpo, secreto) => "sha256=" + createHmac("sha256", secreto).update(cuerpo).digest("hex");
 
@@ -65,4 +65,24 @@ test("guardar: solo el link y la hora; los repetidos no vuelven a la cola", asyn
     { link: "https://www.instagram.com/reel/X/", recibido: "2026-10-25T22:00:00.000Z" },
   ]);
   assert.equal(await guardarLinks(r, ["https://vt.tiktok.com/A/"], "x"), 0);
+});
+
+test("huella del remitente: HMAC-SHA256(sender.id, secreto) en hex, 16 caracteres; sin secreto → null", () => {
+  assert.equal(huellaDe("9", "s"), createHmac("sha256", "s").update("9").digest("hex").slice(0, 16));
+  assert.equal(huellaDe("9", ""), null);
+  assert.equal(huellaDe(undefined, "s"), null);
+});
+
+test("guardar con huella en un Redis sin huellas previas: el primer envío entra a la cola igual que sin huella", async () => {
+  const vistos = new Set(), cola = [], sets = new Map(), vence = [];
+  const r = {
+    sAdd: async (k, v) => { const s = sets.get(k) ?? new Set(); sets.set(k, s); if (k === "cabina:dm:vistos") return vistos.has(v) ? 0 : (vistos.add(v), 1); return s.has(v) ? 0 : (s.add(v), 1); },
+    sCard: async (k) => sets.get(k)?.size ?? 0,
+    expire: async (k, s) => vence.push([k, s]),
+    lPush: async (_k, v) => cola.push(v),
+  };
+  assert.equal(await guardarLinks(r, ["https://vt.tiktok.com/A/"], "t", { huella: "abcd" }), 1);
+  assert.deepEqual(cola.map((v) => JSON.parse(v)), [{ link: "https://vt.tiktok.com/A/", recibido: "t" }]);
+  assert.deepEqual([...sets.get("cabina:dm:remitentes:https://vt.tiktok.com/A/")], ["abcd"]);
+  assert.deepEqual(vence, [["cabina:dm:remitentes:https://vt.tiktok.com/A/", 259200]]);
 });

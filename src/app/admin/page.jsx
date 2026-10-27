@@ -36,7 +36,7 @@ export default async function Admin() {
   return (
     <>
       <nav className="mb-4 flex gap-4 text-sm underline">
-        <a href="/admin/dm-links">Links por DM</a>
+        <a href="/admin/links">Links</a>
         <a href="/admin/palabras">Palabras clave</a>
       </nav>
       <ListaPedidos pedidos={pedidos} cabina={cabina} error={error} />

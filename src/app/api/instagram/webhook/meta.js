@@ -2,10 +2,12 @@
 // Doc de Meta (2026-10-25): verificación GET con hub.mode/hub.verify_token/hub.challenge; cada aviso viene firmado en
 // X-Hub-Signature-256 como "sha256=" + HMAC-SHA256(cuerpo crudo, clave secreta); los reels compartidos por DM llegan
 // como adjunto type "ig_reel" con payload.url (changelog de Instagram Messaging, 11-jun-2024).
-// Privacidad: de cada mensaje solo sale el link; ni el texto ni quién lo mandó se guardan.
+// Privacidad: de cada mensaje solo sale el link; el texto no se guarda y de quién lo mandó solo queda una huella
+// anónima (HMAC con IG_HUELLA_SECRETA) durante 3 días, para el pase directo (spec cantados 2026-10-26 §5).
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-import { COLA, VISTOS } from "../../../admin/lib/instagram/claves.js";
+import { COLA, PASE, REMITENTES, TRES_DIAS_S, VISTOS } from "../../../admin/lib/instagram/claves.js";
+import { forzarLink } from "../../../admin/lib/instagram/dm.js";
 export { COLA, VISTOS };
 
 export function respuestaVerificacion(params, tokenEsperado) {
@@ -53,13 +55,33 @@ export function linksDe(evento) {
   return [...new Set(out.map(limpio).filter(Boolean))];
 }
 
-// r: cliente de Redis (sAdd, lPush). Devuelve cuántos links nuevos entraron a la cola.
-export async function guardarLinks(r, links, ahora = new Date().toISOString()) {
+// Huella anónima del remitente: HMAC-SHA256(sender.id, secreto) en hex, 16 caracteres. Sin secreto → null (pase directo apagado).
+export function huellaDe(senderId, secreto) {
+  if (!secreto || !senderId) return null;
+  return createHmac("sha256", secreto).update(String(senderId)).digest("hex").slice(0, 16);
+}
+
+export const PERSONAS_PASE = 3;
+
+// r: cliente de Redis. El primer envío de un link entra a la cola, como siempre. Con huella, además cuenta personas
+// distintas en 3 días (el vencimiento se renueva con cada envío): la tercera lo vuelve a poner pendiente con forzar,
+// una sola vez por ventana de 3 días.
+// Devuelve cuántos links nuevos entraron a la cola.
+export async function guardarLinks(r, links, ahora = new Date().toISOString(), { huella } = {}) {
   let n = 0;
   for (const link of links) {
-    if (!(await r.sAdd(VISTOS, link))) continue;
-    await r.lPush(COLA, JSON.stringify({ link, recibido: ahora }));
-    n++;
+    if (await r.sAdd(VISTOS, link)) {
+      await r.lPush(COLA, JSON.stringify({ link, recibido: ahora }));
+      n++;
+    }
+    if (!huella) continue;
+    const nueva = await r.sAdd(REMITENTES(link), huella);
+    await r.expire(REMITENTES(link), TRES_DIAS_S);
+    // >= y no ===: si dos personas llegan a la vez y las dos leen 4, igual se da. La marca NX evita darlo dos veces.
+    if (nueva && (await r.sCard(REMITENTES(link))) >= PERSONAS_PASE
+      && (await r.set(PASE(link), "1", { condition: "NX", expiration: { type: "EX", value: TRES_DIAS_S } }))) {
+      await forzarLink(r, link, ahora);
+    }
   }
   return n;
 }

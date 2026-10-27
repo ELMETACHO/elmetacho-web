@@ -8,12 +8,13 @@ test("la cola de DM: pendientes en orden de llegada, confirmar los saca", async 
   const r = redisMemoria();
   await guardarLinks(r, ["https://vt.tiktok.com/A/"], "2026-10-25T10:00:00.000Z");
   await guardarLinks(r, ["https://www.instagram.com/reel/B/"], "2026-10-25T11:00:00.000Z");
-  assert.deepEqual(await pendientesDm(r), ["https://vt.tiktok.com/A/", "https://www.instagram.com/reel/B/"]);
+  assert.deepEqual(await pendientesDm(r), [{ link: "https://vt.tiktok.com/A/", forzar: false }, { link: "https://www.instagram.com/reel/B/", forzar: false }]);
   assert.equal(await confirmarDm(r, ["https://vt.tiktok.com/A/", "", 7], "2026-10-26T05:00:00.000Z"), 1);
-  assert.deepEqual(await pendientesDm(r), ["https://www.instagram.com/reel/B/"]);
+  assert.deepEqual(await pendientesDm(r), [{ link: "https://www.instagram.com/reel/B/", forzar: false }]);
   const lista = await listaDm(r);
   assert.equal(lista[0].link, "https://www.instagram.com/reel/B/");
   assert.equal(lista[1].entregado, "2026-10-26T05:00:00.000Z");
+  assert.equal(lista[1].forzar, null);
 });
 
 test("redis falso: SET NX con vencimiento", async () => {

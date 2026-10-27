@@ -12,7 +12,7 @@ export function repartir(evento, { cabina, palabras }) {
       if (!msg || msg.is_echo) continue;
       if (cuenta === cabina) {
         const links = linksDe({ entry: [{ messaging: [m] }] });
-        if (links.length) acciones.push({ tipo: "links", cuenta, links });
+        if (links.length) acciones.push({ tipo: "links", cuenta, usuario: String(m.sender?.id ?? ""), links });   // usuario: solo para la huella
       } else {
         acciones.push({ tipo: "mensaje", cuenta, usuario: String(m.sender?.id ?? ""), payload: msg.quick_reply?.payload ?? null });
       }
