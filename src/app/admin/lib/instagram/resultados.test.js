@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { redisMemoria } from "./redis-memoria.js";
 import { confirmarDm, forzarLink, pendientesDm } from "./dm.js";
-import { conteoDelDia, fechaBogota, guardarResultados, listaResultados } from "./resultados.js";
-import { CONTEO, FORZAR, RESULTADOS } from "./claves.js";
+import { conteoDelDia, fechaBogota, guardarResultados, listaResultados, motivoCorto } from "./resultados.js";
+import { CONTEO, FORZAR, REMITENTES, RESULTADOS } from "./claves.js";
 import { guardarLinks, huellaDe } from "../../../api/instagram/webhook/meta.js";
 
 const L = "https://vt.tiktok.com/A/";
@@ -168,4 +168,61 @@ test("redis falso: sCard, hDel, hIncrBy y lTrim como node-redis 6", async () => 
   assert.deepEqual(await r.lRange("l", -2, -1), ["c", "b"]);
   await r.lTrim("l", 5, 9);
   assert.equal(await r.del("l"), 0);   // la lista vacía desaparece
+});
+
+test("motivo corto: los motivos reales del PC quedan en grupos legibles", () => {
+  const reales = {
+    "10 vistas (pide 1.000)": "vistas",
+    "3 likes del video (pide 50)": "likes del video",
+    "2 comentarios (pide 300)": "comentarios",
+    "no es video": "no es video",
+    "no se pudo leer el video (3 intentos)": "no se pudo leer el video",
+    "risa en respuestas 0% (pide 30%)": "risa en respuestas",
+    "juez: 5 — chistes planos": "juez",
+  };
+  for (const [motivo, grupo] of Object.entries(reales)) assert.equal(motivoCorto(motivo), grupo, motivo);
+  assert.equal(motivoCorto(""), "sin motivo");
+  assert.equal(motivoCorto("123 (x)"), "sin motivo");
+});
+
+test("guardarResultados: el conteo agrupa los motivos reales del PC", async () => {
+  const r = redisMemoria();
+  await guardarResultados(r, [
+    ok({ motivo: "10 vistas (pide 1.000)" }),
+    ok({ link: "https://vt.tiktok.com/B/", motivo: "250 vistas (pide 1.000)" }),
+    ok({ link: "https://vt.tiktok.com/C/", nivel: 2, estado: "ensayo_no_paso", motivo: "risa en respuestas 0% (pide 30%)" }),
+  ], "2026-10-26T15:00:00.000Z");
+  assert.deepEqual(await conteoDelDia(r, "2026-10-26"), { "1:vistas": 2, "2:ensayo risa en respuestas": 1 });
+});
+
+test("guardarResultados: solo guarda links que se pueden rescatar (http(s), sin espacios, ≤ 500)", async () => {
+  const r = redisMemoria();
+  const n = await guardarResultados(r, [
+    ok({ link: "vt.tiktok.com/A/" }),
+    ok({ link: "ftp://x/y" }),
+    ok({ link: "https://vt.tiktok.com/A/ con espacio" }),
+    ok({ link: "https://x.com/" + "a".repeat(500) }),
+    ok({ link: "http://vt.tiktok.com/A/" }),
+  ], "2026-10-26T15:00:00.000Z");
+  assert.equal(n, 1);
+});
+
+test("pase directo: una sola vez por ventana; la cuarta persona no vuelve a forzar", async () => {
+  const r = redisMemoria(() => 0);
+  for (const u of ["u1", "u2", "u3"]) await guardarLinks(r, [L], "a", { huella: h(u) });
+  assert.deepEqual(await pendientesDm(r), [{ link: L, forzar: true }]);
+  await confirmarDm(r, [L], "b");
+  await guardarLinks(r, [L], "c", { huella: h("u4") });
+  assert.deepEqual(await pendientesDm(r), []);
+  assert.deepEqual(await r.hGetAll(FORZAR), {});
+});
+
+test("pase directo: si la tercera se perdió (carrera), la cuarta lo da", async () => {
+  const r = redisMemoria(() => 0);
+  await guardarLinks(r, [L], "a", { huella: h("u1") });
+  await confirmarDm(r, [L], "b");
+  await r.sAdd(REMITENTES(L), h("u2"));
+  await r.sAdd(REMITENTES(L), h("u3"));   // como si dos llegaran a la vez y ninguna leyera 3
+  await guardarLinks(r, [L], "c", { huella: h("u4") });
+  assert.deepEqual(await pendientesDm(r), [{ link: L, forzar: true }]);
 });

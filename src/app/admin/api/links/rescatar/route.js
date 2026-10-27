@@ -3,6 +3,7 @@
 import { COOKIE, leerCookie, sesionValida } from "../../../lib/sesion.js";
 import { conRedis } from "../../../lib/instagram/conexion.js";
 import { forzarLink } from "../../../lib/instagram/dm.js";
+import { linkValido } from "../../../lib/instagram/resultados.js";
 
 export const runtime = "nodejs";
 
@@ -13,7 +14,7 @@ export async function POST(req) {
   let c = {};
   try { c = await req.json(); } catch { /* se valida abajo */ }
   const link = c?.link;
-  if (typeof link !== "string" || link.length > 500 || !/^https?:\/\/\S+$/.test(link)) {
+  if (!linkValido(link)) {
     return Response.json({ error: "Link inválido." }, { status: 400 });
   }
   await conRedis((r) => forzarLink(r, link, new Date().toISOString()));

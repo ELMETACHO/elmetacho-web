@@ -6,7 +6,7 @@
 // anónima (HMAC con IG_HUELLA_SECRETA) durante 3 días, para el pase directo (spec cantados 2026-10-26 §5).
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-import { COLA, REMITENTES, TRES_DIAS_S, VISTOS } from "../../../admin/lib/instagram/claves.js";
+import { COLA, PASE, REMITENTES, TRES_DIAS_S, VISTOS } from "../../../admin/lib/instagram/claves.js";
 import { forzarLink } from "../../../admin/lib/instagram/dm.js";
 export { COLA, VISTOS };
 
@@ -64,7 +64,8 @@ export function huellaDe(senderId, secreto) {
 export const PERSONAS_PASE = 3;
 
 // r: cliente de Redis. El primer envío de un link entra a la cola, como siempre. Con huella, además cuenta personas
-// distintas en 3 días (el vencimiento se renueva con cada envío): la tercera lo vuelve a poner pendiente con forzar.
+// distintas en 3 días (el vencimiento se renueva con cada envío): la tercera lo vuelve a poner pendiente con forzar,
+// una sola vez por ventana de 3 días.
 // Devuelve cuántos links nuevos entraron a la cola.
 export async function guardarLinks(r, links, ahora = new Date().toISOString(), { huella } = {}) {
   let n = 0;
@@ -76,7 +77,11 @@ export async function guardarLinks(r, links, ahora = new Date().toISOString(), {
     if (!huella) continue;
     const nueva = await r.sAdd(REMITENTES(link), huella);
     await r.expire(REMITENTES(link), TRES_DIAS_S);
-    if (nueva && (await r.sCard(REMITENTES(link))) === PERSONAS_PASE) await forzarLink(r, link, ahora);
+    // >= y no ===: si dos personas llegan a la vez y las dos leen 4, igual se da. La marca NX evita darlo dos veces.
+    if (nueva && (await r.sCard(REMITENTES(link))) >= PERSONAS_PASE
+      && (await r.set(PASE(link), "1", { condition: "NX", expiration: { type: "EX", value: TRES_DIAS_S } }))) {
+      await forzarLink(r, link, ahora);
+    }
   }
   return n;
 }

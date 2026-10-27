@@ -10,16 +10,21 @@ const TRES_DIAS_MS = TRES_DIAS_S * 1000;
 // Fecha del día en Bogotá (la franja corre a las 5 a. m. de allá), AAAA-MM-DD.
 export const fechaBogota = (ms) => new Date(ms).toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
-// «vistas 1200 < 5000» → «vistas»; «juez: 5 — flojo» → «juez»: lo que va antes de «:» o del primer número.
-function motivoCorto(motivo) {
-  const m = String(motivo ?? "").split(":")[0].replace(/[\d<>=≥≤].*$/u, "").trim().toLowerCase().slice(0, 40);
+// Para agrupar el conteo: lo que va antes de «:», sin paréntesis, números, % ni signos.
+// «10 vistas (pide 1.000)» → «vistas»; «juez: 5 — chistes planos» → «juez».
+export function motivoCorto(motivo) {
+  const m = String(motivo ?? "").split(":")[0].replace(/\([^)]*\)/g, " ").replace(/[^\p{L}\s]/gu, " ")
+    .replace(/\s+/g, " ").trim().toLowerCase().slice(0, 40).trim();
   return m || "sin motivo";
 }
+
+// El mismo criterio que «Rescatar»: todo resultado guardado se puede rescatar.
+export const linkValido = (link) => typeof link === "string" && link.length <= 500 && /^https?:\/\/\S+$/.test(link);
 
 function validar(x) {
   if (!x || typeof x !== "object") return null;
   const nivel = Number(x.nivel);
-  if (typeof x.link !== "string" || !x.link || x.link.length > 500) return null;
+  if (!linkValido(x.link)) return null;
   if (!ESTADOS.has(x.estado) || !ORIGENES.has(x.origen) || ![1, 2, 3].includes(nivel)) return null;
   const out = { link: x.link, origen: x.origen, estado: x.estado, nivel, motivo: String(x.motivo ?? "").slice(0, 300) };
   if (x.nota !== undefined && x.nota !== null && Number.isFinite(Number(x.nota))) out.nota = Number(x.nota);
