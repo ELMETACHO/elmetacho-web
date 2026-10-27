@@ -66,3 +66,16 @@ export async function listaResultados(r, ahoraMs = Date.now()) {
 export async function conteoDelDia(r, fecha) {
   return Object.fromEntries(Object.entries(await r.hGetAll(CONTEO(fecha))).map(([k, v]) => [k, Number(v)]));
 }
+
+// Página «Links»: los niveles 2 y 3 y los del ensayo van uno por uno; los «No pasó» del nivel 1 (muchos y con motivos
+// casi iguales) van agrupados por motivo corto, el grupo más grande primero. Todos se pueden rescatar.
+export function separarPorNivel(resultados) {
+  const detalle = [], grupos = new Map();
+  for (const x of resultados) {
+    if (x.nivel >= 2 || x.estado === "ensayo_no_paso") { detalle.push(x); continue; }
+    const k = motivoCorto(x.motivo);
+    if (!grupos.has(k)) grupos.set(k, []);
+    grupos.get(k).push(x);
+  }
+  return { detalle, nivel1: [...grupos.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])) };
+}

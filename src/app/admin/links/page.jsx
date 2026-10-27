@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { COOKIE, sesionValida } from "../lib/sesion.js";
 import { conRedis } from "../lib/instagram/conexion.js";
 import { listaDm } from "../lib/instagram/dm.js";
-import { conteoDelDia, fechaBogota, listaResultados } from "../lib/instagram/resultados.js";
+import { conteoDelDia, fechaBogota, listaResultados, separarPorNivel } from "../lib/instagram/resultados.js";
 import Rescatar from "./Rescatar.jsx";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export default async function Links() {
   } catch {
     error = "No pude leer Redis.";
   }
-  const visibles = resultados.filter((x) => x.nivel >= 2 || x.estado === "ensayo_no_paso");
+  const { detalle: visibles, nivel1 } = separarPorNivel(resultados);
   const conteoOrdenado = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
   return (
     <section>
@@ -50,6 +50,26 @@ export default async function Links() {
           </li>
         ))}
       </ul>
+
+      <h2 className="mt-6 text-lg font-bold">Nivel 1: no pasaron</h2>
+      <p className="mt-1 text-sm opacity-70">Los que se cayeron por los números del video (vistas, likes, comentarios), agrupados por motivo. Abre un grupo para ver los links y rescatar el que quieras.</p>
+      {!error && !nivel1.length && <p className="mt-2 text-sm">Nada en los últimos 3 días.</p>}
+      <div className="mt-2 space-y-2">
+        {nivel1.map(([motivo, xs]) => (
+          <details key={motivo} className="rounded-lg border p-3 text-sm">
+            <summary className="cursor-pointer font-semibold">{motivo} ({xs.length})</summary>
+            <ul className="mt-2 space-y-2">
+              {xs.map((x, i) => (
+                <li key={`${x.link}-${x.fecha}-${i}`} className="border-t pt-2">
+                  <a href={x.link} target="_blank" rel="noreferrer" className="break-all underline">{x.link}</a>
+                  <div className="mt-1 opacity-70">{x.motivo} · {x.origen === "dm" ? "DM" : "Telegram"} · {fecha(x.fecha)}</div>
+                  {x.estado === "no_paso" && <div className="mt-2"><Rescatar link={x.link} /></div>}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ))}
+      </div>
 
       <h2 className="mt-6 text-lg font-bold">Links por DM</h2>
       <p className="mt-1 text-sm opacity-70">Reels y links que la comunidad le manda a elmetacho_. El PC los baja en la franja de las 5 a. m. y van a la Cabina si pasan el filtro.</p>

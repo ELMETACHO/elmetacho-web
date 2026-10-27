@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { redisMemoria } from "./redis-memoria.js";
 import { confirmarDm, forzarLink, pendientesDm } from "./dm.js";
-import { conteoDelDia, fechaBogota, guardarResultados, listaResultados, motivoCorto } from "./resultados.js";
+import { conteoDelDia, fechaBogota, guardarResultados, listaResultados, motivoCorto, separarPorNivel } from "./resultados.js";
 import { CONTEO, FORZAR, REMITENTES, RESULTADOS } from "./claves.js";
 import { guardarLinks, huellaDe } from "../../../api/instagram/webhook/meta.js";
 
@@ -225,4 +225,20 @@ test("pase directo: si la tercera se perdió (carrera), la cuarta lo da", async 
   await r.sAdd(REMITENTES(L), h("u3"));   // como si dos llegaran a la vez y ninguna leyera 3
   await guardarLinks(r, [L], "c", { huella: h("u4") });
   assert.deepEqual(await pendientesDm(r), [{ link: L, forzar: true }]);
+});
+
+test("separarPorNivel: el nivel 1 va agrupado por motivo (el grupo más grande primero); el resto, uno por uno", () => {
+  const xs = [
+    { link: "https://t/1", nivel: 1, estado: "no_paso", motivo: "10 vistas (pide 1.000)" },
+    { link: "https://t/2", nivel: 2, estado: "no_paso", motivo: "2 comentarios buenos (pide 12)" },
+    { link: "https://t/3", nivel: 1, estado: "no_paso", motivo: "2 likes del video (pide 100)" },
+    { link: "https://t/4", nivel: 1, estado: "no_paso", motivo: "50 vistas (pide 1.000)" },
+    { link: "https://t/5", nivel: 1, estado: "ensayo_no_paso", motivo: "50 vistas (pide 1.000)" },
+    { link: "https://t/6", nivel: 3, estado: "paso", motivo: "juez: 8 — bien", nota: 8 },
+  ];
+  const { detalle, nivel1 } = separarPorNivel(xs);
+  assert.deepEqual(detalle.map((x) => x.link), ["https://t/2", "https://t/5", "https://t/6"]);
+  assert.deepEqual(nivel1.map(([m, ls]) => [m, ls.map((x) => x.link)]),
+    [["vistas", ["https://t/1", "https://t/4"]], ["likes del video", ["https://t/3"]]]);
+  assert.deepEqual(separarPorNivel([]), { detalle: [], nivel1: [] });
 });
