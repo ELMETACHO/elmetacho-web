@@ -1,0 +1,3 @@
+{
+  "crons": [{ "path": "/api/instagram/renovar-token", "schedule": "0 13 * * *" }]
+}

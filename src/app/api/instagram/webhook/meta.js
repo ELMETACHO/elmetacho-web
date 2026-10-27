@@ -5,8 +5,8 @@
 // Privacidad: de cada mensaje solo sale el link; ni el texto ni quién lo mandó se guardan.
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export const COLA = "cabina:dm:links";      // lista de {link, recibido} que el PC baja en la franja
-export const VISTOS = "cabina:dm:vistos";   // links que ya entraron alguna vez (no se repiten)
+import { COLA, VISTOS } from "../../../admin/lib/instagram/claves.js";
+export { COLA, VISTOS };
 
 export function respuestaVerificacion(params, tokenEsperado) {
   if (!tokenEsperado || params.get("hub.mode") !== "subscribe") return null;

@@ -33,5 +33,13 @@ export default async function Admin() {
   } finally {
     await almacen?.cerrar();
   }
-  return <ListaPedidos pedidos={pedidos} cabina={cabina} error={error} />;
+  return (
+    <>
+      <nav className="mb-4 flex gap-4 text-sm underline">
+        <a href="/admin/dm-links">Links por DM</a>
+        <a href="/admin/palabras">Palabras clave</a>
+      </nav>
+      <ListaPedidos pedidos={pedidos} cabina={cabina} error={error} />
+    </>
+  );
 }
