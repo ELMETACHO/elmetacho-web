@@ -17,6 +17,40 @@ export const ponerComa = (t) => {
 export const lineaValida = (t) =>
   typeof t === "string" && !/[\r\n]/.test(t) && t.trim().length <= 300 && t.trim().endsWith(",") && t.trim().slice(0, -1).trim().length > 0;
 
+// Comentarios propios de Oscar (solo la Cabina): el PC los dibuja desde cero, sin likes ni medio.
+export const MAX_PROPIOS = 10;
+export const MAX_TEXTO_PROPIO = 300;
+const ID_PROPIO = /^o\d+$/;
+// Línea original de un comentario propio: su texto en una sola línea y con la coma de siempre.
+export const lineaDePropio = (texto) => ponerComa(corto(String(texto ?? "").replace(/\s+/g, " "), 299));
+export const textoPropioValido = (t) =>
+  typeof t === "string" && t.trim().length >= 1 && t.trim().length <= MAX_TEXTO_PROPIO && lineaValida(lineaDePropio(t));
+
+export function validarPropios(lista, idsPropuesta) {
+  if (lista == null) return { propios: [], error: null };   // revisiones viejas: sin propios
+  if (!Array.isArray(lista) || lista.length > MAX_PROPIOS) return { propios: [], error: `Máximo ${MAX_PROPIOS} comentarios tuyos.` };
+  const vistos = new Set(), propios = [];
+  for (const x of lista) {
+    const id = x && typeof x === "object" ? x.id : null;
+    if (typeof id !== "string" || !ID_PROPIO.test(id) || vistos.has(id) || idsPropuesta.includes(id))
+      return { propios: [], error: "Hay un comentario tuyo sin id válido o repetido." };
+    if (!textoPropioValido(x.texto)) return { propios: [], error: `Tu comentario debe tener entre 1 y ${MAX_TEXTO_PROPIO} caracteres.` };
+    vistos.add(id);
+    propios.push({ id, texto: x.texto.trim() });
+  }
+  return { propios, error: null };
+}
+
+// Agrega un comentario propio al final de la lista; si no se puede (vacío, largo o tope), devuelve la misma revisión.
+// Id: el número más alto usado + 1, así uno quitado no se reutiliza.
+export function agregarPropio(rev, texto, idsPropuesta = []) {
+  const propios = rev.propios ?? [];
+  if (propios.length >= MAX_PROPIOS || !textoPropioValido(texto)) return rev;
+  const usados = [...propios.map((x) => x.id), ...idsPropuesta].filter((i) => ID_PROPIO.test(i)).map((i) => Number(i.slice(1)));
+  const id = `o${Math.max(0, ...usados) + 1}`;
+  return { ...rev, propios: [...propios, { id, texto: texto.trim() }], orden: [...rev.orden, id] };
+}
+
 export function validarPropuesta(lista) {
   const mal = (e) => ({ comentarios: [], errores: [e] });
   if (!Array.isArray(lista) || lista.length === 0 || lista.length > MAX_COMENTARIOS)
@@ -77,7 +111,11 @@ export function aplicarRevision(p, c, ahoraMs) {
   if (no) return mal(no);
   if (!c || typeof c !== "object" || Array.isArray(c) || !Array.isArray(c.orden) || !Array.isArray(c.fuera)) return mal("Datos inválidos.");
   if (versionVieja(p, c.version)) return { pedido: p, errores: [VIEJA], conflicto: true };
-  const ids = p.propuesta.comentarios.map((x) => x.id);
+  const idsPropuesta = p.propuesta.comentarios.map((x) => x.id);
+  const { propios, error } = validarPropios(c.propios, idsPropuesta);
+  if (error) return mal(error);
+  if (propios.length && !esCabina(p)) return mal("Solo la Cabina acepta comentarios tuyos.");
+  const ids = [...idsPropuesta, ...propios.map((x) => x.id)];
   const orden = c.orden.map(String), fuera = c.fuera.map(String), juntos = [...orden, ...fuera];
   if (juntos.length !== ids.length || new Set(juntos).size !== ids.length || !juntos.every((i) => ids.includes(i)))
     return mal("La lista no coincide con la propuesta: recarga la página.");
@@ -90,7 +128,7 @@ export function aplicarRevision(p, c, ahoraMs) {
     if (!lineaValida(t)) return mal("Cada línea corregida debe terminar en coma (y no puede quedar vacía).");
     lineas[id] = t.trim();
   }
-  return { pedido: { ...p, revision: { ...p.revision, orden, fuera, lineas: { ...lineas } } }, errores: [] };
+  return { pedido: { ...p, revision: { ...p.revision, orden, fuera, lineas: { ...lineas }, propios } }, errores: [] };
 }
 
 // Spec cabina §4: un candidato se aprueba con su gancho subido y al menos un tramo.
@@ -119,12 +157,18 @@ export function masAtendido(p, ahoraMs) {
   return { pedido: { ...p, revision: { ...p.revision, trae_mas: false },
     propuesta: { ...p.propuesta, vence: iso(ahoraMs + HORAS_REVISION * 3600e3) } }, errores: [] };
 }
+// Contrato con el PC: { id, linea }; los propios suman texto y propio: true para que el PC los dibuje.
 export function listaFinal(p) {
   const por = new Map(p.propuesta.comentarios.map((c) => [c.id, c]));
-  return p.revision.orden.filter((id) => por.has(id)).map((id) => ({ id, linea: (Object.hasOwn(p.revision.lineas, id) ? p.revision.lineas[id] : por.get(id).linea) }));
+  for (const x of p.revision.propios ?? []) por.set(x.id, { linea: lineaDePropio(x.texto), texto: x.texto, propio: true });
+  return p.revision.orden.filter((id) => por.has(id)).map((id) => {
+    const c = por.get(id);
+    const linea = Object.hasOwn(p.revision.lineas, id) ? p.revision.lineas[id] : c.linea;
+    return c.propio ? { id, linea, texto: c.texto, propio: true } : { id, linea };
+  });
 }
 
-// Cambios de la pantalla de revisión sobre { orden, fuera, lineas }.
+// Cambios de la pantalla de revisión sobre { orden, fuera, lineas, propios }.
 export const quitar = (rev, id) =>
   rev.orden.length <= 1 || !rev.orden.includes(id) ? rev : { ...rev, orden: rev.orden.filter((x) => x !== id), fuera: [...rev.fuera, id] };
 export const meter = (rev, id) =>

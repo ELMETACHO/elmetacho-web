@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MAX_MEDIO, MAX_VISTA, aPurgar, anotarTamano, archivosDelCandidato, diasRestantes, nuevoCandidato, paraElPc, publicarCandidato,
   reglaDeSubida, rutaMedio, rutaVista, separarCabina, textoDias, validarCandidato, vencerCandidato, yaPublicado } from "./cabina.js";
-import { aplicarRevision, vencida } from "./revision.js";
+import { agregarPropio, aplicarRevision, vencida } from "./revision.js";
 
 const T = Date.parse("2026-10-23T19:10:00Z");
 const H = 3600e3;
@@ -131,4 +131,17 @@ test("días que faltan, texto de la lista y separación de la Cabina y los pedid
     { id: "c_a", nombre: "tiktok.com/@x/video/7", comentarios: 2, dias: 3 },
   ]);
   assert.deepEqual(pedidos.map((x) => x.id), ["c_l"]);
+});
+
+test("paraElPc: un comentario propio lleva texto y propio: true; los normales quedan igual", () => {
+  const p = publicado();
+  const rev = agregarPropio(p.revision, "  lo que escribió Oscar ", p.propuesta.comentarios.map((c) => c.id));
+  const r = aplicarRevision(p, { ...rev, version: 1 }, T);
+  assert.deepEqual(r.errores, []);
+  const { orden, fuera } = paraElPc({ ...r.pedido, estado: "aprobado" });
+  assert.deepEqual(orden, [
+    { id: "c1", linea: "jajaja," }, { id: "c2", linea: "uy no," },
+    { id: "o1", linea: "lo que escribió Oscar,", texto: "lo que escribió Oscar", propio: true },
+  ]);
+  assert.deepEqual(fuera, ["c3"]);
 });

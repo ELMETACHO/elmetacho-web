@@ -26,7 +26,7 @@ export default async function PaginaCabina({ params }) {
     );
   return (
     <Cabina id={p.id} nombre={nombreCabina(p)} link={p.link} comentarios={p.propuesta.comentarios} version={p.propuesta.version}
-      revisionInicial={{ orden: p.revision.orden, fuera: p.revision.fuera, lineas: p.revision.lineas ?? {} }}
+      revisionInicial={{ orden: p.revision.orden, fuera: p.revision.fuera, lineas: p.revision.lineas ?? {}, propios: p.revision.propios ?? [] }}
       vista={{ duracion: p.vista_previa.duracion, ancho: p.vista_previa.ancho, alto: p.vista_previa.alto }}
       tramosIniciales={p.tramos ?? []} destinoInicial={p.destino === "story" ? "story" : "reel"}
       ganchoInicial={p.gancho ? { nombre: p.gancho.nombre || "tu gancho" } : null} dias={diasRestantes(p, t)} />
