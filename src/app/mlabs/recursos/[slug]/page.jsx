@@ -19,6 +19,11 @@ export async function generateMetadata({ params }) {
     title: { absolute: `${g.titulo} · MLABS by El Metacho` },
     description: g.resumen,
     alternates: { canonical: `https://mlabs.elmetacho.com/recursos/${slug}` },
+    openGraph: {
+      type: "article", locale: "es_CO", siteName: "MLABS by El Metacho", url: `https://mlabs.elmetacho.com/recursos/${slug}`,
+      title: `${g.titulo} · MLABS by El Metacho`, description: g.resumen,
+      images: [{ url: "https://mlabs.elmetacho.com/videos/gps.jpg", width: 540, height: 960 }],
+    },
   };
 }
 

@@ -6,6 +6,12 @@ export const metadata = {
   title: { absolute: "Guías gratis · MLABS by El Metacho" },
   description: "Prompts y guías paso a paso de los videos de Metacho Labs para usar la IA en tu marca.",
   alternates: { canonical: "https://mlabs.elmetacho.com/recursos" },
+  openGraph: {
+    type: "website", locale: "es_CO", siteName: "MLABS by El Metacho", url: "https://mlabs.elmetacho.com/recursos",
+    title: "Guías gratis · MLABS by El Metacho",
+    description: "Prompts y guías paso a paso de los videos de Metacho Labs para usar la IA en tu marca.",
+    images: [{ url: "https://mlabs.elmetacho.com/videos/gps.jpg", width: 540, height: 960 }],
+  },
 };
 
 export default function Recursos() {
