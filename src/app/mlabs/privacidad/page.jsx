@@ -5,6 +5,9 @@ export const metadata = {
   title: { absolute: "Privacidad · MLABS" },
   description:
     "Política de privacidad de MLABS y de la app de Instagram «M LABS REPLY»: qué datos usamos, para qué y cómo pedir su borrado.",
+  // Meta revisa esta URL: si hereda la canónica y el og:url de la portada, la toma por la portada y la rechaza.
+  alternates: { canonical: "https://mlabs.elmetacho.com/privacidad" },
+  openGraph: { title: "Privacidad · MLABS", url: "https://mlabs.elmetacho.com/privacidad", siteName: "MLABS", type: "website" },
 };
 
 function Seccion({ titulo, children }) {
