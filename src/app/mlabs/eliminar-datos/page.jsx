@@ -4,6 +4,8 @@ import { MlabsHeader, MlabsFooter } from "../MlabsMarco";
 export const metadata = {
   title: { absolute: "Eliminar datos · MLABS" },
   description: "Cómo pedir que borremos tus datos de la app de Instagram «M LABS REPLY» de MLABS.",
+  alternates: { canonical: "https://mlabs.elmetacho.com/eliminar-datos" },
+  openGraph: { title: "Eliminar datos · MLABS", url: "https://mlabs.elmetacho.com/eliminar-datos", siteName: "MLABS", type: "website" },
 };
 
 export default function EliminarDatos() {
