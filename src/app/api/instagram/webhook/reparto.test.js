@@ -13,7 +13,7 @@ test("DM a la cuenta de la Cabina → links; a la de palabras → mensaje; eco �
     ] },
   ] };
   assert.deepEqual(repartir(ev, C).acciones, [
-    { tipo: "links", cuenta: "111", links: ["https://www.instagram.com/reel/X/"] },
+    { tipo: "links", cuenta: "111", usuario: "9", links: ["https://www.instagram.com/reel/X/"] },
     { tipo: "mensaje", cuenta: "222", usuario: "8", payload: "YA_TE_SIGO" },
   ]);
 });
