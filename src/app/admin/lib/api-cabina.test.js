@@ -87,6 +87,13 @@ test("crear: datos malos = 400 y no guarda nada", async () => {
   assert.deepEqual(await m.almacen.listar(), []);
 });
 
+test("crear: un candidato con link de Instagram se acepta y queda guardado en forma canónica", async () => {
+  const m = montar();
+  const id = await crear(m, { ...CAND(), link: "https://www.instagram.com/reel/DUf9yHRDRsx/?igsh=MWQ1ZGUxMzBkMA==" });
+  assert.equal((await m.almacen.leer(id)).link, "https://www.instagram.com/reel/DUf9yHRDRsx/");
+  assert.equal((await m.api.pcCabinaCrear(pc({ ...CAND(), link: "https://www.instagram.com/fulano" }))).status, 400);
+});
+
 test("crear: si el id ya existe prueba otro y nunca pisa un candidato", async () => {
   const m = montar({ t: T }, ["aaaa", "aaaa", "bbbb"]);
   const a = await crear(m);

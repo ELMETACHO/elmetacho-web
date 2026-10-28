@@ -7,12 +7,12 @@ import { encolarPatch } from "../cola.js";
 import { leerMeta, subirArchivo, usePantallazos, useTrabajos } from "../subidas.js";
 import EditorTramos from "./EditorTramos.jsx";
 import { extSegura } from "../../lib/editor.js";
-import { ESTILOS, TIPOS_DISPONIBLES, linkValido, pedidoDeOpcion } from "../../lib/pedido.js";
+import { ESTILOS, MSG_LINK, TIPOS_DISPONIBLES, linkValido, pedidoDeOpcion } from "../../lib/pedido.js";
 
 const boton = "adm-btn primario grande";
 const OPCIONES = [
   { tipo: "pantallazos", titulo: "Con pantallazos", detalle: "Tú escoges los comentarios y subes las fotos." },
-  { tipo: "link", titulo: "Por link", detalle: "Claude escoge los comentarios de TikTok y tú los revisas aquí." },
+  { tipo: "link", titulo: "Por link", detalle: "Claude escoge los comentarios de TikTok o Instagram y tú los revisas aquí." },
   { tipo: "remix", titulo: "Remix", detalle: "Reeditar un cantado ya publicado: mismos comentarios en otro orden, otra canción. Sin revisión." },
   { tipo: "story", titulo: "Story", detalle: "Igual que con pantallazos, pero sale como story de Facebook: un solo video, sin corto de YouTube." },
 ];
@@ -213,7 +213,7 @@ export default function NuevoPedido() {
     const v = link.trim();
     if (!v || !idRef.current) return;
     if (!linkValido(v))
-      return setErrorGlobal("Ese link no es de TikTok: debe empezar por https://www.tiktok.com/, https://vm.tiktok.com/ o https://vt.tiktok.com/.");
+      return setErrorGlobal(MSG_LINK);
     setErrorGlobal("");
     patch({ link: v })
       .then(() => setLinkGuardado(true))
@@ -244,7 +244,7 @@ export default function NuevoPedido() {
     !original?.subido && (esRemix ? "clip original" : "video original"),
     tramos.length === 0 && "marcar un tramo",
     !gancho && (esRemix ? "gancho nuevo" : "gancho"),
-    conLink && !linkGuardado && "link de TikTok",
+    conLink && !linkGuardado && "link de TikTok o Instagram",
     esRemix && !publicado && "video publicado",
     tipo === "pantallazos" && pants.length === 0 && "al menos un pantallazo",
   ].filter(Boolean);
@@ -288,12 +288,12 @@ export default function NuevoPedido() {
       {errorGlobal && <p className="adm-error">{errorGlobal}</p>}
 
       {conLink && (
-        <Seccion titulo={`${num("link")}. Link de TikTok${esRemix ? " del video original" : ""}`}>
+        <Seccion titulo={`${num("link")}. Link de TikTok o Instagram${esRemix ? " del video original" : ""}`}>
           <input
             type="url"
             inputMode="url"
             value={link}
-            placeholder="https://vt.tiktok.com/…"
+            placeholder="https://vt.tiktok.com/… o https://www.instagram.com/reel/…"
             onChange={(e) => {
               setLink(e.target.value);
               setLinkGuardado(false);
@@ -320,7 +320,7 @@ export default function NuevoPedido() {
         </Seccion>
       )}
 
-      <Seccion titulo={`${num("original")}. ${esRemix ? "Clip original (el de TikTok, sin editar)" : "Video original"}`}>
+      <Seccion titulo={`${num("original")}. ${esRemix ? "Clip original (el de TikTok o Instagram, sin editar)" : "Video original"}`}>
         <input type="file" accept="video/*" onChange={elegirOriginal} disabled={!id || ocupOrig} />
         <Barra t={trabajos.original} />
         {original && (

@@ -22,7 +22,12 @@ export const TIPOS = ["pantallazos", "link", "remix"];
 export const TIPOS_DISPONIBLES = ["pantallazos", "link", "remix"];
 export const EN_EL_PC = ["en_pc", "en_revision", "aprobado"];   // el PC ya tiene el proyecto: no se cancela desde la web
 const LINK = /^https:\/\/(www\.|vm\.|vt\.)tiktok\.com\/\S+$/;
+// Reels de Instagram (la misma regla que el PC en Python): /reel/, /reels/, /p/ o /tv/ + código, con /<usuario>/ delante
+// opcional, barra final opcional y query opcional (?igsh=… es rastreo). Perfiles y stories no sirven.
+const LINK_IG = /^https:\/\/(?:www\.|m\.)?instagram\.com\/(?:[A-Za-z0-9_.]+\/)?(reels?|p|tv)\/([A-Za-z0-9_-]+)\/?(?:\?\S*)?$/;
 const MAX_LINK = 300;
+export const MSG_LINK = "El link debe ser de TikTok (https://www.tiktok.com/…, https://vm.tiktok.com/… o https://vt.tiktok.com/…) "
+  + "o de un reel de Instagram (https://www.instagram.com/reel/…).";
 export const tipoDe = (p) => p.tipo || "pantallazos";      // pedidos de la fase 1 no traen tipo
 export const esCabina = (p) => Boolean(p) && tipoDe(p) === "cabina";   // candidatos del sondeo (spec cabina §4)
 // Destino (spec stories 2026-10-22 §6): las stories de Facebook van en su propia sección. Sin campo = reel.
@@ -32,7 +37,19 @@ export const TIPOS_STORY = ["pantallazos"];
 export const destinoDe = (p) => (p.destino === "story" ? "story" : "reel");
 export const pedidoDeOpcion = (opcion) =>
   opcion === "story" ? { tipo: "pantallazos", destino: "story" } : { tipo: opcion, destino: "reel" };
-export const linkValido = (x) => typeof x === "string" && x.trim().length <= MAX_LINK && LINK.test(x.trim());
+const linkIg = (t) => t.match(LINK_IG);
+export const linkValido = (x) => {
+  if (typeof x !== "string") return false;
+  const t = x.trim();
+  return t.length <= MAX_LINK && (LINK.test(t) || Boolean(linkIg(t)));
+};
+// Forma en que se guarda el link: TikTok tal cual (sin espacios); Instagram canónico y sin query. null si no es válido.
+export function normalizarLink(x) {
+  if (!linkValido(x)) return null;
+  const t = x.trim(), ig = linkIg(t);
+  if (!ig) return t;
+  return `https://www.instagram.com/${ig[1] === "p" ? "p" : "reel"}/${ig[2]}/`;
+}
 export const nuevoPedido = (id, creado, tipo = "pantallazos", destino = "reel") => ({
   id, creado, tipo, destino, estado: "subiendo", titulo: null, estilo: ESTILOS[0], tramos: [],
   original: null, gancho: null, pantallazos: [], link: null, publicado: null, motivo: null,
@@ -90,8 +107,8 @@ export function aplicarCambios(p, c) {
   }
   if ("link" in c) {
     if (tipoDe(p) === "pantallazos") errores.push("Este pedido no lleva link.");
-    else if (linkValido(c.link)) out.link = c.link.trim();
-    else errores.push("El link debe ser de TikTok: https://www.tiktok.com/…, https://vm.tiktok.com/… o https://vt.tiktok.com/…");
+    else if (linkValido(c.link)) out.link = normalizarLink(c.link);
+    else errores.push(MSG_LINK);
   }
   if ("pantallazos" in c) {
     if (tipoDe(p) !== "pantallazos" && p.estado !== "necesita_pantallazos") errores.push("Este pedido no lleva pantallazos.");
@@ -116,7 +133,7 @@ export function erroresParaEnviar(p) {
   if (!(p.original?.tamano > 0)) e.push("Falta el video original.");
   if (!p.tramos?.length) e.push("Falta marcar el bucle.");
   if (!(p.gancho?.tamano > 0)) e.push("Falta tu gancho.");
-  if (tipo !== "pantallazos" && !linkValido(p.link)) e.push("Falta el link de TikTok.");
+  if (tipo !== "pantallazos" && !linkValido(p.link)) e.push("Falta el link de TikTok o Instagram.");
   if (tipo === "remix" && !(p.publicado?.tamano > 0)) e.push("Falta tu video ya publicado.");
   if (tipo === "pantallazos" && (!p.pantallazos?.length || !p.pantallazos.every((a) => a.tamano > 0))) e.push("Faltan los pantallazos.");
   return e;

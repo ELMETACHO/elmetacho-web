@@ -117,6 +117,16 @@ test("purga: sin publicar a las 24 h; en revisión a los 7 días; lo demás no",
   assert.equal(aPurgar({ tipo: "link", estado: "subiendo", creado: iso(T) }, T + 99 * H), false);
 });
 
+test("candidato con link de Instagram: se acepta, se guarda canónico y se muestra corto", () => {
+  const d = validarCandidato(ID, { ...CAND(), link: "https://www.instagram.com/fulano/reels/DUf9yHRDRsx/?igsh=MWQ1ZGUxMzBkMA==" });
+  assert.deepEqual(d.errores, []);
+  assert.equal(d.link, "https://www.instagram.com/reel/DUf9yHRDRsx/");
+  const { cabina } = separarCabina([publicarCandidato(nuevoCandidato(ID, iso(T), d), T)], T);
+  assert.equal(cabina[0].nombre, "instagram.com/reel/DUf9yHRDRsx");
+  for (const malo of ["https://www.instagram.com/fulano", "https://www.instagram.com/stories/fulano/1/", "http://www.instagram.com/reel/X/"])
+    assert.match(validarCandidato(ID, { ...CAND(), link: malo }).errores[0], /Instagram/, malo);
+});
+
 test("días que faltan, texto de la lista y separación de la Cabina y los pedidos", () => {
   const p = publicado();
   // cuenta hasta el límite real (70 h): 70 h → 3 días; 21 h → 1; 1 h → 1; vencido → 0

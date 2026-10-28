@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nuevoId, nuevoPedido, aplicarCambios, erroresParaEnviar, archivos, borradorVencido, prefijo, TIPOS, TIPOS_DISPONIBLES, linkValido, tipoDe, ordenarLista, subidaPermitida, tonoEstado, destinoDe, pedidoDeOpcion } from "./pedido.js";
+import { nuevoId, nuevoPedido, aplicarCambios, erroresParaEnviar, archivos, borradorVencido, prefijo, TIPOS, TIPOS_DISPONIBLES, linkValido, normalizarLink, tipoDe, ordenarLista, subidaPermitida, tonoEstado, destinoDe, pedidoDeOpcion } from "./pedido.js";
 
 const P = () => nuevoPedido("c_20261021_ab12", "2026-10-21T18:30:00.000Z");
 const arch = (n, extra = {}) => ({ pathname: `cantados/c_20261021_ab12/${n}`, tamano: 100, ...extra });
@@ -91,16 +91,42 @@ test("link de TikTok: solo https con www., vm. o vt.", () => {
     assert.equal(linkValido(malo), false, String(malo));
 });
 
+test("link de Instagram: reels, posts y tv con https; sin perfiles, stories ni hosts falsos", () => {
+  for (const ok of ["https://www.instagram.com/reel/DUf9yHRDRsx/?igsh=MWQ1ZGUxMzBkMA==", "https://www.instagram.com/reel/DUf9yHRDRsx",
+    "https://www.instagram.com/reels/DUf9yHRDRsx/", "https://www.instagram.com/p/C7x-_9aB/", "https://www.instagram.com/tv/B1x2/",
+    "https://www.instagram.com/fulano.de_tal/reel/DUf9yHRDRsx/", "https://instagram.com/reel/DUf9yHRDRsx/", "https://m.instagram.com/reel/DUf9yHRDRsx/",
+    "  https://www.instagram.com/reel/DUf9yHRDRsx/  "])
+    assert.equal(linkValido(ok), true, ok);
+  for (const malo of ["https://www.instagram.com/fulano", "https://www.instagram.com/fulano/", "https://www.instagram.com/stories/fulano/3456789/",
+    "http://www.instagram.com/reel/DUf9yHRDRsx/", "https://instagram.com.evil.co/reel/DUf9yHRDRsx/", "https://evilinstagram.com/reel/DUf9yHRDRsx/",
+    "https://www.instagram.com/reel/DUf9 yHRDRsx/", "https://www.instagram.com/reel/", "https://www.instagram.com/reel/DUf9yHRDRsx/extra",
+    `https://www.instagram.com/reel/${"a".repeat(300)}/`])
+    assert.equal(linkValido(malo), false, malo);
+});
+
+test("normalizarLink: Instagram a la forma canónica sin query; TikTok tal cual", () => {
+  const R = "https://www.instagram.com/reel/DUf9yHRDRsx/";
+  for (const x of ["https://www.instagram.com/reel/DUf9yHRDRsx/?igsh=MWQ1ZGUxMzBkMA==", "https://instagram.com/reels/DUf9yHRDRsx",
+    "https://m.instagram.com/fulano/reel/DUf9yHRDRsx/", "https://www.instagram.com/tv/DUf9yHRDRsx/", " https://www.instagram.com/reel/DUf9yHRDRsx "])
+    assert.equal(normalizarLink(x), R, x);
+  assert.equal(normalizarLink("https://www.instagram.com/fulano/p/C7x-_9aB/?img_index=1"), "https://www.instagram.com/p/C7x-_9aB/");
+  assert.equal(normalizarLink(" https://vt.tiktok.com/ZS9/ "), "https://vt.tiktok.com/ZS9/");
+  assert.equal(normalizarLink("https://www.tiktok.com/@a/video/123?is_from_webapp=1"), "https://www.tiktok.com/@a/video/123?is_from_webapp=1");
+  for (const malo of ["https://www.instagram.com/fulano", "", null, 5]) assert.equal(normalizarLink(malo), null, String(malo));
+});
+
 test("el link se guarda solo en pedidos por link y debe ser válido; un pedido por link no lleva pantallazos", () => {
   assert.equal(aplicarCambios(L(), { link: " https://vt.tiktok.com/ZS9/ " }).pedido.link, "https://vt.tiktok.com/ZS9/");
-  assert.match(aplicarCambios(L(), { link: "https://youtube.com/x" }).errores[0], /TikTok/);
+  assert.match(aplicarCambios(L(), { link: "https://youtube.com/x" }).errores[0], /TikTok.*Instagram/);
+  assert.equal(aplicarCambios(L(), { link: "https://www.instagram.com/reel/DUf9yHRDRsx/?igsh=abc" }).pedido.link, "https://www.instagram.com/reel/DUf9yHRDRsx/");
+  assert.match(aplicarCambios(L(), { link: "https://www.instagram.com/fulano" }).errores[0], /Instagram/);
   assert.match(aplicarCambios(P(), { link: "https://vt.tiktok.com/ZS9/" }).errores[0], /no lleva link/);
   assert.match(aplicarCambios(L(), { pantallazos: [arch("p01.jpg")] }).errores[0], /no lleva pantallazos/);
 });
 
 test("para enviar por link: original, tramo, gancho y link (sin pantallazos)", () => {
   const base = { original: arch("original.mp4", { duracion: 28 }), tramos: [[0, 4]], gancho: arch("gancho.mov") };
-  assert.deepEqual(erroresParaEnviar({ ...L(), ...base }), ["Falta el link de TikTok."]);
+  assert.deepEqual(erroresParaEnviar({ ...L(), ...base }), ["Falta el link de TikTok o Instagram."]);
   assert.deepEqual(erroresParaEnviar({ ...L(), ...base, link: "https://vt.tiktok.com/ZS9/" }), []);
 });
 
@@ -148,7 +174,7 @@ test("remix: lleva link y video publicado; los otros tipos no llevan publicado",
 
 test("para enviar un remix: clip original, tramo, gancho nuevo, link y publicado", () => {
   const base = { original: arch("original.mp4", { duracion: 28 }), tramos: [[0, 4]], gancho: arch("gancho.mov") };
-  assert.deepEqual(erroresParaEnviar({ ...R(), ...base }), ["Falta el link de TikTok.", "Falta tu video ya publicado."]);
+  assert.deepEqual(erroresParaEnviar({ ...R(), ...base }), ["Falta el link de TikTok o Instagram.", "Falta tu video ya publicado."]);
   const listo = { ...R(), ...base, link: "https://vt.tiktok.com/ZS9/", publicado: arch("publicado.mp4") };
   assert.deepEqual(erroresParaEnviar(listo), []);
   assert.deepEqual(archivos(listo), [listo.original.pathname, listo.gancho.pathname, listo.publicado.pathname]);
