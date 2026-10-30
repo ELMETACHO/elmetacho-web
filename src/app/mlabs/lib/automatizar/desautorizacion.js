@@ -31,6 +31,7 @@ export async function atenderBorradoMeta({ r, env, ig, mp, avisar }, signed) {
   const cuenta = await r.get(claveAsid(asid));
   if (!cuenta) {
     console.log(`mlabs meta: callback de borrado con asid desconocido (${asid})`);
+    await avisarSeguro(avisar, `⚠️ MLABS: Meta pidió desautorizar/borrar el user_id ${asid} y no está en el índice. No se borró nada; revisa si Meta manda otro id distinto al de /me.`);
     return { ok: true, borrada: false, codigo };
   }
   if (cuenta === env.IG_CUENTA_PALABRAS || cuenta === env.IG_CUENTA_CABINA) {

@@ -332,3 +332,22 @@ test("M2: el código de revisión se compara contra la variable recortada", asyn
   const r2 = await nueva();
   assert.equal((await activar({ r: r2, env: { ...env, MLABS_CODIGO_REVISION: "   " }, mp: mpFalso(), ahora: () => 0, avisar: sinAviso }, "1", { codigo: " " })).ok, false);
 });
+
+test("M-1: aviso de una cuenta sin ficha (se desconectó y se borró): 'sin cuenta' y no crea ficha ni suscripción", async () => {
+  const r = redisMemoria();
+  assert.equal(await recibirAviso({ r, mp: mpFalso(), ahora: () => 0, avisar: sinAviso }, { tipo: "subscription_preapproval", id: "P1" }), "sin cuenta");
+  assert.equal(await r.get("ig:1:marca"), null);
+  assert.equal(await r.get("ig:1:suscripcion"), null);
+});
+
+test("M-1: si la ficha se borra mientras se atiende el aviso, tampoco se recrea", async () => {
+  const r = await nueva();
+  await guardarSuscripcion(r, "1", { id_mp: "P0", estado_mp: "pending" });
+  const mp = mpFalso({ consultarSuscripcion: async ({ id }) => {
+    if (id === "P0") { await r.del("ig:1:marca"); await r.del("ig:1:suscripcion"); return { id, status: "cancelled", external_reference: "1" }; }
+    return { id, status: "authorized", external_reference: "1", next_payment_date: new Date(7 * DIA).toISOString() };
+  } });
+  assert.equal(await recibirAviso({ r, mp, ahora: () => 0, avisar: sinAviso }, { tipo: "subscription_preapproval", id: "P1" }), "sin cuenta");
+  assert.equal(await r.get("ig:1:marca"), null);
+  assert.equal(await r.get("ig:1:suscripcion"), null);
+});

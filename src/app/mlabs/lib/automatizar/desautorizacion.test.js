@@ -57,9 +57,11 @@ test("firma inválida: no ok y no borra nada", async () => {
   assert.equal(await r.get(claveAsid("A1")), "1");
 });
 
-test("asid desconocido: responde bien y no borra nada", async () => {
-  const r = await preparar();
-  const res = await atenderBorradoMeta(deps(r), firmar({ ...valido, user_id: "ZZ" }));
+test("asid desconocido: responde bien, no borra nada y avisa a Oscar con el asid", async () => {
+  const r = await preparar(), avisos = [];
+  const res = await atenderBorradoMeta({ ...deps(r), avisar: async (t) => avisos.push(t) }, firmar({ ...valido, user_id: "ZZ" }));
+  assert.equal(avisos.length, 1);
+  assert.match(avisos[0], /ZZ/);
   assert.equal(res.ok, true);
   assert.equal(res.borrada, false);
   assert.notEqual(await r.get("ig:1:token"), null);

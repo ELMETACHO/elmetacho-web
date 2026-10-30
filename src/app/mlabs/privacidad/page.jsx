@@ -78,8 +78,8 @@ export default function Privacidad() {
             <p>
               <strong className="text-black">Cuándo se borra todo:</strong> al instante, cuando tocas
               «Desconectar Instagram y borrar mis datos» en tu panel; cuando quitas el permiso a la app
-              desde Instagram; o a los 30 días si Instagram deja de darnos acceso y no vuelves a conectar
-              tu cuenta. También puedes pedirlo por correo a{" "}
+              desde Instagram; o 30 días después de que tu acceso deje de funcionar (por ejemplo, token
+              vencido o revocado) si no vuelves a conectar tu cuenta. También puedes pedirlo por correo a{" "}
               <a href="mailto:contacto@elmetacho.com" className="font-bold underline">
                 contacto@elmetacho.com
               </a>

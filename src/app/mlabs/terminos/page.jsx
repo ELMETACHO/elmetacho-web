@@ -23,8 +23,8 @@ export default function Terminos() {
               un mensaje directo.
             </p>
             <p>
-              Cobro: suscripción mensual con Mercado Pago. Los primeros 7 días son gratis; el primer cobro
-              llega al día 7. Puedes cancelar desde tu panel; el servicio sigue hasta el final del periodo
+              Cobro: suscripción mensual con Mercado Pago. Los primeros 7 días son gratis, solo la primera vez por cuenta de
+              Instagram; el primer cobro llega al día 7. Puedes cancelar desde tu panel; el servicio sigue hasta el final del periodo
               ya pagado (o de los días gratis) y no hay reembolsos parciales.
             </p>
             <p>

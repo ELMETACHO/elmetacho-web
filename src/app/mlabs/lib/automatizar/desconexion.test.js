@@ -60,3 +60,12 @@ test("la cuenta casa y la Cabina no se pueden desconectar por aquí y no pierden
   await assert.rejects(desconectarCuenta({ ...d, env: { ...env, IG_CUENTA_CABINA: "1" } }, "1"), /Cabina/);
   assert.notEqual(await r.get("ig:1:token"), null);
 });
+
+test("M-1: borra ANTES de llamar a Meta y a Mercado Pago (el aviso de MP ya no encuentra ficha)", async () => {
+  const r = await preparar();
+  const vistas = [];
+  const ig = { desuscribirWebhook: async () => vistas.push(["ig", await r.get("ig:1:marca")]) };
+  const mp = { cancelarSuscripcion: async () => vistas.push(["mp", await r.get("ig:1:marca"), await r.get("ig:1:suscripcion")]) };
+  await desconectarCuenta({ r, env, ig, mp, avisar: async () => {} }, "1");
+  assert.deepEqual(vistas, [["ig", null], ["mp", null, null]]);
+});

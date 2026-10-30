@@ -8,7 +8,7 @@ import { tokenDe } from "../../../admin/lib/instagram/token.js";
 import { atenderVuelta } from "./vuelta.js";
 import { leerMarca, listarClientes } from "./marcas.js";
 
-const env = { MLABS_CLAVE_TOKENS: randomBytes(32).toString("base64"), IG_CUENTA_PALABRAS: "222", IG_CUENTA_CABINA: "111" };
+const env = { IG_APP_ID: "id", IG_APP_SECRET: "sec", MLABS_CLAVE_TOKENS: randomBytes(32).toString("base64"), IG_CUENTA_PALABRAS: "222", IG_CUENTA_CABINA: "111" };
 const igFalso = (sobre = {}) => {
   const hechos = [];
   return { hechos, ig: {
@@ -124,4 +124,46 @@ test("la cuenta de la Cabina (IG_CUENTA_CABINA) tampoco se vuelve cliente ni tie
   assert.deepEqual(await listarClientes(r), []);
   assert.equal(await leerMarca(r, "111"), null);
   assert.equal(await r.get("mlabs:asid:A111"), "111");
+});
+
+test("I-2: fallos de configuración o internos avisan a Oscar una vez; los de la marca no avisan", async () => {
+  const r = redisMemoria(), avisos = [];
+  const d = (sobre = {}, e = env) => ({ r, env: e, ig: igFalso(sobre).ig, ahora: () => 1, avisar: async (t) => avisos.push(t) });
+  // fallos de la marca / de Meta: solo log
+  await atenderVuelta(d(), { ...ok, stateRecibido: "X" });
+  await atenderVuelta(d(), { ...ok, code: null, error: "access_denied" });
+  await atenderVuelta(d({ canjearCodigo: async () => { throw new ErrorMeta("code vencido", 400); } }), ok);
+  await atenderVuelta(d({ perfil: async () => ({ cuenta: "5", usuario: "yo", tipo: "PERSONAL", asid: "A5" }) }), ok);
+  assert.deepEqual(avisos, []);
+  // falta MLABS_CLAVE_TOKENS: avisa; el segundo fallo dentro de la hora no repite
+  const res = await atenderVuelta(d({}, { ...env, MLABS_CLAVE_TOKENS: "" }), ok);
+  assert.deepEqual(res, { ok: false, motivo: "codigo" });
+  assert.equal(avisos.length, 1);
+  assert.match(avisos[0], /MLABS_CLAVE_TOKENS/);
+  assert.ok(!avisos[0].includes("LARGO"));
+  await atenderVuelta(d({}, { ...env, MLABS_CLAVE_TOKENS: "" }), ok);
+  assert.equal(avisos.length, 1);
+});
+
+test("I-2: falta IG_APP_ID o IG_APP_SECRET avisa a Oscar", async () => {
+  const avisos = [];
+  const res = await atenderVuelta({ r: redisMemoria(), env: { ...env, IG_APP_ID: "" }, ig: igFalso().ig, ahora: () => 1, avisar: async (t) => avisos.push(t) }, ok);
+  assert.deepEqual(res, { ok: false, motivo: "codigo" });
+  assert.match(avisos[0], /IG_APP_ID/);
+});
+
+test("I-2: si falla firmar la sesión no sale el aviso «conectó su Instagram» y sí el de configuración", async () => {
+  const avisos = [];
+  const sesion = () => { throw new Error("Falta MLABS_SESION_SECRETO"); };
+  const res = await atenderVuelta({ r: redisMemoria(), env, ig: igFalso().ig, ahora: () => 1, avisar: async (t) => avisos.push(t), sesion }, ok);
+  assert.equal(res.ok, false);
+  assert.ok(!avisos.some((t) => /conectó/.test(t)));
+  assert.ok(avisos.some((t) => /MLABS_SESION_SECRETO/.test(t)));
+});
+
+test("I-2: con la sesión firmada devuelve la cookie y avisa de la marca nueva", async () => {
+  const avisos = [];
+  const res = await atenderVuelta({ r: redisMemoria(), env, ig: igFalso().ig, ahora: () => 1, avisar: async (t) => avisos.push(t), sesion: (c) => `COOKIE-${c}` }, ok);
+  assert.deepEqual(res, { ok: true, cuenta: "17841", cookie: "COOKIE-17841" });
+  assert.match(avisos[0], /conectó/);
 });
