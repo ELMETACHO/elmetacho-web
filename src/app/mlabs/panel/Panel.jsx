@@ -30,7 +30,7 @@ export default function Panel() {
       {e.reconectar && <p className="mt-2 rounded bg-red-100 p-2 text-sm text-red-800">Instagram ya no nos deja responder por ti. <a className="font-bold underline" href="/api/mlabs/instagram/entrar">Vuelve a conectar Instagram</a>.</p>}
       {!e.casa && (e.estado === "sin_pago" || e.estado === "cancelada") && (
         <form className="mt-4 space-y-2 rounded-lg border p-3 text-sm" onSubmit={(ev) => { ev.preventDefault(); const f = new FormData(ev.currentTarget); enviar("/api/mlabs/activar", { correo: f.get("correo"), codigo: f.get("codigo") }); }}>
-          <p className="font-bold">Activa tu automatización: 7 días gratis, luego mensualidad con Mercado Pago.</p>
+          <p className="font-bold">{e.uso_gratis ? "Activa tu automatización: mensualidad con Mercado Pago; el cobro empieza hoy (ya usaste tus 7 días gratis)." : "Activa tu automatización: 7 días gratis, luego mensualidad con Mercado Pago."}</p>
           <label className="block">Tu correo <input name="correo" type="email" className="w-full rounded border p-1" /></label>
           <details><summary className="cursor-pointer opacity-70">Tengo un código de acceso</summary><input name="codigo" className="mt-1 w-full rounded border p-1" /></details>
           <button className="rounded bg-black px-3 py-1 text-white">Activar</button>

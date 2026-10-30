@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { redisMemoria } from "../../../admin/lib/instagram/redis-memoria.js";
-import { activar, cancelar, recibirAviso } from "./cobro.js";
+import { activar, cancelar, recibirAviso, vistaEstado } from "./cobro.js";
 import { altaMarca, guardarMarca, guardarSuscripcion, leerMarca, leerSuscripcion } from "./marcas.js";
 
 const DIA = 864e5;
@@ -249,4 +249,14 @@ test("cancelar: si el PUT a Mercado Pago falla, se revierte fin_servicio y el er
 
 test("cancelar sin suscripción: error claro", async () => {
   assert.equal((await cancelar({ r: await nueva(), mp: mpFalso() }, "1")).ok, false);
+});
+
+test("vistaEstado expone uso_gratis: falso en una marca nueva, verdadero si la marca lo guarda o la suscripción tuvo fin_gratis", () => {
+  const m = { usuario: "t", estado: "sin_pago", reconectar_desde: null };
+  assert.equal(vistaEstado(m, null).uso_gratis, false);
+  assert.equal(vistaEstado(m, { id_mp: "P1", fin_gratis: null }).uso_gratis, false);
+  assert.equal(vistaEstado(m, { id_mp: "P1", fin_gratis: 0 }).uso_gratis, false);
+  assert.equal(vistaEstado({ ...m, uso_gratis: true }, null).uso_gratis, true);
+  assert.equal(vistaEstado(m, { id_mp: "P1", fin_gratis: 7 * DIA }).uso_gratis, true);
+  assert.deepEqual(vistaEstado(m, null), { usuario: "t", estado: "sin_pago", casa: false, reconectar: false, suscripcion: null, uso_gratis: false });
 });

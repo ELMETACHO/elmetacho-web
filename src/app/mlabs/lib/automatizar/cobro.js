@@ -113,3 +113,9 @@ export async function cancelar({ r, mp }, cuenta) {
   }
   return { ok: true, hasta };
 }
+
+// Lo que el panel necesita saber de la marca; `uso_gratis` decide si todavía se le puede prometer la prueba de 7 días.
+export const vistaEstado = (m, s) => ({
+  usuario: m.usuario, estado: m.estado, casa: false, reconectar: Boolean(m.reconectar_desde), suscripcion: s,
+  uso_gratis: Boolean(m.uso_gratis || s?.fin_gratis > 0),
+});
