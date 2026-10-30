@@ -10,6 +10,11 @@ import { leerMarca, responde } from "../../../mlabs/lib/automatizar/marcas.js";
 import { guardarLinks, huellaDe } from "./meta.js";
 import { cuentasDe, repartir } from "./reparto.js";
 
+// ¿Podría haber algo que hacer? Reparte suponiendo que todas las cuentas del aviso responden (el máximo posible):
+// si ni así sale una acción, no hace falta abrir Redis (ecos, DMs sin link, cuentas ajenas).
+export const hayAcciones = (evento, env = process.env) =>
+  repartir(evento, { cabina: env.IG_CUENTA_CABINA, responden: new Set(cuentasDe(evento)) }).acciones.length > 0;
+
 export async function atenderEvento(r, evento, { env = process.env, avisar = avisarDeVerdad, ahora = Date.now } = {}) {
   const casa = env.IG_CUENTA_PALABRAS;
   const responden = new Set();

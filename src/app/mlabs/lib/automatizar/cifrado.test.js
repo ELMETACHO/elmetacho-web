@@ -32,6 +32,6 @@ test("un tag de autenticación truncado se rechaza (authTagLength fijo en 16)", 
   // iv(12) + solo 4 bytes de tag: sin authTagLength fijo, el descifrador podría validar un tag corto
   const corto = b.subarray(0, 16).toString("base64url");
   assert.throws(() => descifrar(corto, K));
-  // tag completo (16) pero sin texto, o recortado un byte
+  // 27 bytes: el tag queda recortado en un byte (sin texto cifrado)
   assert.throws(() => descifrar(b.subarray(0, 27).toString("base64url"), K));
 });

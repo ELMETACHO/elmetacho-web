@@ -6,7 +6,7 @@
 // IG_CUENTA_CABINA (id de la cuenta de la Cabina), IG_CUENTA_PALABRAS (id de la cuenta de palabras clave) e
 // IG_HUELLA_SECRETA (para la huella anónima del pase directo; sin ella el pase directo queda apagado).
 import { conRedis } from "../../../admin/lib/instagram/conexion.js";
-import { atenderEvento } from "./atender.js";
+import { atenderEvento, hayAcciones } from "./atender.js";
 import { firmaValida, respuestaVerificacion } from "./meta.js";
 
 export const runtime = "nodejs";
@@ -28,8 +28,9 @@ export async function POST(req) {
   } catch {
     return new Response("ok");   // firmado pero ilegible: no sirve reintentarlo
   }
+  if (!hayAcciones(evento)) return new Response("ok");   // sin acciones posibles no se toca Redis (un fallo de Redis no debe dar 500)
   try {
-    await conRedis((r) => atenderEvento(r, evento));   // abre Redis siempre: lee las fichas de las marcas (atender.js)
+    await conRedis((r) => atenderEvento(r, evento));   // con acciones posibles: lee las fichas de las marcas (atender.js)
     return new Response("ok");
   } catch (e) {
     console.error("webhook instagram redis", e);
