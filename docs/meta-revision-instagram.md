@@ -131,7 +131,7 @@ Reglas comunes (de la guía de Meta; ver sección A): grabar en 1080 o más, **s
 | 3 | Pantalla de Instagram con el usuario de la marca A y la lista de permisos. Pausar para que se lean los tres permisos. | Instagram Business Login: the brand grants instagram_business_basic, manage_comments and manage_messages. |
 | 4 | Permitir. Vuelve a `/panel`. Mostrar `@usuario` arriba. | After login, the dashboard shows the connected account (@username), read with instagram_business_basic. |
 | 5 | Mostrar «Estado: sin_pago» y el formulario «Activa tu automatización». | Status "sin_pago" = payment pending. The brand must activate the subscription. |
-| 6 | Abrir «Tengo un código de acceso», pegar el código (oculto) y pulsar «Activar». Vuelve el panel con la cuenta activa. | "Tengo un código de acceso" = "I have an access code" (reviewer code). Brands normally pay through Mercado Pago. |
+| 6 | Abrir «Tengo un código de acceso», pegar el código en el campo de texto (difuminarlo en la edición) y pulsar «Activar». Vuelve el panel con la cuenta activa. | "Tengo un código de acceso" = "I have an access code" (reviewer code). Brands normally pay through Mercado Pago. |
 | 7 | (Opcional) Mostrar el mensaje de `/automatizar?error=personal`. | Personal accounts are rejected: only professional accounts can connect. |
 
 ### Video 2: `instagram_business_manage_comments` (respuesta pública)
