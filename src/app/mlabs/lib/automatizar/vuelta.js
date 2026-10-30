@@ -19,8 +19,9 @@ export async function atenderVuelta({ r, env, ig, ahora, avisar }, { code, error
     try { await ig.suscribirWebhook({ token: largo.access_token }); } catch (e) {
       await avisarSeguro(avisar, `⚠️ MLABS: no pude suscribir el webhook de @${p.usuario} (${p.cuenta}): ${e?.message}`);
     }
-    // La casa (IG_CUENTA_PALABRAS) no tiene ficha ni va a mlabs:clientes; sí se indexa su asid.
-    if (p.cuenta !== env.IG_CUENTA_PALABRAS) {
+    // La casa (IG_CUENTA_PALABRAS e IG_CUENTA_CABINA) no tiene ficha ni va a mlabs:clientes; sí se indexa su asid.
+    const esCasa = p.cuenta === env.IG_CUENTA_PALABRAS || p.cuenta === env.IG_CUENTA_CABINA;
+    if (!esCasa) {
       const { marca, nueva } = await altaMarca(r, { cuenta: p.cuenta, usuario: p.usuario, ahora });
       if (p.asid) await guardarMarca(r, p.cuenta, { ...marca, asid: p.asid });
       if (nueva) await avisarSeguro(avisar, `🆕 MLABS: @${p.usuario} conectó su Instagram.`);

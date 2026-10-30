@@ -26,3 +26,12 @@ test("texto alterado u otra clave: descifrar lanza", () => {
   assert.throws(() => descifrar(malo, K));
   assert.throws(() => descifrar(c, randomBytes(32).toString("base64")));
 });
+
+test("un tag de autenticación truncado se rechaza (authTagLength fijo en 16)", () => {
+  const b = Buffer.from(cifrar("IGAAtoken", K), "base64url");
+  // iv(12) + solo 4 bytes de tag: sin authTagLength fijo, el descifrador podría validar un tag corto
+  const corto = b.subarray(0, 16).toString("base64url");
+  assert.throws(() => descifrar(corto, K));
+  // 27 bytes: el tag queda recortado en un byte (sin texto cifrado)
+  assert.throws(() => descifrar(b.subarray(0, 27).toString("base64url"), K));
+});

@@ -1,19 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
 
-const vacio = () => ({ palabra: "", respuesta_publica: "¡Enviado! Revisa tu DM 📩", mensaje_dm: "", link: "https://mlabs.elmetacho.com/recursos/", pedir_seguir: false, activa: true });
+const vacio = () => ({ palabra: "", respuesta_publica: "¡Enviado! Revisa tu DM 📩", mensaje_dm: "", link: "", pedir_seguir: false, activa: true });
 
 const ERROR_CARGA = "No se pudo cargar (¿venció la sesión o falló el servidor?)";
 const ERROR_GUARDAR = "No se pudo guardar (¿venció la sesión o falló el servidor?)";
 
-export default function Palabras() {
+export default function Palabras({ api = "/admin/api/palabras", titulo = "Palabras clave · metacholabs", volver = { href: "/admin", texto: "← Admin" }, avisoPausa = "En pausa: el token no sirve o falta. Pega uno nuevo en Vercel (IG_TOKEN_LABS)." }) {
   const [lista, setLista] = useState(null);
   const [pausa, setPausa] = useState(false);
   const [msg, setMsg] = useState("");
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch("/admin/api/palabras");
+        const r = await fetch(api);
         const d = await r.json();
         if (!r.ok || d.error) return setMsg(d.error || ERROR_CARGA);
         setLista(d.disparadores);
@@ -27,7 +27,7 @@ export default function Palabras() {
   async function guardar() {
     setMsg("Guardando…");
     try {
-      const r = await fetch("/admin/api/palabras", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ disparadores: lista }) });
+      const r = await fetch(api, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ disparadores: lista }) });
       const d = await r.json();
       if (!r.ok) return setMsg(d.error || ERROR_GUARDAR);
       setLista(d.disparadores);
@@ -39,9 +39,9 @@ export default function Palabras() {
   if (!lista) return <p>{msg || "Cargando…"}</p>;
   return (
     <section>
-      <a href="/admin" className="text-sm underline">← Admin</a>
-      <h1 className="mt-2 text-2xl font-black">Palabras clave · metacholabs</h1>
-      {pausa && <p className="mt-2 rounded bg-red-100 p-2 text-sm text-red-800">En pausa: el token no sirve o falta. Pega uno nuevo en Vercel (IG_TOKEN_LABS).</p>}
+      {volver && <a href={volver.href} className="text-sm underline">{volver.texto}</a>}
+      <h1 className="mt-2 text-2xl font-black">{titulo}</h1>
+      {pausa && avisoPausa && <p className="mt-2 rounded bg-red-100 p-2 text-sm text-red-800">{avisoPausa}</p>}
       <p className="mt-1 text-sm opacity-70">Si un comentario contiene la palabra (sin importar mayúsculas ni tildes), se responde en público y le llega el DM con el link. La primera de la lista gana.</p>
       {lista.map((d, k) => (
         <div key={d.id || k} className="mt-4 space-y-2 rounded-lg border p-3 text-sm">

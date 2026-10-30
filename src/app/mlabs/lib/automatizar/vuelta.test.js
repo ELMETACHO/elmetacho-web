@@ -8,7 +8,7 @@ import { tokenDe } from "../../../admin/lib/instagram/token.js";
 import { atenderVuelta } from "./vuelta.js";
 import { leerMarca, listarClientes } from "./marcas.js";
 
-const env = { MLABS_CLAVE_TOKENS: randomBytes(32).toString("base64"), IG_CUENTA_PALABRAS: "222" };
+const env = { MLABS_CLAVE_TOKENS: randomBytes(32).toString("base64"), IG_CUENTA_PALABRAS: "222", IG_CUENTA_CABINA: "111" };
 const igFalso = (sobre = {}) => {
   const hechos = [];
   return { hechos, ig: {
@@ -115,4 +115,13 @@ test("si falla la suscripción al webhook igual entra, pero Oscar recibe aviso",
   const res = await atenderVuelta({ r, env, ig: igFalso({ suscribirWebhook: async () => { throw new Error("boom"); } }).ig, ahora: () => 1, avisar: async (t) => avisos.push(t) }, ok);
   assert.equal(res.ok, true);
   assert.ok(avisos.some((t) => /webhook/.test(t)));
+});
+
+test("la cuenta de la Cabina (IG_CUENTA_CABINA) tampoco se vuelve cliente ni tiene ficha; su asid se indexa", async () => {
+  const r = redisMemoria();
+  const res = await atenderVuelta({ r, env, ig: igFalso({ perfil: async () => ({ cuenta: "111", usuario: "elmetacho_", tipo: "BUSINESS", asid: "A111" }) }).ig, ahora: () => 1, avisar: sinAviso }, ok);
+  assert.deepEqual(res, { ok: true, cuenta: "111" });
+  assert.deepEqual(await listarClientes(r), []);
+  assert.equal(await leerMarca(r, "111"), null);
+  assert.equal(await r.get("mlabs:asid:A111"), "111");
 });
