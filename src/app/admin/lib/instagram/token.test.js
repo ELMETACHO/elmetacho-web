@@ -109,6 +109,10 @@ test("renovar sin clave no guarda el token nuevo en claro", async () => {
   const res = await renovarSiHaceFalta({ r, env: { ...env, MLABS_CLAVE_TOKENS: "" }, cuenta: "222", ahora: () => 1000 * DIA, renovar, avisar: async (t) => avisos.push(t) });
   assert.equal(res, "error");
   assert.equal((await r.get("ig:222:token")).includes("NUEVO"), false);
+  assert.equal(avisos.length, 1);
+  assert.match(avisos[0], /MLABS_CLAVE_TOKENS/);
+  assert.match(avisos[0], /NO se guardó/);
+  assert.doesNotMatch(avisos[0], /menos de 24 h/);
 });
 
 test("renovar guarda cifrado y migra el token viejo de la casa", async () => {
@@ -141,4 +145,19 @@ test("manejo de error con casa:false y 190 pide reconexión", async () => {
   const manejar = crearManejoDeError({ r, cuenta: "500", ahora: () => 3, avisar: async () => {}, token: "T", casa: false });
   await manejar(new ErrorMeta("Invalid OAuth", 190));
   assert.equal(JSON.parse(await r.get("ig:500:marca")).reconectar_desde, 3);
+});
+
+test("casa con {cifrado} ilegible: usa IG_TOKEN_LABS y avisa una vez; el cliente sigue lanzando", async () => {
+  const r = redisMemoria(), avisos = [];
+  await guardarToken(r, env, "222", "GUARDADO", 0);
+  await guardarToken(r, env, "500", "DEL_CLIENTE", 0);
+  const sinClave = { ...env, MLABS_CLAVE_TOKENS: "" };
+  assert.equal(await tokenDe(r, sinClave, "222"), "V");
+  await assert.rejects(tokenDe(r, sinClave, "500"), /MLABS_CLAVE_TOKENS/);
+  const renovar = async (t) => { assert.equal(t, "V"); return { access_token: "N", expires_in: 60 * 86400 }; };
+  const res = await renovarSiHaceFalta({ r, env: sinClave, cuenta: "222", ahora: () => 1000 * DIA, renovar, avisar: async (x) => avisos.push(x) });
+  assert.equal(res, "error");
+  assert.equal(avisos.length, 1);
+  assert.match(avisos[0], /descifrar/);
+  await assert.rejects(renovarSiHaceFalta({ r, env: sinClave, cuenta: "500", ahora: () => 1000 * DIA, renovar, avisar: async () => {} }), /MLABS_CLAVE_TOKENS/);
 });
