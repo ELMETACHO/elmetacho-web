@@ -63,14 +63,15 @@ export function useTrabajos() {
 
 // Lista ordenable de pantallazos: elegir (sube y guarda de a uno), mover y quitar.
 // `subir(clave, file, nombre)` sube; `patch(cuerpo)` guarda en fila; `alError(msg)` / `alLimpiar()` manejan el aviso.
-export function usePantallazos({ listoParaElegir, subir, patch, conOcupado, alError, alLimpiar }) {
-  const [pants, setPants] = useState([]); // { pathname, tamano, nombre, url }
-  const pantsRef = useRef([]);
-  const contador = useRef(0);
+// `inicial`: los de un borrador que se continúa (sin vista previa: url null); la numeración sigue después del mayor.
+export function usePantallazos({ listoParaElegir, subir, patch, conOcupado, alError, alLimpiar, inicial = [] }) {
+  const [pants, setPants] = useState(inicial); // { pathname, tamano, nombre, url }
+  const pantsRef = useRef(inicial);
+  const contador = useRef(Math.max(0, ...inicial.map((p) => Number(p.pathname.match(/\/p(\d+)\.[^/]+$/)?.[1]) || 0)));
 
   useEffect(() => {
     const actuales = pantsRef;
-    return () => actuales.current.forEach((p) => URL.revokeObjectURL(p.url));
+    return () => actuales.current.forEach((p) => p.url && URL.revokeObjectURL(p.url));
   }, []);
 
   function fijarPants(lista) {
@@ -115,7 +116,7 @@ export function usePantallazos({ listoParaElegir, subir, patch, conOcupado, alEr
     guardar(lista);
   }
   function quitarPant(i) {
-    URL.revokeObjectURL(pantsRef.current[i].url);
+    if (pantsRef.current[i].url) URL.revokeObjectURL(pantsRef.current[i].url);
     const lista = pantsRef.current.filter((_, j) => j !== i);
     fijarPants(lista);
     guardar(lista);

@@ -7,7 +7,7 @@ const ORIGENES = new Set(["dm", "telegram"]);
 const MAX = 5000;
 const TRES_DIAS_MS = TRES_DIAS_S * 1000;
 
-// Fecha del día en Bogotá (la franja corre a las 5 a. m. de allá), AAAA-MM-DD.
+// Fecha del día en Bogotá (la franja corre a las 5 p. m. de allá), AAAA-MM-DD.
 export const fechaBogota = (ms) => new Date(ms).toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
 // Para agrupar el conteo: lo que va antes de «:», sin paréntesis, números, % ni signos.

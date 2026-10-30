@@ -11,7 +11,8 @@ export default function ListaPantallazos({ pants, onMover, onMoverA, onQuitar })
         <li key={p.pathname} ref={registrar(i)}
           className={`adm-tarjeta adm-arrastrable flex flex-col gap-2 p-2 ${de === i ? "levantado" : ""} ${marcaDe(i, pants.length, de, hueco)}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={p.url} alt={`Pantallazo ${i + 1}`} className="adm-pantallazo" />
+          {p.url ? <img src={p.url} alt={`Pantallazo ${i + 1}`} className="adm-pantallazo" />
+            : <p className="adm-sub p-2 text-sm">Ya subido (sin vista previa)</p>}
           <div className="flex items-center gap-2">
             <button aria-label="Arrastrar para ordenar" className="adm-icono adm-asa" {...asa(i)}>⠿</button>
             <span className="adm-orden">{i + 1}</span>

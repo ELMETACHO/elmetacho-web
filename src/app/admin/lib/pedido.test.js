@@ -203,3 +203,14 @@ test("la opción «Story» es un pedido con pantallazos con destino story; las d
   assert.deepEqual(pedidoDeOpcion("link"), { tipo: "link", destino: "reel" });
   assert.deepEqual(pedidoDeOpcion("remix"), { tipo: "remix", destino: "reel" });
 });
+
+test("borrador: nombre que dice de qué video es y qué le falta", async () => {
+  const { resumenBorrador, nombreVisible } = await import("./pedido.js");
+  const p = { ...nuevoPedido("c_20261029_ab12", "2026-10-29T10:00:00Z", "link"), link: "https://vt.tiktok.com/ZSabc/" };
+  assert.equal(nombreVisible(p), "tiktok.com/ZSabc");
+  assert.equal(nombreVisible(nuevoPedido("c_x", "2026-10-29T10:00:00Z", "remix")), "Remix sin título");
+  const r = resumenBorrador(p);
+  assert.equal(r.tipo, "Por link");
+  assert.deepEqual(r.tiene, ["link tiktok.com/ZSabc"]);
+  assert.ok(r.faltan.includes("video original") && r.faltan.includes("gancho"));
+});

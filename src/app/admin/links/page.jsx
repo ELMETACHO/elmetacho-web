@@ -72,7 +72,7 @@ export default async function Links() {
       </div>
 
       <h2 className="mt-6 text-lg font-bold">Links por DM</h2>
-      <p className="mt-1 text-sm opacity-70">Reels y links que la comunidad le manda a elmetacho_. El PC los baja en la franja de las 5 a. m. y van a la Cabina si pasan el filtro.</p>
+      <p className="mt-1 text-sm opacity-70">Reels y links que la comunidad le manda a elmetacho_. El PC los baja en la franja de las 5 p. m. y van a la Cabina si pasan el filtro.</p>
       {!error && !dm.length && <p className="mt-2 text-sm">Todavía no llega ninguno.</p>}
       <ul className="mt-2 space-y-2">
         {dm.map((x) => (

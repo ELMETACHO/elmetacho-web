@@ -141,7 +141,25 @@ export function erroresParaEnviar(p) {
 export const archivos = (p) => [p.original, p.gancho, p.publicado, ...(p.pantallazos || [])].filter(Boolean).map((a) => a.pathname);
 export const borradorVencido = (p, ahoraMs) =>
   p.estado === "subiendo" && ahoraMs - Date.parse(p.creado) > HORAS_BORRADOR * 3600e3;
-export const nombreVisible = (p) => p.titulo || p.original?.nombre || p.id;
+const NOMBRE_TIPO = { pantallazos: "Con pantallazos", link: "Por link", remix: "Remix" };
+const linkCorto = (l) => l && l.replace(/^https:\/\/(www\.|vm\.|vt\.|m\.)?/, "").replace(/\/$/, "");
+export const nombreTipo = (p) => (destinoDe(p) === "story" ? "Story" : NOMBRE_TIPO[tipoDe(p)] || tipoDe(p));
+// Sin título ni original, el id (c_2026…) no le dice nada a Oscar: el link o el gancho dicen de qué video es.
+export const nombreVisible = (p) =>
+  p.titulo || p.original?.nombre || linkCorto(p.link) || (p.gancho?.nombre && `Gancho ${p.gancho.nombre}`) || `${nombreTipo(p)} sin título`;
+
+// Borrador (Oscar 2026-10-29: «saber de qué video es y continuarlo»): qué tiene ya y qué le falta para enviarlo.
+export function resumenBorrador(p) {
+  const tiene = [
+    p.link && `link ${linkCorto(p.link)}`,
+    p.original && `original (${p.original.nombre || "subido"})`,
+    p.tramos?.length && "bucle",
+    p.gancho && "gancho",
+    p.publicado && "video publicado",
+    p.pantallazos?.length && `${p.pantallazos.length} pantallazo${p.pantallazos.length === 1 ? "" : "s"}`,
+  ].filter(Boolean);
+  return { tipo: nombreTipo(p), tiene, faltan: erroresParaEnviar(p).map((e) => e.replace(/^Faltan? (el |la |los |tu )?/, "").replace(/\.$/, "")) };
+}
 
 const PRIORIDAD = { en_revision: 0, necesita_pantallazos: 1 };   // lo que espera a Oscar va arriba
 export const ordenarLista = (lista) => [...lista].sort((a, b) => (PRIORIDAD[a.estado] ?? 2) - (PRIORIDAD[b.estado] ?? 2));

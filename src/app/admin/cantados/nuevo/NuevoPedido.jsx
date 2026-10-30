@@ -23,11 +23,11 @@ const SECCIONES = {
   remix: ["link", "publicado", "original", "gancho", "estilo"],
 };
 const LISTO = {
-  pantallazos: "Listo: sale a las 5 a. m.",
-  link: "Listo: a las 5 a. m. Claude escoge los comentarios y te llega el enlace para revisarlos.",
-  remix: "Listo: el remix sale a las 5 a. m., sin revisión.",
+  pantallazos: "Listo: sale a las 5 p. m.",
+  link: "Listo: a las 5 p. m. Claude escoge los comentarios y te llega el enlace para revisarlos.",
+  remix: "Listo: el remix sale a las 5 p. m., sin revisión.",
 };
-const LISTO_STORY = "Listo: la story sale a las 5 a. m. y te llega por Telegram.";
+const LISTO_STORY = "Listo: la story sale a las 5 p. m. y te llega por Telegram.";
 
 const Seccion = ({ titulo, children }) => (
   <section className="adm-tarjeta flex flex-col gap-3">
@@ -36,21 +36,24 @@ const Seccion = ({ titulo, children }) => (
   </section>
 );
 
-export default function NuevoPedido() {
+export default function NuevoPedido({ inicial = null }) {
   const router = useRouter();
-  const [id, setId] = useState(null);
-  const [tipo, setTipo] = useState(null);
-  const [story, setStory] = useState(false);
-  const [link, setLink] = useState("");
-  const [linkGuardado, setLinkGuardado] = useState(false);
+  // `inicial`: un borrador que se continúa (lo ya subido no tiene vista previa; el original se vuelve a elegir para
+  // cambiar el bucle).
+  const ini = inicial;
+  const [id, setId] = useState(ini?.id ?? null);
+  const [tipo, setTipo] = useState(ini?.tipo ?? null);
+  const [story, setStory] = useState(ini?.story ?? false);
+  const [link, setLink] = useState(ini?.link ?? "");
+  const [linkGuardado, setLinkGuardado] = useState(Boolean(ini?.link));
   const [errorGlobal, setErrorGlobal] = useState("");
-  const [original, setOriginal] = useState(null); // { url, nombre, duracion, ancho, alto, subido }
-  const [tramos, setTramos] = useState([]);
-  const [gancho, setGancho] = useState(null); // { nombre }
-  const [publicado, setPublicado] = useState(null); // { nombre } (solo remix)
+  const [original, setOriginal] = useState(ini?.original ? { ...ini.original, url: null, subido: true } : null); // { url, nombre, duracion, ancho, alto, subido }
+  const [tramos, setTramos] = useState(ini?.tramos ?? []);
+  const [gancho, setGancho] = useState(ini?.gancho ? { nombre: ini.gancho.nombre } : null); // { nombre }
+  const [publicado, setPublicado] = useState(ini?.publicado ? { nombre: ini.publicado.nombre } : null); // { nombre } (solo remix)
   const [avisoGancho, setAvisoGancho] = useState("");
-  const [estilo, setEstilo] = useState(ESTILOS[0]);
-  const [titulo, setTitulo] = useState("");
+  const [estilo, setEstilo] = useState(ini?.estilo ?? ESTILOS[0]);
+  const [titulo, setTitulo] = useState(ini?.titulo ?? "");
   const { trabajos, fijarTrabajo, conOcupado, subiendo } = useTrabajos(); // trabajos: barras; subiendo: hay handlers en curso
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(false);
@@ -58,11 +61,11 @@ export default function NuevoPedido() {
   const [ocupGancho, setOcupGancho] = useState(false);
   const [ocupPub, setOcupPub] = useState(false);
 
-  const idRef = useRef(null);
+  const idRef = useRef(ini?.id ?? null);
   const videoRef = useRef(null);
   const cola = useRef(Promise.resolve());
-  const origenGuardado = useRef(false); // el original ya está en el servidor, con su duración
-  const tramosRef = useRef([]);
+  const origenGuardado = useRef(Boolean(ini?.original)); // el original ya está en el servidor, con su duración
+  const tramosRef = useRef(ini?.tramos ?? []);
   const urlOrig = useRef(null);
 
   useEffect(() => {
@@ -103,6 +106,7 @@ export default function NuevoPedido() {
     conOcupado,
     alError: setErrorGlobal,
     alLimpiar: () => setErrorGlobal(""),
+    inicial: ini?.pantallazos ?? [],
   });
 
   async function elegirOriginal(e) {
@@ -323,11 +327,18 @@ export default function NuevoPedido() {
       <Seccion titulo={`${num("original")}. ${esRemix ? "Clip original (el de TikTok o Instagram, sin editar)" : "Video original"}`}>
         <input type="file" accept="video/*" onChange={elegirOriginal} disabled={!id || ocupOrig} />
         <Barra t={trabajos.original} />
-        {original && (
+        {original?.url && (
           <>
             <video ref={videoRef} src={original.url} controls playsInline className="adm-video" />
             <EditorTramos duracion={original.duracion} tramos={tramos} onCambio={cambioTramos} videoRef={videoRef} />
           </>
+        )}
+        {original && !original.url && (
+          <p className="text-sm">
+            <span className="font-semibold text-[var(--verde)]">Subido: {original.nombre || "video original"}</span>
+            {tramos.length > 0 ? ` · bucle marcado (${tramos.map(([a, z]) => `${a.toFixed(1)}–${z.toFixed(1)} s`).join(", ")})` : ""}.{" "}
+            <span className="adm-sub">{tramos.length ? "Para cambiar el bucle" : "Para marcar el bucle"}, vuelve a elegir el video.</span>
+          </p>
         )}
       </Seccion>
 

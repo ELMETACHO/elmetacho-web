@@ -79,7 +79,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
         const malo = await verificarArchivos(p);
         if (malo) return json({ error: malo }, 400);
         await almacen.guardar({ ...p, pantallazos_listos: true });
-        await avisar(`📥 Recibí los pantallazos de ${nombreVisible(p)} — sale a las 5 a. m.`).catch(() => {});
+        await avisar(`📥 Recibí los pantallazos de ${nombreVisible(p)} — sale a las 5 p. m.`).catch(() => {});
         return json({ ok: true });
       }
       if (p.estado !== "subiendo") return json({ error: "Ya estaba enviado." }, 409);
@@ -89,9 +89,9 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       if (malo) return json({ error: malo }, 400);
       await almacen.guardar({ ...p, estado: "listo" });
       const cuando = {
-        link: "a las 5 a. m. Claude escoge los comentarios y te mando el enlace para revisarlos.",
-        remix: "remix: sale a las 5 a. m., sin revisión (mismos comentarios en otro orden, con otra canción).",
-      }[tipoDe(p)] ?? "sale a las 5 a. m.";
+        link: "a las 5 p. m. Claude escoge los comentarios y te mando el enlace para revisarlos.",
+        remix: "remix: sale a las 5 p. m., sin revisión (mismos comentarios en otro orden, con otra canción).",
+      }[tipoDe(p)] ?? "sale a las 5 p. m.";
       await avisar(`📥 Recibí${destinoDe(p) === "story" ? " la story" : ""}: ${nombreVisible(p)} — ${cuando}`).catch(() => {});
       return json({ ok: true });
     }),

@@ -32,6 +32,12 @@
 .adm-titulo { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; color: var(--verde); }
 .adm-h2 { margin: 0; font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
 .adm-sub { color: var(--gris); }
+.adm-plegable { display: flex; flex-direction: column; gap: 10px; }
+.adm-plegable > summary { cursor: pointer; padding: 6px 2px; list-style: none; }
+.adm-plegable > summary::before { content: "▸ "; display: inline-block; transition: transform 0.15s; }
+.adm-plegable[open] > summary::before { transform: rotate(90deg); }
+.adm-plegable > summary::-webkit-details-marker { display: none; }
+.adm-plegable > :not(summary) { margin-top: 8px; }
 
 .adm-tarjeta { background: #fff; border-radius: 22px; padding: 14px; box-shadow: var(--sombra); }
 .adm-tarjeta.tenue { background: rgba(255, 255, 255, 0.6); box-shadow: none; }
