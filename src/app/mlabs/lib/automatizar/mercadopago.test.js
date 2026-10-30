@@ -125,3 +125,21 @@ test("cobro rechazado → pago_fallido; aprobado → activa; no revive una cance
   const r = aplicarCobro(marca("activa"), { status: "rejected" });
   assert.deepEqual(aplicarCobro(r, { status: "rejected" }), r);
 });
+
+test("cancelación externa: sin fin_servicio, sigue activa hasta el próximo cobro y luego se apaga", () => {
+  const pre = { id: "P1", status: "cancelled", next_payment_date: new Date(7 * DIA).toISOString() };
+  const durante = aplicarSuscripcion(marca("activa"), { id_mp: "P1" }, pre, 3 * DIA);
+  assert.equal(durante.marca.estado, "activa");
+  assert.equal(durante.suscripcion.fin_servicio, 7 * DIA);
+  assert.equal(aplicarSuscripcion(durante.marca, durante.suscripcion, pre, 8 * DIA).marca.estado, "cancelada");
+  assert.equal(aplicarSuscripcion(marca("activa"), { id_mp: "P1" }, pre, 8 * DIA).marca.estado, "cancelada");
+  // un fin_servicio ya guardado manda sobre el próximo cobro
+  assert.equal(aplicarSuscripcion(marca("activa"), { id_mp: "P1", fin_servicio: 2 * DIA }, pre, 3 * DIA).marca.estado, "cancelada");
+});
+
+test("pago_fallido que cancela con servicio vigente se queda en pago_fallido hasta fin_servicio", () => {
+  const pre = { id: "P1", status: "cancelled" };
+  const s = { id_mp: "P1", fin_servicio: 10 * DIA };
+  assert.equal(aplicarSuscripcion(marca("pago_fallido"), s, pre, 5 * DIA).marca.estado, "pago_fallido");
+  assert.equal(aplicarSuscripcion(marca("pago_fallido"), s, pre, 11 * DIA).marca.estado, "cancelada");
+});

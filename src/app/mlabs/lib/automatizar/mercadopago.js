@@ -63,8 +63,11 @@ export function aplicarSuscripcion(marca, susc, pre, ahoraMs) {
     return { marca: { ...marca, estado: marca.estado === "pago_fallido" ? "pago_fallido" : "activa", origen: "pago" }, suscripcion: { ...base, fin_gratis: base.fin_gratis ?? base.proximo_cobro } };
   }
   if (pre.status === "cancelled" || pre.status === "paused") {
-    const sigue = base.fin_servicio && base.fin_servicio > ahoraMs;
-    return { marca: { ...marca, estado: sigue ? "activa" : "cancelada" }, suscripcion: base };
+    // Cancelación por fuera del panel (app o correo de Mercado Pago): sin fin_servicio, el servicio llega hasta el próximo cobro ya pagado.
+    const fin = base.fin_servicio ?? base.proximo_cobro ?? null;
+    const sigue = fin && fin > ahoraMs;
+    const estado = sigue ? (marca.estado === "pago_fallido" ? "pago_fallido" : "activa") : "cancelada";
+    return { marca: { ...marca, estado }, suscripcion: { ...base, ...(fin ? { fin_servicio: fin } : {}) } };
   }
   return { marca, suscripcion: base };   // pending u otros: nada cambia
 }
