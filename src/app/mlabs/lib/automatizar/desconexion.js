@@ -12,17 +12,18 @@ export async function desconectarCuenta({ r, env, ig, mp, avisar }, cuenta) {
   const m = await leerMarca(r, cuenta);
   let token = null;
   try { token = await tokenDe(r, env, cuenta); } catch (e) { avisos.push(`token ilegible (${e.message})`); }
-  if (token) {
-    try { await ig.desuscribirWebhook({ token }); } catch (e) { avisos.push(`Meta: ${e.message}`); }
-  }
   const s = await leerSuscripcion(r, cuenta);
-  if (s?.id_mp && s.estado_mp !== "cancelled") {
-    try { await mp.cancelarSuscripcion({ id: s.id_mp }); } catch (e) { avisos.push(`Mercado Pago: ${e.message} — cancélala a mano (${s.id_mp})`); }
-  }
+  // Se borra ANTES de llamar a Meta y a Mercado Pago: el aviso «cancelled» que dispara nuestro propio PUT ya no encuentra ficha.
   const claves = await clavesDeCuenta(r, cuenta);
   if (m?.asid) claves.push(claveAsid(m.asid));   // índice asid → cuenta de los callbacks de Meta
   for (const k of claves) await r.del(k);
   await r.sRem(CLIENTES, cuenta);
+  if (token) {
+    try { await ig.desuscribirWebhook({ token }); } catch (e) { avisos.push(`Meta: ${e.message}`); }
+  }
+  if (s?.id_mp && s.estado_mp !== "cancelled") {
+    try { await mp.cancelarSuscripcion({ id: s.id_mp }); } catch (e) { avisos.push(`Mercado Pago: ${e.message} — cancélala a mano (${s.id_mp})`); }
+  }
   if (avisos.length) await avisarSeguro(avisar, `⚠️ MLABS: @${m?.usuario ?? cuenta} se desconectó y sus datos se borraron, pero: ${avisos.join("; ")}`);
   console.log(`mlabs: cuenta ${cuenta} desconectada, ${claves.length} claves borradas`);
   return { borradas: claves.length, avisos };

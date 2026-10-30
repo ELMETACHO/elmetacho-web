@@ -102,6 +102,7 @@ export async function recibirAviso({ r, mp, ahora, avisar }, { tipo, id }) {
     susc = await adoptar({ r, mp, avisar }, cuenta, m, susc, pre);
     if (!susc) return "ignorado";
   }
+  if (!(await leerMarca(r, cuenta))) return "sin cuenta";   // se desconectó mientras consultábamos a MP: no se recrea la ficha
   const antes = m.estado;
   let { marca, suscripcion } = aplicarSuscripcion(m, susc, pre, ahora());
   if (cobro) marca = aplicarCobro(marca, cobro);

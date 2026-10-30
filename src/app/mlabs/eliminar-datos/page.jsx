@@ -8,7 +8,11 @@ export const metadata = {
   openGraph: { title: "Eliminar datos · MLABS", url: "https://mlabs.elmetacho.com/eliminar-datos", siteName: "MLABS", type: "website" },
 };
 
-export default function EliminarDatos() {
+export default async function EliminarDatos({ searchParams }) {
+  const q = await searchParams;
+  const listo = q?.listo === "1";
+  // El código lo devuelve el callback de Meta; solo se muestra si tiene forma de código (nada de la cuenta).
+  const codigo = typeof q?.codigo === "string" && /^[A-Za-z0-9_-]{4,64}$/.test(q.codigo) ? q.codigo : null;
   return (
     <main className="min-h-screen bg-white text-black">
       <MlabsHeader />
@@ -16,14 +20,29 @@ export default function EliminarDatos() {
         <div className="mx-auto max-w-2xl">
           <h1 className="titular-ancho text-5xl sm:text-6xl">Cómo borrar tus datos</h1>
           <div className="mt-6 space-y-4 text-base leading-8 text-gris">
+            {listo && (
+              <p role="status" className="rounded bg-green-100 p-3 text-green-900">
+                Listo: tu cuenta se desconectó y tus datos se borraron.
+              </p>
+            )}
+            {codigo && (
+              <p role="status" className="rounded bg-green-100 p-3 text-green-900">
+                Recibimos tu solicitud de eliminación. Código de confirmación: <strong className="font-mono">{codigo}</strong>. Si tu cuenta estaba conectada, sus datos se eliminaron.
+              </p>
+            )}
             <p>
-              Para que borremos los datos que tengamos tuyos de la app de Instagram «M LABS REPLY»,
-              escribe a{" "}
+              <strong className="text-black">Si conectaste tu Instagram a MLABS:</strong> entra a tu panel
+              (Iniciar sesión con Instagram en{" "}
+              <Link href="/automatizar" className="font-bold underline">/automatizar</Link>) y toca
+              «Desconectar Instagram y borrar mis datos». Se borra al instante. También puedes quitar el
+              permiso a la app desde Instagram (Configuración, Apps y sitios web).
+            </p>
+            <p>
+              O escríbenos a{" "}
               <a href="mailto:contacto@elmetacho.com" className="font-bold underline">
                 contacto@elmetacho.com
               </a>{" "}
-              con el asunto <strong className="text-black">«Borrar mis datos de Instagram»</strong>. Hazlo
-              desde tu correo o indícanos tu cuenta de Instagram para poder identificarte.
+              con el asunto <strong className="text-black">«Borrar mis datos de Instagram»</strong> e indícanos tu cuenta de Instagram.
             </p>
             <p>Borramos tus datos en máximo 15 días hábiles y te lo confirmamos por el mismo medio.</p>
             <p>
@@ -41,7 +60,7 @@ export default function EliminarDatos() {
           <section className="mt-10 rounded-[1.5rem] border-2 border-black bg-white p-5 sm:p-6">
             <h2 className="titular-ancho text-2xl">English summary</h2>
             <p className="mt-3 text-base leading-8 text-gris">
-              To delete your data from the Instagram app «M LABS REPLY», email contacto@elmetacho.com
+              If you connected your Instagram account to MLABS, sign in at /automatizar and tap «Desconectar Instagram y borrar mis datos»: everything is deleted instantly (you can also remove the app permission in Instagram). Otherwise, to delete your data from the Instagram app «M LABS REPLY», email contacto@elmetacho.com
               with the subject «Borrar mis datos de Instagram», from your email or naming your Instagram
               account. We delete it within 15 business days and confirm by the same channel. Data also
               expires automatically: Instagram ids after 24 hours and the answered-comment marker after 8

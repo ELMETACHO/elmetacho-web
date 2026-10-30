@@ -6,7 +6,7 @@ const vacio = () => ({ palabra: "", respuesta_publica: "¡Enviado! Revisa tu DM 
 const ERROR_CARGA = "No se pudo cargar (¿venció la sesión o falló el servidor?)";
 const ERROR_GUARDAR = "No se pudo guardar (¿venció la sesión o falló el servidor?)";
 
-export default function Palabras({ api = "/admin/api/palabras", titulo = "Palabras clave · metacholabs", volver = { href: "/admin", texto: "← Admin" }, avisoPausa = "En pausa: el token no sirve o falta. Pega uno nuevo en Vercel (IG_TOKEN_LABS)." }) {
+export default function Palabras({ Titulo = "h1", api = "/admin/api/palabras", titulo = "Palabras clave · metacholabs", volver = { href: "/admin", texto: "← Admin" }, avisoPausa = "En pausa: el token no sirve o falta. Pega uno nuevo en Vercel (IG_TOKEN_LABS)." }) {
   const [lista, setLista] = useState(null);
   const [pausa, setPausa] = useState(false);
   const [msg, setMsg] = useState("");
@@ -40,7 +40,7 @@ export default function Palabras({ api = "/admin/api/palabras", titulo = "Palabr
   return (
     <section>
       {volver && <a href={volver.href} className="text-sm underline">{volver.texto}</a>}
-      <h1 className="mt-2 text-2xl font-black">{titulo}</h1>
+      <Titulo className="mt-2 text-2xl font-black">{titulo}</Titulo>
       {pausa && avisoPausa && <p className="mt-2 rounded bg-red-100 p-2 text-sm text-red-800">{avisoPausa}</p>}
       <p className="mt-1 text-sm opacity-70">Si un comentario contiene la palabra (sin importar mayúsculas ni tildes), se responde en público y le llega el DM con el link. La primera de la lista gana.</p>
       {lista.map((d, k) => (
