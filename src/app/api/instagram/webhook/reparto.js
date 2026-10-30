@@ -1,12 +1,16 @@
-// reparto.js — cada aviso de Meta trae entry.id = la cuenta de Instagram que lo recibe (spec §4.1).
-// IG_CUENTA_CABINA (elmetacho_): DM → cola de la Cabina. IG_CUENTA_PALABRAS (metacholabs): comentarios y mensajes.
+// reparto.js — cada aviso de Meta trae entry.id = la cuenta de Instagram que lo recibe (spec 2026-10-25 §4.1 y
+// 2026-10-26 §6). IG_CUENTA_CABINA: DM → cola de la Cabina. Cuentas en «responden» (casa + marcas que pagan):
+// comentarios y mensajes. El resto se ignora.
 import { linksDe } from "./meta.js";
 
-export function repartir(evento, { cabina, palabras }) {
+export const cuentasDe = (evento) => [...new Set((evento?.entry ?? []).map((e) => String(e?.id ?? "")).filter(Boolean))];
+
+export function repartir(evento, { cabina, responden }) {
   const acciones = [], desconocidas = [];
   for (const e of evento?.entry ?? []) {
     const cuenta = String(e?.id ?? "");
-    if (!cuenta || (cuenta !== cabina && cuenta !== palabras)) { if (cuenta) desconocidas.push(cuenta); continue; }
+    const atiende = responden?.has(cuenta);
+    if (!cuenta || (cuenta !== cabina && !atiende)) { if (cuenta) desconocidas.push(cuenta); continue; }
     for (const m of e.messaging ?? []) {
       const msg = m?.message;
       if (!msg || msg.is_echo) continue;
@@ -17,7 +21,7 @@ export function repartir(evento, { cabina, palabras }) {
         acciones.push({ tipo: "mensaje", cuenta, usuario: String(m.sender?.id ?? ""), payload: msg.quick_reply?.payload ?? null });
       }
     }
-    if (cuenta !== palabras) continue;
+    if (!atiende) continue;
     for (const c of e.changes ?? []) {
       if (c?.field !== "comments") continue;
       const v = c.value ?? {};

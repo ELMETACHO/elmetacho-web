@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { repartir } from "./reparto.js";
+import { cuentasDe, repartir } from "./reparto.js";
 
-const C = { cabina: "111", palabras: "222" };
+const C = { cabina: "111", responden: new Set(["222"]) };
 
 test("DM a la cuenta de la Cabina → links; a la de palabras → mensaje; eco → nada", () => {
   const ev = { object: "instagram", entry: [
@@ -33,11 +33,26 @@ test("comentarios solo de la cuenta de palabras; id como value.id o value.commen
   ]);
 });
 
-test("cuentas que no están en las variables quedan como desconocidas; sin variables no se procesa nada", () => {
+test("cuentas que no responden quedan como desconocidas; sin datos no se procesa nada", () => {
   const ev = { entry: [{ id: "333", messaging: [{ sender: { id: "1" }, message: { text: "https://vt.tiktok.com/A/" } }] }] };
   assert.deepEqual(repartir(ev, C), { acciones: [], desconocidas: ["333"] });
-  assert.deepEqual(repartir({ entry: [{ id: "111", messaging: [] }] }, {}).desconocidas, ["111"]);
+  assert.deepEqual(repartir({ entry: [{ id: "111", messaging: [] }] }, { responden: new Set() }).desconocidas, ["111"]);
   assert.deepEqual(repartir(null, C), { acciones: [], desconocidas: [] });
+});
+
+test("varias marcas: cada comentario va con su cuenta; una marca sin pago no aparece", () => {
+  const ev = { entry: [
+    { id: "500", changes: [{ field: "comments", value: { id: "a", from: { id: "7" }, text: "precio" } }] },
+    { id: "600", changes: [{ field: "comments", value: { id: "b", from: { id: "8" }, text: "precio" } }] },
+  ] };
+  const { acciones, desconocidas } = repartir(ev, { cabina: "111", responden: new Set(["222", "500"]) });
+  assert.deepEqual(acciones.map((a) => [a.cuenta, a.id]), [["500", "a"]]);
+  assert.deepEqual(desconocidas, ["600"]);
+});
+
+test("cuentasDe: ids distintos del aviso", () => {
+  assert.deepEqual(cuentasDe({ entry: [{ id: "1" }, { id: "2" }, { id: "1" }, {}] }), ["1", "2"]);
+  assert.deepEqual(cuentasDe(null), []);
 });
 
 test("un comentario que responde a otro lleva respuestaA con el id del padre", () => {
