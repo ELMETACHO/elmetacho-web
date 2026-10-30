@@ -1,6 +1,6 @@
 // route.test.js — las palabras clave son solo de la cuenta en sesión: sin sesión 401, origen ajeno 403 y una marca no toca las de otra (spec 2026-10-26 §3).
 // Usa un Redis falso mínimo (protocolo RESP sobre un socket local) para comprobar de verdad qué se escribe y dónde.
-import { test, before, after } from "node:test";
+import { test, before, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
 import net from "node:net";
 import { GET, PUT } from "./route.js";
@@ -45,6 +45,8 @@ before(async () => {
   process.env.MLABS_SESION_SECRETO = SECRETO;
 });
 after(() => { servidor.close(); process.env = antes; });
+beforeEach(() => datos.clear());
+const ficha = (cuenta) => datos.set(`ig:${cuenta}:marca`, JSON.stringify({ usuario: "u", estado: "activa" }));
 
 const cookie = (cuenta) => `mlabs_sesion=${firmarMarca(cuenta, SECRETO, Date.now())}`;
 const palabra = { palabra: "guía", respuesta_publica: "¡Enviado!", mensaje_dm: "Aquí va", link: "https://ejemplo.com/g", pedir_seguir: false, activa: true };
@@ -68,12 +70,14 @@ test("PUT con origen distinto o sin origen: 403 y no escribe", async () => {
 });
 
 test("PUT con lista inválida: 400", async () => {
+  ficha("111");
   const res = await PUT(put("111", { disparadores: [{ ...palabra, link: "http://x.com" }] }));
   assert.equal(res.status, 400);
-  assert.equal(datos.size, 0);
+  assert.equal(datos.has("ig:111:disparadores"), false);
 });
 
 test("una marca no puede tocar las palabras de otra, aunque mande la cuenta ajena en el cuerpo o la URL", async () => {
+  ficha("111"); ficha("222");
   const a = await PUT(put("111", { disparadores: [palabra] }));
   assert.equal(a.status, 200);
   // La marca 222 intenta escribir en la cuenta 111 por el cuerpo y por la URL: se ignora, escribe en la suya.
@@ -88,5 +92,20 @@ test("una marca no puede tocar las palabras de otra, aunque mande la cuenta ajen
   assert.deepEqual(de111.disparadores.map((d) => d.palabra), ["guía"]);
   assert.deepEqual(de222.disparadores.map((d) => d.palabra), ["otra"]);
   assert.equal(de111.pausa, false);
-  assert.deepEqual([...datos.keys()].sort(), ["ig:111:disparadores", "ig:222:disparadores"]);
+  assert.deepEqual([...datos.keys()].sort(), ["ig:111:disparadores", "ig:111:marca", "ig:222:disparadores", "ig:222:marca"]);
+});
+
+test("sin ficha de la marca (se desconectó o se borró): GET y PUT dan 401 y la sesión viva no recrea palabras", async () => {
+  assert.equal((await GET(get("111"))).status, 401);
+  assert.equal((await PUT(put("111", { disparadores: [palabra] }))).status, 401);
+  assert.equal(datos.size, 0);
+});
+
+test("la cuenta casa no tiene ficha y sigue usando sus palabras", async () => {
+  process.env.IG_CUENTA_PALABRAS = "333";
+  try {
+    assert.equal((await PUT(put("333", { disparadores: [palabra] }))).status, 200);
+    assert.equal((await GET(get("333"))).status, 200);
+    assert.equal(datos.has("ig:333:disparadores"), true);
+  } finally { delete process.env.IG_CUENTA_PALABRAS; }
 });
