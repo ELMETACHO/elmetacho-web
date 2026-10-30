@@ -1,15 +1,15 @@
 // graph.js — llamadas a la Graph API de Instagram (Instagram Login), con fetch inyectable para las pruebas.
 // Doc (2026-10-25): host graph.instagram.com, Authorization: Bearer; respuesta privada con recipient.comment_id;
 // is_user_follow_business solo tras un mensaje del usuario; refresh_access_token con ig_refresh_token.
-const BASE = "https://graph.instagram.com/v26.0";
-const PLAZO = 8000;
+export const BASE = "https://graph.instagram.com/v26.0";
+export const PLAZO = 8000;
 
 export class ErrorMeta extends Error {
   constructor(mensaje, codigo) { super(mensaje); this.codigo = codigo; }
 }
 export const tokenInvalido = (e) => e instanceof ErrorMeta && e.codigo === 190;
 
-async function leer(r) {
+export async function leer(r) {
   const d = await r.json().catch(() => ({}));
   if (!r.ok || d?.error) throw new ErrorMeta(d?.error?.message || `HTTP ${r.status}`, d?.error?.code ?? null);
   return d;
