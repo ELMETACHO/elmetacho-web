@@ -15,7 +15,8 @@ export async function activar({ r, env, mp, ahora, avisar }, cuenta, { correo, c
   if (m.estado === "activa" || m.estado === "pago_fallido") return { ok: false, error: "Tu cuenta ya está activa." };
   if (typeof codigo === "string" && codigo.trim()) {
     // Variable vacía o ausente: ningún código sirve.
-    if (!env.MLABS_CODIGO_REVISION || !iguales(codigo.trim(), env.MLABS_CODIGO_REVISION)) return { ok: false, error: "El código no es válido." };
+    const esperado = String(env.MLABS_CODIGO_REVISION ?? "").trim();
+    if (!esperado || !iguales(codigo.trim(), esperado)) return { ok: false, error: "El código no es válido." };
     await guardarMarca(r, cuenta, { ...m, estado: "activa", origen: "codigo" });
     await avisarSeguro(avisar, `🔑 MLABS: @${m.usuario} se activó con el código de acceso.`);
     return { ok: true };
@@ -57,6 +58,24 @@ export async function activar({ r, env, mp, ahora, avisar }, cuenta, { correo, c
   return { ok: true, ir: s.init_point };
 }
 
+// Devuelve la suscripción nueva que pasa a ser la vigente, o null si el aviso debe ignorarse.
+async function adoptar({ r, mp, avisar }, cuenta, m, susc, pre) {
+  if (pre.status !== "authorized" || m.origen === "codigo") return null;
+  if (susc?.id_mp) {
+    let guardada = null;
+    try { guardada = await mp.consultarSuscripcion({ id: susc.id_mp }); } catch (e) { if (e?.status !== 404) throw e; }
+    if (guardada?.status === "authorized") {
+      await avisarSeguro(avisar, `⚠️ MLABS @${m.usuario}: tiene DOS suscripciones authorized en Mercado Pago (${susc.id_mp} y ${pre.id}). Cancela una a mano.`);
+      return null;
+    }
+    if (guardada?.status === "pending") {
+      try { await mp.cancelarSuscripcion({ id: susc.id_mp }); } catch (e) { console.error("mlabs aviso: no se pudo cancelar la suscripción pendiente anterior:", e?.message); }
+    }
+  }
+  await avisarSeguro(avisar, `MLABS @${m.usuario}: se adoptó la suscripción ${pre.id} (la guardada era ${susc?.id_mp ?? "ninguna"}).`);
+  return { id_mp: pre.id, estado_mp: "pending", proximo_cobro: null, fin_gratis: m.uso_gratis ? 0 : null, fin_servicio: null };
+}
+
 // Devuelve el estado final de la marca, o "ignorado" / "sin cuenta". Siempre consulta a Mercado Pago antes de cambiar nada.
 export async function recibirAviso({ r, mp, ahora, avisar }, { tipo, id }) {
   if (tipo !== "subscription_authorized_payment" && tipo !== "subscription_preapproval") return "ignorado";
@@ -76,9 +95,13 @@ export async function recibirAviso({ r, mp, ahora, avisar }, { tipo, id }) {
   const cuenta = String(pre.external_reference ?? "");
   const m = cuenta ? await leerMarca(r, cuenta) : null;
   if (!m) return "sin cuenta";
-  // Solo cuenta la suscripción vigente de la marca; las viejas o desconocidas no tocan nada.
-  const susc = await leerSuscripcion(r, cuenta);
-  if (!susc?.id_mp || susc.id_mp !== pre.id || (cobro && cobro.preapproval_id !== susc.id_mp)) return "ignorado";
+  // Solo cuenta la suscripción vigente de la marca; las viejas o desconocidas no tocan nada, salvo que sea una `authorized`
+  // de esta misma cuenta (p. ej. doble clic en «Activar») y la guardada no lo esté: entonces se adopta.
+  let susc = await leerSuscripcion(r, cuenta);
+  if (!susc?.id_mp || susc.id_mp !== pre.id) {
+    susc = await adoptar({ r, mp, avisar }, cuenta, m, susc, pre);
+    if (!susc) return "ignorado";
+  }
   const antes = m.estado;
   let { marca, suscripcion } = aplicarSuscripcion(m, susc, pre, ahora());
   if (cobro) marca = aplicarCobro(marca, cobro);
@@ -92,12 +115,22 @@ export async function recibirAviso({ r, mp, ahora, avisar }, { tipo, id }) {
 }
 
 // fin_servicio se guarda ANTES del PUT: si el aviso «cancelled» se adelanta, la marca sigue activa hasta esa fecha (no se corta en seco).
+// Solo se guarda si hay un periodo ya ganado (marca `activa` y suscripción `authorized` en Mercado Pago); si no, solo se cancela.
 export async function cancelar({ r, mp }, cuenta) {
   const s = await leerSuscripcion(r, cuenta);
   if (!s?.id_mp) return { ok: false, error: "No tienes una suscripción activa." };
-  // Se consulta el próximo cobro real; si la consulta falla, se usa el guardado.
-  let proximo = s.proximo_cobro ?? null;
-  try { proximo = Date.parse((await mp.consultarSuscripcion({ id: s.id_mp })).next_payment_date) || proximo; } catch { /* se usa el guardado */ }
+  const m = await leerMarca(r, cuenta);
+  let proximo = s.proximo_cobro ?? null, estadoMp = s.estado_mp;
+  try {
+    const pre = await mp.consultarSuscripcion({ id: s.id_mp });
+    proximo = Date.parse(pre.next_payment_date) || proximo;
+    estadoMp = pre.status;
+  } catch { /* se usa lo guardado */ }
+  if (!(m?.estado === "activa" && estadoMp === "authorized")) {
+    if (s.fin_servicio) return { ok: true, hasta: s.fin_servicio };   // ya estaba cancelada
+    await mp.cancelarSuscripcion({ id: s.id_mp });
+    return { ok: true, hasta: null };
+  }
   const hasta = s.fin_servicio ?? proximo ?? s.fin_gratis ?? null;
   await guardarSuscripcion(r, cuenta, { ...s, fin_servicio: hasta });
   try {

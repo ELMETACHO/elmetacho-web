@@ -144,9 +144,16 @@ test("cancelación externa: sin fin_servicio, sigue activa hasta el próximo cob
   assert.equal(aplicarSuscripcion(marca("activa"), { id_mp: "P1", fin_servicio: 2 * DIA }, pre, 3 * DIA).marca.estado, "cancelada");
 });
 
-test("pago_fallido que cancela con servicio vigente se queda en pago_fallido hasta fin_servicio", () => {
+test("pago_fallido que cancela queda cancelada de inmediato (no pagó el periodo en curso)", () => {
   const pre = { id: "P1", status: "cancelled" };
   const s = { id_mp: "P1", fin_servicio: 10 * DIA };
-  assert.equal(aplicarSuscripcion(marca("pago_fallido"), s, pre, 5 * DIA).marca.estado, "pago_fallido");
+  assert.equal(aplicarSuscripcion(marca("pago_fallido"), s, pre, 5 * DIA).marca.estado, "cancelada");
   assert.equal(aplicarSuscripcion(marca("pago_fallido"), s, pre, 11 * DIA).marca.estado, "cancelada");
+});
+
+test("sin_pago que recibe cancelled/paused (aunque haya next_payment_date futuro) sigue sin pago: no hay servicio gratis", () => {
+  const pre = { id: "P1", status: "cancelled", next_payment_date: new Date(7 * DIA).toISOString() };
+  assert.equal(aplicarSuscripcion(marca("sin_pago"), { id_mp: "P1", fin_servicio: 7 * DIA }, pre, 0).marca.estado, "sin_pago");
+  assert.equal(aplicarSuscripcion(marca("sin_pago"), { id_mp: "P1" }, { ...pre, status: "paused" }, 0).marca.estado, "sin_pago");
+  assert.equal(aplicarSuscripcion(marca("cancelada"), { id_mp: "P1" }, pre, 0).marca.estado, "cancelada");
 });

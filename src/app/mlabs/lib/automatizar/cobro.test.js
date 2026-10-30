@@ -15,6 +15,7 @@ const mpFalso = (sobre = {}) => ({
 });
 const nueva = async () => { const r = redisMemoria(); await altaMarca(r, { cuenta: "1", usuario: "tienda", ahora: () => 0 }); return r; };
 const sinAviso = async () => {};
+const poner = async (r, estado, extra = {}) => guardarMarca(r, "1", { ...(await leerMarca(r, "1")), estado, origen: "pago", ...extra });
 
 test("activar con correo: crea la suscripción, guarda el correo y devuelve a dónde ir", async () => {
   const r = await nueva();
@@ -186,7 +187,8 @@ test("cobro de otra suscripción (no la vigente de la marca): se ignora sin toca
 test("aviso de una suscripción que la marca nunca creó se ignora; tipos desconocidos y objetos que no existen también", async () => {
   const r = await nueva();
   const d = { r, mp: mpFalso(), ahora: () => 0, avisar: sinAviso };
-  assert.equal(await recibirAviso(d, { tipo: "subscription_preapproval", id: "P1" }), "ignorado");   // sin suscripción guardada
+  const pendiente = mpFalso({ consultarSuscripcion: async ({ id }) => ({ id, status: "pending", external_reference: "1" }) });
+  assert.equal(await recibirAviso({ ...d, mp: pendiente }, { tipo: "subscription_preapproval", id: "P1" }), "ignorado");   // sin suscripción guardada y sin autorizar
   assert.equal((await leerMarca(r, "1")).estado, "sin_pago");
   assert.equal(await recibirAviso(d, { tipo: "payment", id: "1" }), "ignorado");
   const noExiste = mpFalso({ consultarSuscripcion: async () => { throw Object.assign(new Error("not found"), { status: 404 }); } });
@@ -197,6 +199,7 @@ test("aviso de una suscripción que la marca nunca creó se ignora; tipos descon
 
 test("cancelar en días gratis: sigue hasta fin_gratis y guarda fin_servicio", async () => {
   const r = await nueva();
+  await poner(r, "activa");
   await guardarSuscripcion(r, "1", { id_mp: "P1", proximo_cobro: 7 * DIA, fin_gratis: 7 * DIA });
   const res = await cancelar({ r, mp: mpFalso() }, "1");
   assert.deepEqual(res, { ok: true, hasta: 7 * DIA });
@@ -205,15 +208,17 @@ test("cancelar en días gratis: sigue hasta fin_gratis y guarda fin_servicio", a
 
 test("cancelar usa el next_payment_date que Mercado Pago dice ahora (no el guardado, que puede estar viejo); si la consulta falla, el guardado", async () => {
   const r = await nueva();
+  await poner(r, "activa");
   await guardarSuscripcion(r, "1", { id_mp: "P1", proximo_cobro: 1 * DIA });
   assert.deepEqual(await cancelar({ r, mp: mpFalso() }, "1"), { ok: true, hasta: 7 * DIA });
-  await guardarSuscripcion(r, "1", { id_mp: "P1", proximo_cobro: 2 * DIA });
+  await guardarSuscripcion(r, "1", { id_mp: "P1", estado_mp: "authorized", proximo_cobro: 2 * DIA });
   const roto = mpFalso({ consultarSuscripcion: async () => { throw new Error("caído"); } });
   assert.deepEqual(await cancelar({ r, mp: roto }, "1"), { ok: true, hasta: 2 * DIA });
 });
 
 test("cancelar: si el PUT falla Y la reversión también falla, sube el error ORIGINAL de Mercado Pago", async () => {
   const r = await nueva();
+  await poner(r, "activa");
   await guardarSuscripcion(r, "1", { id_mp: "P1", proximo_cobro: 7 * DIA });
   const mp = mpFalso({ cancelarSuscripcion: async () => { r.set = async () => { throw new Error("redis caído"); }; throw new Error("MP no pudo"); } });
   await assert.rejects(cancelar({ r, mp }, "1"), /MP no pudo/);
@@ -239,6 +244,7 @@ test("cancelar guarda fin_servicio ANTES del PUT: si el aviso «cancelled» lleg
 
 test("cancelar: si el PUT a Mercado Pago falla, se revierte fin_servicio y el error sube", async () => {
   const r = await nueva();
+  await poner(r, "activa");
   await guardarSuscripcion(r, "1", { id_mp: "P1", proximo_cobro: 7 * DIA, fin_gratis: 7 * DIA });
   const mp = mpFalso({ cancelarSuscripcion: async () => { throw Object.assign(new Error("caído"), { status: 502 }); } });
   await assert.rejects(cancelar({ r, mp }, "1"), /caído/);
@@ -259,4 +265,70 @@ test("vistaEstado expone uso_gratis: falso en una marca nueva, verdadero si la m
   assert.equal(vistaEstado({ ...m, uso_gratis: true }, null).uso_gratis, true);
   assert.equal(vistaEstado(m, { id_mp: "P1", fin_gratis: 7 * DIA }).uso_gratis, true);
   assert.deepEqual(vistaEstado(m, null), { usuario: "t", estado: "sin_pago", casa: false, reconectar: false, suscripcion: null, uso_gratis: false });
+});
+
+test("C1: activar, NO pagar y cancelar (suscripción pending): no se guarda fin_servicio y el aviso «cancelled» deja la marca sin pago", async () => {
+  const r = await nueva(); let puts = 0;
+  await guardarSuscripcion(r, "1", { id_mp: "P1", estado_mp: "pending" });
+  const pendiente = (status) => mpFalso({
+    consultarSuscripcion: async ({ id }) => ({ id, status, external_reference: "1", next_payment_date: new Date(7 * DIA).toISOString() }),
+    cancelarSuscripcion: async () => { puts++; },
+  });
+  assert.deepEqual(await cancelar({ r, mp: pendiente("pending") }, "1"), { ok: true, hasta: null });
+  assert.equal(puts, 1);
+  assert.equal((await leerSuscripcion(r, "1")).fin_servicio ?? null, null);
+  await recibirAviso({ r, mp: pendiente("cancelled"), ahora: () => 1 * DIA, avisar: sinAviso }, { tipo: "subscription_preapproval", id: "P1" });
+  assert.equal((await leerMarca(r, "1")).estado, "sin_pago");
+  assert.equal((await leerMarca(r, "1")).uso_gratis ?? false, false);
+});
+
+test("cancelar con la marca pago_fallido: no se guarda fin_servicio y el aviso la deja cancelada de inmediato", async () => {
+  const r = await nueva();
+  await guardarSuscripcion(r, "1", { id_mp: "P1", estado_mp: "authorized", proximo_cobro: 7 * DIA });
+  await poner(r, "pago_fallido");
+  assert.deepEqual(await cancelar({ r, mp: mpFalso() }, "1"), { ok: true, hasta: null });
+  const cancelada = mpFalso({ consultarSuscripcion: async ({ id }) => ({ id, status: "cancelled", external_reference: "1", next_payment_date: new Date(7 * DIA).toISOString() }) });
+  assert.equal(await recibirAviso({ r, mp: cancelada, ahora: () => 1 * DIA, avisar: sinAviso }, { tipo: "subscription_preapproval", id: "P1" }), "cancelada");
+});
+
+test("doble clic en Activar: llega authorized la suscripción que NO quedó guardada y la guardada está pending → se adopta, se cancela la otra y se aplica", async () => {
+  const r = await nueva(), avisos = [], canceladas = [];
+  await guardarSuscripcion(r, "1", { id_mp: "B", estado_mp: "pending" });   // la que ganó la escritura
+  const mp = mpFalso({
+    consultarSuscripcion: async ({ id }) => ({ id, status: id === "A" ? "authorized" : "pending", external_reference: "1", next_payment_date: new Date(7 * DIA).toISOString() }),
+    cancelarSuscripcion: async ({ id }) => { canceladas.push(id); },
+  });
+  assert.equal(await recibirAviso({ r, mp, ahora: () => 0, avisar: async (t) => avisos.push(t) }, { tipo: "subscription_preapproval", id: "A" }), "activa");
+  assert.equal((await leerSuscripcion(r, "1")).id_mp, "A");
+  assert.equal((await leerSuscripcion(r, "1")).fin_gratis, 7 * DIA);
+  assert.deepEqual(canceladas, ["B"]);
+  assert.equal((await leerMarca(r, "1")).estado, "activa");
+});
+
+test("adopción con un cobro aprobado de la suscripción no guardada; también si no había ninguna guardada", async () => {
+  const r = await nueva();
+  const mp = mpFalso({ consultarCobro: async () => ({ status: "approved", preapproval_id: "A" }),
+    consultarSuscripcion: async ({ id }) => ({ id, status: "authorized", external_reference: "1", next_payment_date: new Date(30 * DIA).toISOString() }) });
+  assert.equal(await recibirAviso({ r, mp, ahora: () => 0, avisar: sinAviso }, { tipo: "subscription_authorized_payment", id: "C1" }), "activa");
+  assert.equal((await leerSuscripcion(r, "1")).id_mp, "A");
+});
+
+test("dos suscripciones authorized: no se toca nada y se avisa a Oscar con los dos ids", async () => {
+  const r = await nueva(), avisos = [];
+  await guardarSuscripcion(r, "1", { id_mp: "B", estado_mp: "authorized" });
+  await poner(r, "activa");
+  const mp = mpFalso();   // por defecto toda suscripción consultada está authorized
+  assert.equal(await recibirAviso({ r, mp, ahora: () => 0, avisar: async (t) => avisos.push(t) }, { tipo: "subscription_preapproval", id: "A" }), "ignorado");
+  assert.equal((await leerSuscripcion(r, "1")).id_mp, "B");
+  assert.equal(avisos.length, 1);
+  assert.match(avisos[0], /A/);
+  assert.match(avisos[0], /B/);
+});
+
+test("M2: el código de revisión se compara contra la variable recortada", async () => {
+  const r = await nueva();
+  const res = await activar({ r, env: { ...env, MLABS_CODIGO_REVISION: "  META-REVISA \n" }, mp: mpFalso(), ahora: () => 0, avisar: sinAviso }, "1", { codigo: "META-REVISA" });
+  assert.deepEqual(res, { ok: true });
+  const r2 = await nueva();
+  assert.equal((await activar({ r: r2, env: { ...env, MLABS_CODIGO_REVISION: "   " }, mp: mpFalso(), ahora: () => 0, avisar: sinAviso }, "1", { codigo: " " })).ok, false);
 });
