@@ -30,6 +30,7 @@ export async function canjearCodigo({ code, clientId, secreto, redirectUri, fetc
 export async function tokenLargo({ token, secreto, fetch: f = fetch }) {
   const q = new URLSearchParams({ grant_type: "ig_exchange_token", client_secret: secreto, access_token: token });
   const d = await leerIG(await f(`https://graph.instagram.com/access_token?${q}`, { signal: AbortSignal.timeout(PLAZO) }));
+  if (!d.access_token || !Number.isFinite(Number(d.expires_in)) || d.expires_in === null || d.expires_in === "") throw new ErrorMeta("Instagram no devolvió el token largo", null);
   return { access_token: d.access_token, expires_in: Number(d.expires_in) };
 }
 
@@ -38,6 +39,7 @@ const conToken = (f, token, metodo, ruta) => f(`${BASE}${ruta}`, { method: metod
 // user_id = id profesional (el de entry[].id de los webhooks); id = app-scoped, se guarda como asid.
 export async function perfil({ token, fetch: f = fetch }) {
   const d = await leerIG(await conToken(f, token, "GET", "/me?fields=user_id,username,account_type,id"));
+  if (d.user_id == null || d.user_id === "") throw new ErrorMeta("Instagram no devolvió el id de la cuenta", null);
   return { cuenta: String(d.user_id), usuario: String(d.username ?? ""), tipo: d.account_type ?? null, asid: d.id == null ? null : String(d.id) };
 }
 

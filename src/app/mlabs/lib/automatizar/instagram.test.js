@@ -61,6 +61,15 @@ test("token largo y perfil", async () => {
   assert.equal(llamadas[1].op.headers.Authorization, "Bearer LARGO");
 });
 
+test("token largo sin access_token o sin expires_in numérico, y perfil sin user_id: ErrorMeta", async () => {
+  for (const cuerpo of [{ expires_in: 5 }, { access_token: "L" }, { access_token: "L", expires_in: "pronto" }]) {
+    await assert.rejects(tokenLargo({ token: "C", secreto: "s", fetch: falso([{ cuerpo }]).f }), ErrorMeta);
+  }
+  for (const cuerpo of [{ username: "x" }, { user_id: null, username: "x" }]) {
+    await assert.rejects(perfil({ token: "L", fetch: falso([{ cuerpo }]).f }), ErrorMeta);
+  }
+});
+
 test("suscribir y desuscribir el webhook de la cuenta", async () => {
   const { f, llamadas } = falso([{ cuerpo: { success: true } }, { cuerpo: { success: true } }]);
   await suscribirWebhook({ token: "T", fetch: f });
