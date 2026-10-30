@@ -51,7 +51,7 @@ export default function Panel() {
       )}
       {msg !== "Cargando…" && msg && <p className="mt-2 text-sm">{msg}</p>}
       <div className="mt-6">
-        <Palabras api="/api/mlabs/palabras" titulo="Tus palabras clave" volver={null} avisoPausa="" />
+        <Palabras Titulo="h2" api="/api/mlabs/palabras" titulo="Tus palabras clave" volver={null} avisoPausa="" />
       </div>
       {!e.casa && (
         <button disabled={enviando} className="mt-8 text-sm text-red-700 underline disabled:opacity-50" onClick={() => confirm("Se borran tu conexión, tus palabras clave y tus datos, y se cancela tu suscripción. ¿Seguir?") && enviar("/api/mlabs/desconectar")}>

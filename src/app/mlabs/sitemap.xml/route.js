@@ -8,6 +8,8 @@ export function GET() {
   const urls = [
     { u: "" },
     { u: "/recursos" },
+    { u: "/automatizar" },
+    { u: "/terminos" },
     { u: "/novedades", f: edicionesRecientes[0]?.fecha },
     ...edicionesRecientes.slice(1).map((e) => ({ u: `/novedades/${e.slug}`, f: e.fecha })),
     ...guias.map((g) => ({ u: `/recursos/${g.slug}`, f: g.actualizado })),
