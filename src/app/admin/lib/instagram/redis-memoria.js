@@ -27,6 +27,13 @@ export function redisMemoria(reloj = () => Date.now()) {
     incr: async (k) => { const e = vivo(k); const n = Number(e?.v || 0) + 1; poner(k, String(n), e?.vence || 0); return n; },
     expire: async (k, s) => { const e = vivo(k); if (!e) return 0; e.vence = reloj() + s * 1000; return 1; },
     sAdd: async (k, m) => { const s = val(k, new Set()); if (s.has(m)) return 0; s.add(m); cambiar(k, s); return 1; },
+    sRem: async (k, m) => { const s = val(k, new Set()); if (!s.delete(m)) return 0; guardar(k, s); return 1; },
+    sMembers: async (k) => [...val(k, new Set())],
+    // node-redis 6: scanIterator entrega lotes (string[]). Aquí, un solo lote con las claves que coinciden.
+    scanIterator: async function* ({ MATCH }) {
+      const re = new RegExp(`^${MATCH.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`);
+      yield [...datos.keys()].filter((k) => vivo(k) && re.test(k));
+    },
     sCard: async (k) => val(k, new Set()).size,
     lPush: async (k, m) => { const l = val(k, []); l.unshift(m); cambiar(k, l); return l.length; },
     lRange: async (k, a, b) => { const l = val(k, []); const [i, j] = tramo(l.length, a, b); return l.slice(i, j + 1); },
