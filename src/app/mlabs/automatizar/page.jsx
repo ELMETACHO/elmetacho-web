@@ -70,8 +70,9 @@ export default async function Automatizar({ searchParams }) {
             )}
             <a
               href="/api/mlabs/instagram/entrar"
-              className="inline-block rounded-lg bg-black px-5 py-3 font-bold text-white"
+              className="inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 font-bold text-white"
             >
+              <img src="/marca/instagram-glyph.png" alt="" width={20} height={20} />
               Iniciar sesión con Instagram
             </a>
             <p className="text-sm">

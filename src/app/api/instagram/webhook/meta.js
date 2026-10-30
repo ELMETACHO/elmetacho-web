@@ -1,4 +1,4 @@
-// meta.js — lógica del webhook de Instagram (app de Meta «M LABS REPLY»), sin dependencias para poder probarla.
+// meta.js — lógica del webhook de Instagram (app de Meta «MLABS»), sin dependencias para poder probarla.
 // Doc de Meta (2026-10-25): verificación GET con hub.mode/hub.verify_token/hub.challenge; cada aviso viene firmado en
 // X-Hub-Signature-256 como "sha256=" + HMAC-SHA256(cuerpo crudo, clave secreta); los reels compartidos por DM llegan
 // como adjunto type "ig_reel" con payload.url (changelog de Instagram Messaging, 11-jun-2024).

@@ -72,6 +72,59 @@ Los candidatos que saca el sondeo del PC de los links de TikTok se revisan aquí
 
 **Arrastre (Cabina, Revisar y pantallazos).** Con eventos de puntero desde el asa ⠿ (sirve con el dedo), raya verde donde cae y desplazamiento solo cerca de los bordes; se guarda igual que con las flechas. **Pantallazos** (Nuevo video y Subir pantallazos): cada uno a lo ancho, hasta 60 % del alto de la pantalla, número grande y nombre pequeño.
 
+## MLABS multimarca (2026-10-26, spec `docs/superpowers/specs/2026-10-26-mlabs-automatizacion-instagram-multimarca-design.md` en el repo MLABS-PRODUCTOS)
+
+Cualquier marca con Instagram profesional y público inicia sesión en `https://mlabs.elmetacho.com/automatizar`, pone sus palabras clave en `/panel` y paga una mensualidad con Mercado Pago (7 días gratis solo la primera vez por cuenta). La cuenta casa (`IG_CUENTA_PALABRAS`, metacholabs) sigue funcionando como antes y no tiene ficha ni suscripción. Código: `src/app/mlabs/` (páginas y `lib/automatizar/`) y `src/app/api/mlabs/`. Materiales de App Review: `docs/meta-revision-instagram.md`.
+
+### Rutas
+
+Las de la marca exigen la cookie de sesión de la marca (401 si falta o venció) y, las que escriben, que el origen sea el del sitio (403 si no).
+
+| Ruta | Quién | Qué hace |
+|---|---|---|
+| `GET /api/mlabs/instagram/entrar` | Cualquiera | Genera el `state`, lo pone en cookie y redirige a la autorización de Instagram (Business Login) con los tres permisos. Sin `IG_APP_ID` responde 500 |
+| `GET /api/mlabs/instagram/vuelta` | Instagram | Redirección OAuth (debe estar dada de alta en Meta tal cual). Valida el `state`, canjea el código por el token largo, lee `/me`, rechaza cuentas personales, guarda el token cifrado, suscribe el webhook (`comments`, `messages`), crea la ficha en `sin_pago` (o reconecta una existente) y pone la cookie de sesión. Siempre redirige: éxito a `/panel`; fallo a `/automatizar?error=cancelado\|state\|codigo\|personal`, nunca un 500 |
+| `GET /api/mlabs/estado` | Marca | Estado de la marca para el panel: `usuario`, `estado`, `reconectar`, `suscripcion`, `uso_gratis` |
+| `GET` y `PUT /api/mlabs/palabras` | Marca | Lee o reemplaza (`PUT {disparadores}`) las palabras clave de la marca, con la misma validación que `/admin/api/palabras`. Sin ficha (desconectada) responde 401 |
+| `POST /api/mlabs/activar` | Marca | Cuerpo `{correo}`: crea la suscripción en Mercado Pago y devuelve `{ir}` (el checkout). Cuerpo `{codigo}`: activa con `MLABS_CODIGO_REVISION` sin cobrar. Si ya había una suscripción, antes mira qué dice Mercado Pago |
+| `POST /api/mlabs/cancelar` | Marca | Cancela en Mercado Pago; el servicio sigue hasta el fin del periodo ya ganado (se guarda `fin_servicio`) |
+| `POST /api/mlabs/desconectar` | Marca | Borra todo lo de la cuenta (claves `ig:<cuenta>:*`, ficha, suscripción, índice de Meta), desuscribe el webhook, cancela en Mercado Pago, borra la cookie y manda a `/eliminar-datos?listo=1`. La casa y la Cabina no se desconectan por aquí (400) |
+| `POST /api/mlabs/mercadopago` | Mercado Pago (firma `x-signature` con `MP_WEBHOOK_SECRETO`) | Avisos de suscripción y de cobro. Firma inválida: 401. Siempre consulta el estado real a Mercado Pago antes de cambiar nada. Fallo real (Mercado Pago o Redis): 500 para que reintente |
+| `POST /api/mlabs/instagram/desautorizar` | Meta (`signed_request` firmado con `IG_APP_SECRET`) | La marca quitó la app de su Instagram: borra igual que desconectar. Firma inválida: 400 y no borra nada |
+| `POST /api/mlabs/instagram/eliminar` | Meta (`signed_request`) | «Solicitud de eliminación de datos»: borra igual y responde `{url, confirmation_code}` con `/eliminar-datos?codigo=…`. Si el id de Meta no está en el índice, no borra y avisa por Telegram |
+| `POST /api/instagram/webhook` | Meta | Ya existía; ahora reparte por `entry.id`: la casa, la Cabina y las marcas cuya ficha **responde** (ver estados) y cuyo token se pueda leer |
+| `GET /api/instagram/renovar-token` | Cron de Vercel | Ya existía; ahora también hace el mantenimiento de las marcas (ver cron) |
+
+Lo que hay que dar de alta en Meta (app «MLABS»): URI de redirección OAuth `https://mlabs.elmetacho.com/api/mlabs/instagram/vuelta`; desautorizar `…/api/mlabs/instagram/desautorizar`; eliminación de datos `…/api/mlabs/instagram/eliminar`; webhook `…/api/instagram/webhook`. En Mercado Pago, la URL de notificaciones `https://mlabs.elmetacho.com/api/mlabs/mercadopago` (eventos de suscripción y de pagos de suscripción).
+
+### Estados de la marca (`estado` en la ficha `ig:<cuenta>:marca`)
+
+| Estado | Qué significa | ¿Responde comentarios? |
+|---|---|---|
+| `sin_pago` | Se conectó pero aún no activa (o abandonó el checkout) | No |
+| `activa` | Con periodo gratis o pagado vigente (o activada con el código de acceso) | Sí |
+| `pago_fallido` | Mercado Pago rechazó un cobro y lo reintenta | Sí, mientras Mercado Pago reintenta; si la suscripción se cancela, pasa a `cancelada` de inmediato |
+| `cancelada` | Canceló y venció su periodo, o el periodo terminó sin pago | No; puede volver a activar (ya sin los 7 días gratis) |
+
+Aparte, `reconectar_desde` (una fecha, no es un estado): Instagram dejó de aceptar el token. Mientras tenga valor la marca **no** responde, su panel pide «Vuelve a conectar Instagram» y Oscar recibe un solo aviso. Al volver a iniciar sesión se limpia. Si pasan 30 días sin reconectar, el cron la desconecta y borra todo.
+
+Las cuentas activadas con código (`origen: "codigo"`) no las toca Mercado Pago ni el cron: son las de prueba y revisión.
+
+### Cron diario (`vercel.json`, `0 13 * * *`, UTC)
+
+`GET /api/instagram/renovar-token` (con `CRON_SECRET`) hace, una cuenta tras otra (el fallo de una no frena a las demás):
+1. Renueva el token de la casa y el de cada marca si le falta poco; si no se puede, avisa por Telegram.
+2. Apaga las marcas `activa` cuyo `fin_servicio` o `fin_gratis` ya pasó, solo si Mercado Pago confirma que no hay pago vigente (si no responde, no toca nada y reintenta mañana).
+3. Desconecta y borra a las marcas con `reconectar_desde` de 30 días o más.
+
+### Revertir con seguridad
+
+Volver a una versión anterior al multimarca (antes de los PR 1 a 5) sin más puede dejar a la casa sin respuestas: el token de metacholabs ahora puede estar guardado **cifrado** en `ig:<IG_CUENTA_PALABRAS>:token` y la versión vieja no sabe leerlo.
+1. **Antes** de volver, borra esa clave en Redis: `ig:<valor de IG_CUENTA_PALABRAS>:token`. La versión vieja usará entonces `IG_TOKEN_LABS` (que debe seguir puesto y vigente; si ya expiró, genera uno nuevo en Meta).
+2. Vuelve a la versión anterior (redespliegue de Vercel o revert de los PR).
+3. Las claves de las marcas (`ig:<cuenta>:*`, `mlabs:*`) quedan en Redis sin uso; no se borran. Pero **sus suscripciones siguen cobrándose en Mercado Pago** y nadie les responde: si el revert va a durar, cancélalas a mano en Mercado Pago o avisa a las marcas.
+4. Al volver a la versión nueva, la casa guardará su token cifrado otra vez en la siguiente renovación; mientras tanto usa `IG_TOKEN_LABS`.
+
 ## Cómo se usa desde el celular
 
 1. Abre `elmetacho.com/admin` (o la vista previa del PR), escribe la clave y entra. La sesión dura 30 días.
@@ -95,13 +148,20 @@ Las pone Oscar; nunca se escriben en el repo (es público) ni las abre Claude.
 | `BLOB_READ_WRITE_TOKEN`, `BLOB_STORE_ID` | Las crea Vercel al conectar el almacén Blob | Subidas del navegador y enlaces firmados |
 | `KV_REDIS_URL` | Ya existe en Vercel (Redis del sitio) | Pedidos y contador de intentos |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Ya existen en Vercel | Aviso "Recibí…" al enviar un pedido |
-| `IG_WEBHOOK_VERIFY_TOKEN` | Vercel (Production) | Frase que se inventa Oscar y pega también en Meta (app «M LABS REPLY» → webhooks → «Identificador de verificación») |
+| `IG_WEBHOOK_VERIFY_TOKEN` | Vercel (Production) | Frase que se inventa Oscar y pega también en Meta (app «MLABS» (antes «M LABS REPLY») → webhooks → «Identificador de verificación») |
 | `IG_APP_SECRET`, `META_APP_SECRET` | Vercel (Production) | Claves secretas de la app de Instagram y de la app de Meta, para comprobar la firma de cada aviso del webhook |
 | `IG_CUENTA_CABINA` | Vercel (Production) | Id de elmetacho_ (`17841402790807435`): los DM que llegan a esa cuenta van a la cola de la Cabina |
 | `IG_CUENTA_PALABRAS` | Vercel (Production) | Id de metacholabs (`17841480070378472`): comentarios y mensajes para las palabras clave |
 | `IG_TOKEN_LABS` | Vercel (Production) | Token de metacholabs (Meta → metacholabs → «Generar identificador»). Lo usan las palabras clave; el cron lo renueva. Si falta o no sirve, las palabras clave se pausan 6 h y llega un aviso por Telegram |
 | `IG_HUELLA_SECRETA` | Vercel (Production) | Frase larga y aleatoria que pega Oscar. Con ella el webhook guarda una huella anónima de quién manda cada link (3 días) para el pase directo; sin ella el pase directo queda apagado. Si se cambia, las huellas viejas dejan de coincidir (la cuenta de personas vuelve a empezar) |
 | `CRON_SECRET` | Vercel (Production) | Frase larga que Oscar inventa. Vercel la manda como `Authorization: Bearer …` al cron de `GET /api/instagram/renovar-token`; sin ella el cron responde 401 |
+| `IG_APP_ID` | Vercel (Production) | Id de la app de Instagram (Business Login). Lo usa `GET /api/mlabs/instagram/entrar` para mandar a la marca a autorizar; sin ella responde 500 |
+| `MLABS_CLAVE_TOKENS` | Vercel (Production) | Clave que cifra los tokens de Instagram guardados en Redis. Si falta o se cambia, los tokens guardados no se pueden leer (la casa cae a `IG_TOKEN_LABS`; las marcas tendrían que reconectar). No la cambies sin motivo |
+| `MLABS_SESION_SECRETO` | Vercel (Production) | Secreto que firma la cookie de sesión de las marcas. Si falta, nadie puede iniciar sesión (la vuelta de Instagram falla y llega un aviso); si se cambia, todas las sesiones se cierran |
+| `MLABS_CODIGO_REVISION` | Vercel (Production) | Código de acceso para el revisor de Meta: activa una cuenta sin pagar (`origen: "codigo"`). Vacía o ausente = ningún código sirve. Se pega a mano en el formulario de Meta; quitarla cuando termine la revisión |
+| `MLABS_PRECIO` | Vercel (Production) | Precio mensual en pesos colombianos (número entero). Sin él «Activar» responde «El cobro no está configurado todavía» y la landing no muestra precio |
+| `MP_ACCESS_TOKEN` | Vercel (Production) | Token de acceso de Mercado Pago (producción) para crear, consultar y cancelar suscripciones |
+| `MP_WEBHOOK_SECRETO` | Vercel (Production) | Secreto de firma de los avisos de Mercado Pago (`x-signature`). Sin él todos los avisos se rechazan con 401 y los pagos no se reflejan |
 
 **Recomendación:** `ADMIN_CLAVE` larga y aleatoria (**20 caracteres o más**). Si alguien roba la cookie, puede intentar adivinar la clave sin conexión (la cookie va firmada con una llave derivada de ella); el límite de 5 intentos no lo frena. Lo mismo para `ADMIN_PC_TOKEN`. Genéralas con un administrador de contraseñas.
 

@@ -4,7 +4,7 @@ import { MlabsHeader, MlabsFooter } from "../MlabsMarco";
 export const metadata = {
   title: { absolute: "Privacidad · MLABS" },
   description:
-    "Política de privacidad de MLABS y de la app de Instagram «M LABS REPLY»: qué datos usamos, para qué y cómo pedir su borrado.",
+    "Política de privacidad de MLABS y de la app de Instagram: qué datos usamos, para qué y cómo pedir su borrado.",
   // Meta revisa esta URL: si hereda la canónica y el og:url de la portada, la toma por la portada y la rechaza.
   alternates: { canonical: "https://mlabs.elmetacho.com/privacidad" },
   openGraph: { title: "Privacidad · MLABS", url: "https://mlabs.elmetacho.com/privacidad", siteName: "MLABS", type: "website" },
@@ -40,11 +40,11 @@ export default function Privacidad() {
             </p>
           </Seccion>
 
-          <Seccion titulo="2. Qué datos usamos de Instagram (app «M LABS REPLY»)">
+          <Seccion titulo="2. Qué datos usamos de Instagram (app «MLABS»)">
             <p>
               <strong className="text-black">En la cuenta de El Metacho (elmetacho_):</strong> cuando nos
               envías por mensaje directo un reel, o un link de TikTok o de Instagram, guardamos solo ese
-              link y la hora en que lo recibimos. No guardamos el texto del mensaje ni quién lo envió.
+              link y la hora en que lo recibimos y, si está configurada, una huella anónima (un código irreversible, no tu id ni tu usuario) de quien lo envía durante 3 días, para evitar duplicados. No guardamos el texto del mensaje ni tu nombre de usuario.
             </p>
             <p>
               <strong className="text-black">En la cuenta de MLABS (metacholabs):</strong> si tu comentario
@@ -54,7 +54,7 @@ export default function Privacidad() {
               «seguir primero» está activa, tu id de Instagram durante 24 horas mientras esperamos que nos
               escribas. Después de que nos escribes, consultamos a Instagram si sigues la cuenta.
             </p>
-            <p>No guardamos el texto de los comentarios ni de los mensajes, ni nombres de usuario de quienes comentan.</p>
+            <p>No guardamos el texto de los comentarios ni de los mensajes, ni nombres de usuario de las personas que comentan o escriben (de las marcas que conectan su cuenta sí guardamos el usuario de Instagram; ver sección 3).</p>
           </Seccion>
 
           <Seccion titulo="3. Marcas que usan MLABS">
@@ -118,11 +118,12 @@ export default function Privacidad() {
           <Seccion titulo="6. English summary">
             <p>
               MLABS is a service of EL METACHO S.A.S. (Bogotá, Colombia). Through the Instagram app
-              «M LABS REPLY» we store only: the links of reels or TikTok/Instagram links sent by direct
-              message to El Metacho, with the time received; and, for comments on the MLABS account that
+              «MLABS» we store only: the links of reels or TikTok/Instagram links sent by direct
+              message to El Metacho, with the time received and, if configured, an anonymous hash of the sender (not their ID or username) kept for 3 days to avoid duplicates; and, for comments on the MLABS account that
               contain a configured keyword, the comment id (8 days) and, only if the follow-first option is
               on, the commenter&apos;s Instagram-scoped id (24 hours). We do not store comment or message
-              text, or usernames. We use data only to send the requested resource and to suggest videos; we
+              text, or usernames of the people who comment or message (brands that connect their account
+              are covered below). We use data only to send the requested resource and to suggest videos; we
               do not sell, share or use it for advertising. Brands that connect their own Instagram account
               to MLABS: we store the Instagram id and username, an encrypted access token, keywords, the
               Mercado Pago email and the subscription status, only to run and bill the service, and never

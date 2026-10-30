@@ -1,10 +1,12 @@
-# Revisión de Meta: app «M LABS REPLY» (Instagram API with Instagram Login)
+# Revisión de Meta: app «MLABS» (Instagram API with Instagram Login)
 
-Documento de trabajo para el envío a App Review (2026-10-25). Pide **acceso avanzado** a `instagram_business_basic`, `instagram_business_manage_messages` e `instagram_business_manage_comments`. Los textos en inglés están listos para pegar; el guion de los videos y la lista de pendientes están en español.
+Documento de trabajo para el envío a App Review (reescrito el 2026-10-30 para MLABS multimarca; la versión anterior era de la app de una sola cuenta, «M LABS REPLY»). Pide **acceso avanzado** a `instagram_business_basic`, `instagram_business_manage_messages` e `instagram_business_manage_comments`. Los textos en inglés están listos para pegar; las notas para Oscar, el guion de los videos y la lista de envío están en español.
+
+**Qué cambió frente al envío planeado antes:** ya no es una app que sirve solo a cuentas propias. Es una herramienta de autoservicio para marcas (cuentas profesionales de Instagram) que inician sesión con Instagram (Business Login). Eso la convierte en el caso que Meta sí revisa («Tech Provider» que sirve a varios negocios) y hace que Meta pueda probar el inicio de sesión completo, que antes era la duda 2 de la sección F.
 
 ---
 
-## A. Fuentes y requisitos encontrados (verificado el 2026-10-25)
+## A. Fuentes y requisitos encontrados (verificado el 2026-10-25; releído el 2026-10-30)
 
 Fuentes consultadas:
 
@@ -17,64 +19,91 @@ Lo que piden, según esas páginas:
 
 | Tema | Requisito documentado |
 |---|---|
-| Cuándo hay revisión | Requerida si la app pide acceso avanzado para varios negocios (Tech Provider). Para una app que solo sirve a negocios propios, con acceso estándar, no hace falta. «Your app must complete App Review before it can request permissions with Advanced Access from any app user.» |
+| Cuándo hay revisión | Requerida si la app pide acceso avanzado para varios negocios (Tech Provider). Para una app que solo sirve a negocios propios, con acceso estándar, no hace falta; MLABS ya no es ese caso (sirve a varias marcas). «Your app must complete App Review before it can request permissions with Advanced Access from any app user.» |
 | Antes de pedir acceso avanzado | Hay que haber hecho al menos una llamada exitosa a la API. |
 | Ajustes de la app | Ícono 1024x1024, URL de política de privacidad, categoría, correo de contacto del negocio. |
 | Instrucciones de prueba | Pasos de inicio de sesión y prueba por plataforma, cuándo y cómo se usa cada permiso; credenciales de prueba si hacen falta. La app debe estar «publicly available» o dar instrucciones de acceso. Usar cuentas de prueba de Meta; no poner credenciales personales. |
 | Descripción por permiso | Una descripción propia por permiso, lo más específica posible, sin copiar el mismo texto entre permisos. |
 | Screencast | Mostrar las acciones que usan el permiso, resolución 1080 o mayor, interfaz en inglés si se puede (si no, subtítulos y tooltips), sin audio (no lo escuchan), usar el mouse, explicar botones poco claros. El botón de inicio de sesión debe verse. |
-| `instagram_business_basic` | Video: flujo completo de login con la concesión del permiso y luego mostrar el nombre de usuario y el ID del perfil (según Meta). Nuestra app no llama a ningún endpoint de perfil: se muestra desde el panel de Meta. |
+| `instagram_business_basic` | Video: flujo completo de login con la concesión del permiso y luego mostrar el nombre de usuario y el ID del perfil (según Meta). MLABS sí llama a `GET /me` al iniciar sesión y muestra `@usuario` en el panel de la marca: eso es lo que se graba. |
 | `instagram_business_manage_messages` (depende de `basic`) | Describir las funciones de mensajería que se ofrecen a los negocios. Video: login completo con la concesión, la app enviando un mensaje a un usuario de Instagram y el inbox de Instagram recibiéndolo; además, una solicitud cURL de envío de mensaje (se puede generar con el «API Integration Helper» en App Dashboard > Instagram). |
 | `instagram_business_manage_comments` (depende de `basic`) | Explicar por qué se necesita gestionar comentarios. Video: login completo con la concesión; «Demonstrate creating, updating, and deleting a comment»; mostrar el resultado en la app y en la app nativa de Instagram. |
-| Acceso avanzado | Requiere verificación del negocio (El Metacho S.A.S ya está verificado). |
+| Acceso avanzado | Requiere verificación del negocio (El Metacho S.A.S. ya está verificado). |
 | Permisos de más | Pedir permisos que la app no usa o que no encajan con el uso permitido hace que «your submission will not be approved». |
 
 Lo que NO está documentado o no coincide (no lo invento):
 
 - La página de referencia no dice si la grabación es obligatoria para mensajes en este permiso (en `instagram_manage_messages`, el de Facebook Login, sí insisten en grabar). Se graba de todas formas.
 - La descripción oficial de `instagram_business_manage_comments` en la página de referencia está copiada de otro permiso (publicar contenido). Solo las secciones de caso de uso y screencast son específicas de comentarios. No tiene efecto en nuestro envío, pero conviene saberlo si el revisor pregunta.
-- Meta pide demostrar «crear, actualizar y borrar» un comentario. Nuestra app solo **crea** una respuesta pública (`POST /{comment-id}/replies`) y no edita ni borra. Se declara con honestidad en la descripción; ver riesgo en la sección F.
+- Meta pide demostrar «crear, actualizar y borrar» un comentario. MLABS solo **crea** una respuesta pública (`POST /{comment-id}/replies`) y no edita ni borra. Se declara con honestidad en la descripción; ver riesgo en la sección F.
 - No encontré una guía propia de Meta con un formato fijo para las instrucciones de prueba más allá de lo de arriba.
 - Una guía de terceros (Cloudfon) también sugiere un screencast por permiso; no es fuente de Meta y no se usa como requisito.
 
 ---
 
-## B. Descripciones de uso por permiso (inglés, para pegar)
+## B. Descripción del producto y uso por permiso (inglés, para pegar)
+
+### B.0 Descripción general de la app (para el campo de descripción / detalles de la app)
+
+```
+MLABS is a self-service tool for Instagram professional accounts (brands, businesses and creators). When a person comments a keyword on one of the brand's posts, MLABS automatically (1) replies publicly to that comment and (2) sends that person one private reply (DM) with a link chosen by the brand. Optionally, the brand can require the person to follow the account first: the private reply then asks them to follow and includes a "Ya te sigo" ("I already follow you") button; once the person writes back, MLABS checks whether they follow the account and, if so, sends the link.
+
+How a brand uses it:
+1. The brand opens https://mlabs.elmetacho.com/automatizar and taps "Log in with Instagram" (Instagram API with Instagram Login / Business Login) with its professional account and grants the permissions.
+2. In its dashboard (https://mlabs.elmetacho.com/panel) the brand configures its own keywords, the public reply text, the DM text and the link for each keyword.
+3. The brand pays a monthly subscription through Mercado Pago (the first connection of an account includes a 7-day free trial). The automation only runs while the subscription is active.
+4. The brand can cancel the subscription at any time from the dashboard (the service keeps working until the end of the paid period) and can disconnect Instagram, which immediately and permanently deletes all its data.
+
+Data use: we use the data only to provide the service on behalf of the brand that connected its account. Access tokens are stored encrypted. We do not sell data, do not use it for advertising and do not share it with third parties. We do not store the text of comments or messages or the usernames of the people who comment.
+
+Privacy policy: https://mlabs.elmetacho.com/privacidad
+Data deletion instructions and callback: https://mlabs.elmetacho.com/eliminar-datos
+```
 
 ### B.1 `instagram_business_basic`
 
 ```
-M LABS REPLY needs instagram_business_basic because it is the base permission on which instagram_business_manage_messages and instagram_business_manage_comments depend, and it gives the app basic access to the Instagram professional accounts it is connected to.
+MLABS needs instagram_business_basic because it is the base permission on which instagram_business_manage_comments and instagram_business_manage_messages depend, and because it is how we identify the brand that logs in.
 
-We operate two Instagram professional accounts, both owned by our verified business, El Metacho S.A.S.: El Metacho (@elmetacho_, Instagram ID 17841402790807435) and MLABS (@metacholabs, Instagram ID 17841480070378472). Every webhook notification carries the ID of the account that received the event (entry.id). The app compares that ID with the two accounts above to decide what to do with the event. The app does not call any profile endpoint to do this.
+When a brand completes "Log in with Instagram", we call GET /me?fields=user_id,username,account_type,id with the brand's token. We use the result for three things only:
+1. To check that the account is a professional account (business or creator). Personal accounts are rejected with a message asking the brand to switch to a professional account.
+2. To show the brand its own username (@username) at the top of its dashboard, so it can confirm that the right account is connected.
+3. To store the account ID, because every webhook notification carries the ID of the account that received the event (entry.id), and that is how we find which brand's keywords apply. The app-scoped ID is stored only to find the account when Instagram calls our deauthorize / data deletion callbacks.
 
-We do not read or store the profile's media, followers or insights.
+We do not read or store the brand's media, followers or insights, and we do not use this permission for anything else.
 ```
 
-### B.2 `instagram_business_manage_messages`
+### B.2 `instagram_business_manage_comments`
 
 ```
-M LABS REPLY uses instagram_business_manage_messages in two separate flows, one per account.
+MLABS uses instagram_business_manage_comments to answer, on behalf of the brand, the comments that contain one of the keywords the brand configured in its dashboard.
 
-Flow 1 - Receiving links by DM (account @elmetacho_, no message is ever sent). Followers of El Metacho (a Colombian comedy channel) share reels and TikTok links with the account by Instagram DM, so the owner can consider them as ideas for new videos. Our webhook (https://mlabs.elmetacho.com/api/instagram/webhook, every request is verified with the X-Hub-Signature-256 signature) receives the message event. The app extracts only the shared link (the ig_reel attachment URL or a URL in the text) and the time it arrived, and stores them. The sender's name, the text of the message and any other content are not stored. The stored links appear in a private admin page ("Links por DM", www.elmetacho.com/admin/dm-links) that only the account owner can open, and the owner's computer retrieves them once a day to propose videos. No reply is sent in this flow.
+Each brand defines in its dashboard (https://mlabs.elmetacho.com/panel) a list of keywords and, for each one, the public reply text. Our webhook (https://mlabs.elmetacho.com/api/instagram/webhook, every request verified with the X-Hub-Signature-256 signature) receives the "comments" notification of the brand's account. If the comment contains a configured keyword as a whole word (case and accent insensitive), the app posts one public reply to that comment with POST /{comment-id}/replies, for example "Sent! Check your DM". Right after, it sends the private reply described under instagram_business_manage_messages. The public reply tells the commenter that the information was sent, so they know to look in their DMs.
 
-Flow 2 - Sending a link after a keyword comment (account @metacholabs, the account of our agency MLABS). The business configures keywords in a private admin page (www.elmetacho.com/admin/palabras). When a person comments a configured keyword on a post of @metacholabs (for example "curso"), the app sends exactly one private reply to that person with POST /{ig-id}/messages using recipient.comment_id, containing a link to a free resource hosted at mlabs.elmetacho.com. The person asked for it by commenting, and we send only one message per comment, within the 7-day window.
-Optionally, a keyword can require that the person follows the account first. In that case the private reply asks the person to follow the account and includes a quick reply button, "Ya te sigo" ("I already follow you"). The person can tap the button or simply reply to the message; in both cases Instagram delivers a message from the user, which opens the 24-hour messaging window. The app treats any message from a person who has a pending follow check (24 hours) as the confirmation. The app then checks GET /{igsid}?fields=is_user_follow_business. If the person follows the account, the app sends the resource link. If not, it sends a short reminder asking the person to follow the account and reply or tap the button again.
+Why it is needed: without it the app cannot answer the comment, and the commenter would not know that a private message is waiting for them.
 
-What we store: only the Instagram-scoped ID of the person while they wait for the follow check (24 hours, then deleted), and a marker that a comment was already answered (8 days). We do not store the text of comments or messages or usernames. We do not send marketing broadcasts, we do not message people who have not commented or written first, and we do not use the data for advertising or share it with third parties.
+The app posts at most one public reply per matching comment. Instagram only allows public replies to top-level comments, so for a comment that is itself a reply the app skips the public reply and sends only the private message. The app does not edit, hide, moderate or delete comments, it ignores comments written by the brand's own account, and it answers each comment only once. Comments are not stored: only a marker that a comment ID was already answered is kept for 8 days to avoid duplicates.
+
+The automation only runs for brands with an active subscription and can be stopped by the brand at any time (delete the keyword, cancel the subscription or disconnect Instagram).
 
 Privacy policy: https://mlabs.elmetacho.com/privacidad
 Data deletion instructions: https://mlabs.elmetacho.com/eliminar-datos
 ```
 
-### B.3 `instagram_business_manage_comments`
+### B.3 `instagram_business_manage_messages`
 
 ```
-M LABS REPLY uses instagram_business_manage_comments on the account @metacholabs (MLABS, owned by our verified business El Metacho S.A.S.) to answer comments that contain a keyword configured by the business.
+MLABS uses instagram_business_manage_messages to send, on behalf of the brand, one private reply (DM) to a person who commented a keyword on the brand's post, and to complete the optional "follow first" step.
 
-The business configures keywords and the public reply text in a private admin page (www.elmetacho.com/admin/palabras). When our webhook (https://mlabs.elmetacho.com/api/instagram/webhook, signature verified) receives a "comments" notification and the comment contains a configured keyword as a whole word (case and accent insensitive), the app posts one public reply to that comment with POST /{comment-id}/replies, for example "Enviado! Revisa tu DM" ("Sent! Check your DM"). Right after, it sends the private reply described under instagram_business_manage_messages. The public reply tells the commenter that the resource is waiting in their DMs.
+Flow 1 - Private reply after a keyword comment. When a person comments a keyword configured by the brand, the app sends exactly one message to that person with POST /{ig-id}/messages using recipient.comment_id, containing the text and the link that the brand configured for that keyword (for example a price list, a catalog or a booking page). The person asked for it by commenting. We send one message per comment, within the 7-day window Instagram allows for private replies. We do not send marketing broadcasts, we do not message people who have not commented or written first, and we do not use messages for advertising.
 
-The app attempts one public reply to each comment that matches a keyword. Instagram only allows public replies to top-level comments, so for a comment that is itself a reply the app skips the public reply and only sends the private message. If Instagram rejects a public reply, the app logs the error and still sends the private reply. It does not edit or delete comments, it does not moderate, hide or delete anyone's comments, it ignores comments written by the account itself, and it answers each comment only once. The app does not store the text of comments or usernames; it stores only a marker that a comment ID was already answered (8 days) to avoid duplicate replies when Meta resends a notification.
+Flow 2 - Optional "follow first" step. If the brand enabled "ask to follow" for a keyword, the private reply asks the person to follow the account and includes a quick reply button "Ya te sigo" ("I already follow you"). The person can tap the button or simply reply; in both cases Instagram delivers a message from the user, which opens the 24-hour messaging window. The app treats any message from a person who has a pending follow check as the confirmation and reads GET /{igsid}?fields=is_user_follow_business. If the person follows the account, the app sends the link. If not, it sends one reminder to follow and offers the button again.
+
+Why it is needed: the private reply is the core of the product (deliver the brand's link to the person who asked for it) and the follow check needs the person's reply to be read.
+
+What we store: only the Instagram-scoped ID of the person while they wait for the follow check (24 hours, then deleted) and a marker that a comment was already answered (8 days). We do not store the text of comments or messages, nor usernames. The brand's DM text and link are the brand's own configuration and are deleted when it disconnects.
+
+Note: our own accounts (@elmetacho_ and @metacholabs, owned by El Metacho S.A.S., our verified business) are connected to the same app. For @elmetacho_ the webhook receives reels that followers share by DM and stores only the shared link and its arrival time and, if configured, an anonymous hash of the sender (an HMAC, not the ID or username) for 3 days to avoid duplicates (no reply is sent). This is described in the privacy policy.
 
 Privacy policy: https://mlabs.elmetacho.com/privacidad
 Data deletion instructions: https://mlabs.elmetacho.com/eliminar-datos
@@ -82,109 +111,161 @@ Data deletion instructions: https://mlabs.elmetacho.com/eliminar-datos
 
 ---
 
-## C. Guion de los tres videos (español)
+## C. Guion de los tres videos
 
-Reglas comunes (de la guía de Meta): grabar en 1080 o más, **sin audio** (no lo escuchan), navegador y Instagram en **inglés** si se puede (si algo queda en español, poner subtítulos o un texto en pantalla que lo explique), usar el mouse, mostrar la barra de direcciones para que se vea el sitio (recomendación nuestra, no de Meta), y poner rótulos en pantalla (por ejemplo «Cuenta: @metacholabs»). Cada video, de preferencia menos de 2 minutos (recomendación nuestra, no de Meta). Antes de grabar: app configurada (webhook a `mlabs.elmetacho.com`, `IG_TOKEN_LABS` y `CRON_SECRET` en Vercel, palabra «curso» creada y activa) y, si la app aún no está publicada, hacerlo con cuentas con rol en la app.
+Reglas comunes (de la guía de Meta; ver sección A): grabar en 1080 o más, **sin audio**, interfaz de Instagram y del navegador en **inglés** si se puede (nuestra web está en español: por eso cada paso lleva subtítulo en inglés), usar el mouse, mostrar la barra de direcciones (recomendación nuestra) y explicar los botones poco claros. Un video por permiso y **solo** con lo de ese permiso. Cada video de preferencia menos de 2 a 3 minutos (recomendación nuestra). El botón «Iniciar sesión con Instagram» debe verse en cada video (Meta lo exige).
 
-Parte común al inicio de cada video (unos 20 segundos): mostrar el **inicio de sesión de Instagram** con el botón visible y la pantalla donde se concede el permiso del que trata el video (Meta lo pide en cada permiso). Si el inicio de sesión por permiso no se puede repetir, ver la nota en la sección F.
+**Antes de grabar:**
+- Dos cuentas de Instagram de prueba **profesionales y públicas**, ambas con rol de probador en la app: la «marca» (A) y quien comenta (B). La marca A debe tener al menos una publicación.
+- La marca A **sin** conectar a MLABS (o desconectada), para grabar el inicio de sesión desde cero.
+- `MLABS_CODIGO_REVISION` puesto en Vercel. Si se activa con el código, el código se escribe en un campo de texto VISIBLE (no es un campo de contraseña): difumina el código en la edición del video. No mostrar nunca el código real.
+- Palabras de ejemplo: «precio» (sin pedir seguir) y «guia» (con «Pedir que me siga»).
+- Los subtítulos se agregan en edición (o texto en pantalla).
 
-### Video 1: `instagram_business_manage_messages` + `instagram_business_basic` (reel por DM a elmetacho_)
+### Video 1: `instagram_business_basic` (inicio de sesión y perfil)
 
-1. (Rótulo: «Permisos: instagram_business_basic y instagram_business_manage_messages».) Mostrar el login de Instagram de la cuenta **elmetacho_** y la pantalla de permisos concedidos.
-2. Mostrar en el panel de Meta (App Dashboard > Instagram) la cuenta **elmetacho_** conectada, con su nombre de usuario y el ID `17841402790807435`. Rótulo: «Esto se ve en el panel de Meta, no en la app; la app identifica la cuenta por el ID que llega en el aviso del webhook (entry.id)» (cubre `basic`, de la que dependen los otros dos permisos).
-3. Desde otro celular o cuenta de prueba (una cuenta con rol en la app): abrir un reel, tocar enviar y mandarlo por DM a **elmetacho_**. Que se vea el DM enviado.
-4. Cambiar al navegador: abrir `www.elmetacho.com/admin/dm-links` (con la sesión de admin de Oscar iniciada; el revisor no tiene acceso, por eso se muestra aquí) y mostrar que el link del reel apareció, con la hora. Rótulo: «La app guarda solo el link y la hora».
-5. Mostrar también el aviso del webhook: en Vercel, el registro de la petición `POST /api/instagram/webhook` con código 200 (sin mostrar datos personales).
-6. Cerrar con la solicitud cURL: en el API Integration Helper, la solicitud de envío de mensaje (`POST /{ig-id}/messages`) tal como pide Meta. Rótulo: «En este flujo no se envía respuesta; el envío de mensajes se muestra en el video 2 y 3».
+| # | Qué se ve y qué se hace | Subtítulo (inglés) |
+|---|---|---|
+| 1 | Abrir `https://mlabs.elmetacho.com/automatizar`. Mostrar la página y el botón «Iniciar sesión con Instagram». | MLABS landing page. Brands log in with their Instagram professional account. |
+| 2 | Clic en «Iniciar sesión con Instagram». | Button "Iniciar sesión con Instagram" = "Log in with Instagram". |
+| 3 | Pantalla de Instagram con el usuario de la marca A y la lista de permisos. Pausar para que se lean los tres permisos. | Instagram Business Login: the brand grants instagram_business_basic, manage_comments and manage_messages. |
+| 4 | Permitir. Vuelve a `/panel`. Mostrar `@usuario` arriba. | After login, the dashboard shows the connected account (@username), read with instagram_business_basic. |
+| 5 | Mostrar «Estado: sin_pago» y el formulario «Activa tu automatización». | Status "sin_pago" = payment pending. The brand must activate the subscription. |
+| 6 | Abrir «Tengo un código de acceso», pegar el código en el campo de texto (difuminarlo en la edición) y pulsar «Activar». Vuelve el panel con la cuenta activa. | "Tengo un código de acceso" = "I have an access code" (reviewer code). Brands normally pay through Mercado Pago. |
+| 7 | (Opcional) Mostrar el mensaje de `/automatizar?error=personal`. | Personal accounts are rejected: only professional accounts can connect. |
 
-### Video 2: `instagram_business_manage_comments` + mensaje por comentario (metacholabs)
+### Video 2: `instagram_business_manage_comments` (respuesta pública)
 
-1. (Rótulo: «Permisos: instagram_business_manage_comments e instagram_business_manage_messages».) Mostrar el login de Instagram de **metacholabs** y la concesión de permisos.
-2. Abrir `www.elmetacho.com/admin/palabras` y mostrar la palabra «curso» (sin «pedir seguir»), con la respuesta pública, el mensaje y el link configurados.
-3. Desde una cuenta de prueba con rol, abrir una publicación de **metacholabs** y comentar `curso`.
-4. Mostrar en la **app de Instagram** (la nativa) bajo ese comentario la respuesta pública de metacholabs («¡Enviado! Revisa tu DM»). Meta pide ver el resultado en la app nativa.
-5. Abrir los DM de la cuenta de prueba y mostrar el mensaje con el link recibido de metacholabs. Tocar el link y mostrar que abre el recurso en `mlabs.elmetacho.com`.
-6. Mostrar el cURL de la respuesta pública (`POST /{comment-id}/replies`) y del DM con `recipient.comment_id` en el API Integration Helper.
-7. Decir en un rótulo: «La app solo crea respuestas; no edita ni borra comentarios».
+Inicio común (unos 20 s): el login del video 1, pasos 1 a 4, resumido y con el botón visible.
 
-### Video 3: flujo «Ya te sigo» (metacholabs)
+| # | Qué se ve y qué se hace | Subtítulo (inglés) |
+|---|---|---|
+| 1 | En `/panel`, bloque «Tus palabras clave». Mostrar la palabra «precio» con sus campos. | Keywords section. "Palabra" = keyword, "Respuesta en el comentario" = public reply, "Mensaje del DM" = DM text, "Link" = link. |
+| 2 | Mostrar «Respuesta en el comentario» (por ejemplo «¡Enviado! Revisa tu DM 📩») y «Activa» marcado. | Public reply that MLABS will post under the comment: "Sent! Check your DM". |
+| 3 | Con la cuenta B, abrir una publicación de la marca A y comentar `precio`. | Another account comments the keyword "precio" on the brand's post. |
+| 4 | En la **app nativa de Instagram**, mostrar bajo ese comentario la respuesta pública de la marca A. | MLABS replied publicly with POST /{comment-id}/replies (instagram_business_manage_comments). |
+| 5 | Comentar `hola` (sin la palabra) y mostrar que no hay respuesta. | A comment without the keyword gets no reply. |
+| 6 | Rótulo final. | The app only creates replies. It never edits, hides or deletes comments. |
+| 7 | (Opcional) Mostrar el cURL de `POST /{comment-id}/replies` del API Integration Helper. | Equivalent API request. |
 
-1. (Rótulo: «Mismos permisos que el video 2».) En `www.elmetacho.com/admin/palabras`, mostrar una palabra con «pedir seguir» activado (por ejemplo «guia»).
-2. La cuenta de prueba **no** sigue a metacholabs. Comentar `guia` en una publicación de metacholabs.
-3. Mostrar la respuesta pública y el DM «Para recibirlo, sígueme y toca 👇» con el botón **«Ya te sigo»** (si Instagram no muestra el botón, ver el riesgo 5 de la sección F: se responde con cualquier texto).
-4. Tocar «Ya te sigo» (o responder cualquier texto) sin seguir la cuenta: mostrar el recordatorio «Aún no me sigues…».
-5. Seguir a metacholabs desde la cuenta de prueba (mostrar el botón «Siguiendo») y tocar «Ya te sigo» (o responder) otra vez: mostrar que llega el mensaje con el link.
-6. Mostrar el cURL de la consulta `GET /{igsid}?fields=is_user_follow_business` en el API Integration Helper. Rótulo: «Solo se consulta después de que el usuario escribe primero».
+### Video 3: `instagram_business_manage_messages` (DM con el link y «Ya te sigo»)
+
+Inicio común (unos 20 s): login resumido, con el botón visible y la pantalla de permisos.
+
+| # | Qué se ve y qué se hace | Subtítulo (inglés) |
+|---|---|---|
+| 1 | En `/panel`, mostrar «precio» con «Mensaje del DM» y «Link» configurados. | The brand configured the DM text and the link for this keyword. |
+| 2 | Cuenta B comenta `precio` en la publicación de la marca A. | A person comments the keyword. |
+| 3 | Abrir los mensajes de la cuenta B y mostrar el DM recibido de la marca A con el link. Tocar el link. | The person receives one private reply with the link (POST /{ig-id}/messages with recipient.comment_id). |
+| 4 | En `/panel`, mostrar «guia» con «Pedir que me siga» marcado. | "Pedir que me siga" = "Ask the person to follow me first". |
+| 5 | La cuenta B **no** sigue a la marca A. Comentar `guia`. Mostrar el DM con «Ya te sigo». | The DM asks the person to follow first and shows the button "Ya te sigo" = "I already follow you". |
+| 6 | Tocar «Ya te sigo» (o escribir cualquier texto) sin seguir: mostrar el recordatorio «Aún no me sigues…». | The person has not followed yet: MLABS replies with a reminder. |
+| 7 | Seguir a la marca A desde B (mostrar «Following»). Tocar «Ya te sigo» de nuevo: llega el mensaje con el link. | After following, the person receives the link. Follow status is read with GET /{igsid}?fields=is_user_follow_business. |
+| 8 | (Opcional) Mostrar el cURL de `POST /{ig-id}/messages` del API Integration Helper. | Equivalent API request. |
+
+Nota: el botón «Ya te sigo» en una respuesta privada **no se ha probado nunca en vivo**. Si Instagram no lo muestra, grabar con una respuesta de texto y ajustar el subtítulo (ver riesgo 5 en la sección F).
 
 ---
 
-## D. Test instructions for the reviewer (English)
+## D. Test instructions for the reviewer (English, para pegar)
+
+El código de acceso **no** va escrito en este archivo (el repo es público). Oscar lo pega a mano en el formulario de Meta, donde dice `<OSCAR PASTES MLABS_CODIGO_REVISION HERE IN THE META FORM>`.
 
 ```
 OVERVIEW
-M LABS REPLY is a server-side app (no end-user web UI for the Instagram flows). Everything is triggered by Instagram events that reach our webhook (https://mlabs.elmetacho.com/api/instagram/webhook). Two business accounts, both owned by El Metacho S.A.S. (verified business), are connected:
-- El Metacho: @elmetacho_ (Instagram ID 17841402790807435) - receives links by DM.
-- MLABS: @metacholabs (Instagram ID 17841480070378472) - answers keyword comments.
+MLABS is a self-service web tool for Instagram professional accounts (brands). When someone comments a keyword on the brand's post, MLABS replies publicly and sends the person a private reply (DM) with a link. Every brand logs in with Instagram (Business Login), configures its own keywords in its dashboard and pays a monthly subscription through Mercado Pago. For review, a one-time access code activates the account without payment.
+Site: https://mlabs.elmetacho.com/automatizar
 Privacy policy: https://mlabs.elmetacho.com/privacidad
 Data deletion: https://mlabs.elmetacho.com/eliminar-datos
+The website is in Spanish; English translations of the labels are given below in parentheses.
 
 WHAT YOU NEED
-- An Instagram account with a role on the app (tester) or a Meta test account. Credentials: [OSCAR: complete here a tester account created for the reviewer, or write "use the Meta test account provided by App Review"; do not use a personal account].
-- The admin pages (www.elmetacho.com/admin/dm-links and www.elmetacho.com/admin/palabras) are private and reviewers are not given access to them (one admin password also protects unrelated tools of the business). What they show is visible in the screencasts.
+- Account A: an Instagram PROFESSIONAL (business or creator) and PUBLIC account with at least one post. This is the "brand". Personal accounts are rejected by design.
+- Account B: any other Instagram account, used to write the comment and to receive the DM.
+- ACCESS CODE: <OSCAR PASTES MLABS_CODIGO_REVISION HERE IN THE META FORM>
 
-TEST 1 - instagram_business_basic and instagram_business_manage_messages (receiving a link)
-1. From your test Instagram account, open any reel and send it by DM to @elmetacho_ (Share > Send).
-2. The private admin page (www.elmetacho.com/admin/dm-links) lists the new row with the reel link and the arrival time within a few seconds; this is visible in the screencast.
-3. The app only stores the link and the time. No reply is sent in this flow.
+STEPS
+1. Open https://mlabs.elmetacho.com/automatizar and click the black button "Iniciar sesión con Instagram" ("Log in with Instagram").
+2. Log in with account A and accept the permissions (instagram_business_basic, instagram_business_manage_comments, instagram_business_manage_messages). You are redirected to https://mlabs.elmetacho.com/panel and see "@<account A username>" at the top and "Estado: sin_pago" ("Status: payment pending").
+3. In the box "Activa tu automatización" ("Activate your automation"), open "Tengo un código de acceso" ("I have an access code"), paste the ACCESS CODE and click "Activar" ("Activate"). The page reloads and the status changes to "activa" (active). The email field is not needed when you use the code. No payment is requested.
+4. In the section "Tus palabras clave" ("Your keywords") click "+ Palabra" ("+ Keyword") and fill in:
+   - "Palabra" (Keyword): precio
+   - "Respuesta en el comentario" (Reply in the comment): the default text is fine ("Sent! Check your DM" in Spanish)
+   - "Mensaje del DM" (DM message): any text, for example "Here is the information you asked for"
+   - "Link": any https:// link, for example https://mlabs.elmetacho.com
+   - Leave "Activa" (Active) checked and "Pedir que me siga" (Ask them to follow me first) unchecked.
+   Click "Guardar" (Save). You will see "Guardado ✓" (Saved).
+5. With account B, open a post of account A and comment: precio
+6. Within a few seconds you will see (a) a public reply from account A under your comment and (b) a private message from account A in the DMs of account B, containing your text and link.
+7. A comment that does not contain the keyword as a whole word (for example "precios" or "hola") gets no reply. A repeated notification for the same comment never produces a duplicate reply.
 
-TEST 2 - instagram_business_manage_comments and instagram_business_manage_messages (keyword comment, no follow required)
-1. The configured keywords are visible in the screencast (private page www.elmetacho.com/admin/palabras). The keyword "curso" is active and does not require following.
-2. From your test account, open any recent post of @metacholabs and comment: curso
-3. Within a few seconds, a public reply from @metacholabs appears under your comment ("Enviado! Revisa tu DM").
-4. Open your Instagram DMs: you receive one private message from @metacholabs with a link to a resource at mlabs.elmetacho.com.
-5. Comment "curso" again on the same post: a second comment gets its own reply, but a repeated webhook for the same comment never produces a duplicate.
-6. A comment that does not contain a keyword as a whole word (for example "recursos") gets no reply.
+OPTIONAL - "follow first" flow
+8. In the dashboard add a second keyword, for example "guia", and check "Pedir que me siga" (Ask them to follow me first). Save.
+9. Make sure account B does NOT follow account A. Comment: guia
+10. Account B receives a DM asking to follow the account, with a button "Ya te sigo" ("I already follow you"). If your client does not show the button, reply with any text.
+11. Tap the button (or reply) without following: the account answers that you do not follow it yet ("Aún no me sigues...") and offers the button again.
+12. Follow account A from account B and tap the button (or reply) again: you receive the link. The follow status is read with GET /{igsid}?fields=is_user_follow_business only after account B wrote to the account.
 
-TEST 3 - "Ya te sigo" flow (follow first)
-1. Make sure your test account does NOT follow @metacholabs.
-2. Comment on a post of @metacholabs: guia  (keyword with "follow first" enabled).
-3. You receive a public reply and a DM asking you to follow the account, with a quick reply button "Ya te sigo" (if your Instagram client does not show the button, just proceed with the next step by replying with any text).
-4. Tap "Ya te sigo" (or reply with any text) without following: the account replies that you do not follow it yet and offers the button again.
-5. Follow @metacholabs and tap "Ya te sigo" (or reply with any text) again: you receive the resource link.
-6. The follow status is read with GET /{igsid}?fields=is_user_follow_business, only after you wrote to the account (tapping the button or replying).
+DISCONNECT (data deletion)
+13. At the bottom of the dashboard, click "Desconectar Instagram y borrar mis datos" ("Disconnect Instagram and delete my data") and confirm. You are taken to https://mlabs.elmetacho.com/eliminar-datos?listo=1 with the message "Listo: tu cuenta se desconectó y tus datos se borraron" ("Done: your account was disconnected and your data were deleted"). Token, keywords, subscription and all records of the account are removed immediately. Brands with a paid subscription also have a "Cancelar suscripción" ("Cancel subscription") button in the dashboard.
+14. If the brand removes the app from Instagram (Settings > Apps and websites), our deauthorize callback (https://mlabs.elmetacho.com/api/mlabs/instagram/desautorizar) deletes the same data; the data deletion request callback is https://mlabs.elmetacho.com/api/mlabs/instagram/eliminar.
 
 NOTES
-- Instagram Login is the only login used. The app uses the permissions instagram_business_basic, instagram_business_manage_messages and instagram_business_manage_comments, and no others.
+- The app uses only instagram_business_basic, instagram_business_manage_comments and instagram_business_manage_messages.
 - Private replies are limited to one message per comment, within 7 days of the comment.
-- To delete data: follow https://mlabs.elmetacho.com/eliminar-datos.
+- The app only creates public replies; it does not edit or delete comments.
+- Comment and message texts and usernames of commenters are not stored.
 ```
 
 ---
 
-## E. Lista para Oscar antes de enviar (español)
+## E. Lista de envío para Oscar (español)
 
-En el panel de la app «M LABS REPLY» (developers.facebook.com):
+Hazla el día del envío, en este orden. Lo marcado «(doc)» sale de la documentación de Meta releída el 2026-10-30 (https://developers.facebook.com/docs/instagram-platform/app-review). **Ese día vuelve a leer esa página y anota abajo cualquier cambio.**
 
-- [ ] **Ajustes > Básico:** URL de política de privacidad `https://mlabs.elmetacho.com/privacidad`.
-- [ ] **Eliminación de datos:** URL de instrucciones `https://mlabs.elmetacho.com/eliminar-datos`.
+**Antes de abrir el formulario**
+- [ ] **Prueba de punta a punta hecha** (Tarea 13, Paso 1 del plan): Meta exige al menos una llamada exitosa por permiso (doc), y «Ya te sigo» nunca se ha probado en vivo.
+- [ ] **Nombre de la app en Meta:** «MLABS». Las páginas `/privacidad` y `/eliminar-datos` del sitio ya dicen «MLABS» (corregido el 2026-10-30).
+- [ ] Dos cuentas de prueba profesionales y públicas con rol de probador (marca A y comentarista B), ver sección C.
+- [ ] `MLABS_CODIGO_REVISION` puesto en Vercel (frase larga y aleatoria que solo tú ves). Sin la variable ningún código sirve.
+- [ ] Grabar y editar los tres videos (sección C) con subtítulos en inglés.
+- [ ] Glifo oficial de Instagram (pack de Meta): ya está en `public/marca/instagram-glyph.png` y el botón de `/automatizar` lo muestra.
+
+**Ajustes de la app (App Dashboard > Ajustes de la app > Básico)**
+- [ ] **Ícono de 1024×1024** (doc).
+- [ ] **URL de la política de privacidad:** `https://mlabs.elmetacho.com/privacidad` (doc).
+- [ ] **Categoría** de la app (doc).
+- [ ] **Correo de contacto del negocio** en Ajustes de desarrollador: aquí llegan los resultados (doc).
 - [ ] **Dominio de la app:** `mlabs.elmetacho.com`.
-- [ ] **Ícono** de 1024x1024, **categoría** de la app y **correo de contacto** del negocio (aquí llegan los resultados).
-- [ ] **Instagram > Webhooks:** cambiar la URL de devolución de llamada a `https://mlabs.elmetacho.com/api/instagram/webhook` (con la frase de verificación de Vercel) y suscribir los campos `messages` y `comments`.
-- [ ] **Vercel:** variable `IG_TOKEN_LABS` (token generado con «Generar identificador» en la fila de metacholabs; no se pega en el chat) y `CRON_SECRET` (para el cron diario que renueva el token). Redesplegar después de ponerlas.
-- [ ] Hacer **al menos una llamada exitosa** con cada permiso (Meta lo exige antes de pedir acceso avanzado): comentario real y DM real con cuentas con rol.
-- [ ] Crear la cuenta de prueba para el revisor y completar los `[OSCAR: …]` de la sección D. El revisor **no** recibe acceso a `/admin` (hay una sola `ADMIN_CLAVE` que también gobierna cantados); lo de `/admin` se muestra en los videos.
-- [ ] Palabras creadas en `/admin/palabras`: «curso» (sin pedir seguir) y una con «pedir seguir» (por ejemplo «guia»), con link al recurso.
-- [ ] Grabar los tres videos (sección C) y subirlos, cada uno al permiso que corresponde.
-- [ ] Pegar las tres descripciones de la sección B, una por permiso, sin mezclar.
-- [ ] Verificación del negocio: ya está (El Metacho S.A.S). Revisar que sigue vigente.
-- [ ] Después del envío, anotar la fecha en `docs/BRIEF.md` («Resumen de sesiones»).
+- [ ] **Eliminación de datos:** URL de devolución de llamada `https://mlabs.elmetacho.com/api/mlabs/instagram/eliminar` (responde `url` y `confirmation_code`), o la página `https://mlabs.elmetacho.com/eliminar-datos` si el formulario pide una página.
+- [ ] **Desautorizar:** `https://mlabs.elmetacho.com/api/mlabs/instagram/desautorizar`.
+- [ ] **URI de redirección OAuth** de Instagram Business Login: `https://mlabs.elmetacho.com/api/mlabs/instagram/vuelta` (exactamente igual).
+- [ ] **Webhooks de Instagram:** URL `https://mlabs.elmetacho.com/api/instagram/webhook` con la frase de `IG_WEBHOOK_VERIFY_TOKEN`; campos `comments` y `messages`.
+- [ ] Verificación del negocio vigente (El Metacho S.A.S.); el acceso avanzado la exige.
+- [ ] App publicada (modo Live) y que se pueda cargar y probar desde fuera (doc).
+
+**App Review > Permisos y funciones: por cada permiso**
+- [ ] Solicitar los tres y **solo** esos tres (pedir de más hace que no aprueben; doc). `basic` va incluido porque los otros dos dependen de él (doc).
+- [ ] **Descripción** del uso: pegar la de la sección B que corresponde (B.1, B.2, B.3), sin mezclar entre permisos. B.0 va en la descripción general.
+- [ ] **Video:** el 1 a `basic`, el 2 a `manage_comments`, el 3 a `manage_messages`.
+- [ ] **Aceptar el uso permitido** de cada permiso (doc).
+- [ ] **Instrucciones de prueba:** pegar la sección D y, **solo en el formulario de Meta**, reemplazar `<OSCAR PASTES MLABS_CODIGO_REVISION HERE IN THE META FORM>` por el código real. No lo escribas en este archivo, en el chat ni en ningún commit.
+- [ ] Sin credenciales personales en las instrucciones (usar cuentas de prueba).
+
+**Después del envío**
+- [ ] Anotar la fecha del envío en `docs/BRIEF.md` («Resumen de sesiones») y en la bitácora.
+- [ ] Cuando aprueben: cambiar o quitar `MLABS_CODIGO_REVISION` (el código deja de servir) y comprobar que las cuentas activadas con él (`origen: "codigo"`) sean solo de prueba.
+
+**Cambios en la doc de Meta el día del envío:** _(anotar aquí)_
 
 ---
 
 ## F. Riesgos y dudas (para no llevarse sorpresas)
 
-1. **Comentarios: crear, actualizar y borrar.** Meta pide mostrar los tres. La app solo crea respuestas. Puede que el revisor lo cuestione; la descripción lo dice con claridad y el video lo muestra. Si lo rechazan por eso, la salida honesta es explicar el uso real o añadir un borrado de nuestras propias respuestas desde `/admin` (decisión de Oscar, no se hace sin spec).
-2. **«Login completo» en cada video.** Meta lo pide por permiso, y nuestra app no tiene botón de login de cara al público: las cuentas se conectan desde el panel de Meta («Generar identificador»). En el video hay que mostrar ese flujo de concesión de permisos del panel y decirlo en un rótulo. Meta documenta que el botón de login debe verse, pero no dice qué hacer para una app que conecta solo cuentas propias. Es una duda abierta; se resuelve con lo que diga el revisor.
-3. **¿Hace falta revisión?** La documentación dice que una app que sirve solo a un negocio propio con acceso estándar no la necesita. Aun así, según lo comprobado en el spec §2, los avisos del webhook solo llegan a apps publicadas, y publicar con datos reales exige la revisión. Por eso se envía.
-4. **Instrucciones de prueba:** Meta no define un formato fijo más allá de «pasos de inicio de sesión y prueba»; lo escrito es la mejor interpretación.
-5. **Botón «Ya te sigo» no verificado.** La documentación de Meta no dice que una respuesta privada (con `recipient.comment_id`) acepte botones de respuesta rápida. El código trata cualquier mensaje del usuario con una espera vigente de 24 h como confirmación, así que el flujo funciona aunque el botón no aparezca (el usuario responde con cualquier texto). Antes de grabar el video 3, comprobar en vivo si el botón se ve; si no, grabar con respuesta de texto y ajustar el rótulo.
+1. **Comentarios: crear, actualizar y borrar.** Meta pide mostrar los tres. La app solo crea respuestas. Puede que el revisor lo cuestione; la descripción lo dice con claridad y el video 2 lo rotula. Si lo rechazan por eso, la salida honesta es explicar el uso real o añadir un borrado de nuestras propias respuestas (decisión de Oscar, no se hace sin spec).
+2. **Botón de inicio de sesión.** Meta dice que debe verse y seguir sus guías de marca (doc). El botón ya lleva el glifo oficial de Instagram (`public/marca/instagram-glyph.png`); **falta mirarlo en la vista previa** y comprobar que cumple las guías de marca antes de grabar.
+3. **Revisor sin rol en la app.** Mientras el acceso avanzado no esté aprobado, normalmente solo autorizan la app las cuentas con rol. **No está verificado** que el revisor de Meta pueda conectar su cuenta sin rol. Si responde que no puede, añadirlo como probador. Estar atento al correo de contacto.
+4. **El revisor no paga:** usa el código. Si Meta insiste en ver el cobro, ofrecer un video; nunca dar tarjetas.
+5. **Botón «Ya te sigo» no verificado.** La documentación de Meta no dice que una respuesta privada (con `recipient.comment_id`) acepte botones de respuesta rápida. El código trata cualquier mensaje del usuario con una espera vigente de 24 h como confirmación, así que el flujo funciona aunque el botón no aparezca (el usuario responde con cualquier texto). Antes de grabar el video 3, comprobar en vivo si el botón se ve; si no, grabar con respuesta de texto y ajustar el subtítulo.
+6. **Textos del sitio con el nombre viejo.** Resuelto el 2026-10-30: `/privacidad` y `/eliminar-datos` ya dicen «MLABS».
+7. **Cuentas propias en la misma app.** @elmetacho_ (links por DM) y @metacholabs se atienden con la misma app; la política de privacidad lo explica y B.3 lo declara. El revisor puede preguntar.

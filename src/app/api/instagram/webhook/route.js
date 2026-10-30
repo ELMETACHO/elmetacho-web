@@ -1,4 +1,4 @@
-// Webhook de Instagram (app de Meta «M LABS REPLY»): los reels y links de TikTok/Instagram que la comunidad le manda
+// Webhook de Instagram (app de Meta «MLABS»): los reels y links de TikTok/Instagram que la comunidad le manda
 // a Oscar por DM entran a la cola de la Cabina en Redis (lógica y fuentes en meta.js).
 // Atiende a IG_CUENTA_PALABRAS (cuenta casa), a IG_CUENTA_CABINA (DM) y a las marcas con ficha activa en Redis.
 // Variables en Vercel: IG_WEBHOOK_VERIFY_TOKEN (la misma frase que se pone en Meta como «Identificador de
