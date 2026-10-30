@@ -7,7 +7,7 @@ const nextConfig = {
     return {
       beforeFiles: [
         { source: "/", has: MLABS_HOST, destination: "/mlabs" },
-        { source: "/:path((?!_next|mlabs|api|images|videos|icon\\.svg|favicon\\.ico|apple-icon).*)", has: MLABS_HOST, destination: "/mlabs/:path" },
+        { source: "/:path((?!_next|mlabs|api|images|videos|marca|icon\\.svg|favicon\\.ico|apple-icon).*)", has: MLABS_HOST, destination: "/mlabs/:path" },
       ],
     };
   },
