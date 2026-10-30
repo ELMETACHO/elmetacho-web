@@ -70,3 +70,36 @@ test("hayAcciones: ecos, DMs sin link y avisos vacíos no tienen acciones posibl
   assert.equal(hayAcciones(dm("111", "1"), env), true);
   assert.equal(hayAcciones({ entry: [{ id: "500", changes: [{ field: "comments", value: { id: "a", text: "x" } }] }] }, env), true);
 });
+
+test("la Cabina no responde: un comentario a elmetacho_ no tiene acciones y una ficha activa con su id no entra a responden", async () => {
+  const com = { entry: [{ id: "111", changes: [{ field: "comments", value: { id: "a", from: { id: "7" }, text: "curso" } }] }] };
+  assert.equal(hayAcciones(com, env), false);
+  const clave = Buffer.alloc(32, 7).toString("base64");
+  const e2 = { ...env, MLABS_CLAVE_TOKENS: clave };
+  const r = redisMemoria();
+  await guardarMarca(r, "111", { estado: "activa" });
+  await guardarToken(r, e2, "111", "TOK", Date.now() + 1e9);
+  const logs = [];
+  const l = console.log; console.log = (m) => logs.push(m);
+  try { await atenderEvento(r, com, { env: e2, avisar: async () => {} }); } finally { console.log = l; }
+  assert.equal(logs.some((m) => /111 comentario/.test(m)), false);
+});
+
+test("una ficha ilegible se salta con console.error y no tumba al resto; una marca activa sin token se salta con warn", async () => {
+  const e2 = { ...env, IG_TOKEN_LABS: "TOKLABS", MLABS_CLAVE_TOKENS: Buffer.alloc(32, 7).toString("base64") };
+  const r = redisMemoria();
+  await r.set("ig:600:marca", "{no es json");
+  await guardarMarca(r, "700", { estado: "activa" });   // activa sin token
+  await guardarMarca(r, "800", { estado: "activa" });
+  await r.set("ig:800:token", JSON.stringify({ cifrado: "basura" }));   // token que no descifra
+  const com = (id) => ({ id, changes: [{ field: "comments", value: { id: "c" + id, from: { id: "7" }, text: "x" } }] });
+  const logs = [], errs = [], warns = [];
+  const l = [console.log, console.error, console.warn];
+  console.log = (m) => logs.push(m); console.error = (m) => errs.push(m); console.warn = (m) => warns.push(m);
+  try { await atenderEvento(r, { entry: [com("600"), com("700"), com("800"), com("222"), ...dm("111", "5").entry] }, { env: e2, avisar: async () => {} }); }
+  finally { [console.log, console.error, console.warn] = l; }
+  assert.ok(errs.some((m) => /600/.test(m)) && errs.some((m) => /800/.test(m)));
+  assert.ok(warns.some((m) => /700/.test(m) && /sin token|no tiene token/.test(m)));
+  assert.ok(logs.some((m) => /222 comentario/.test(m)));   // la casa siguió
+  assert.equal((await r.lRange(COLA, 0, -1)).length, 1);   // y la Cabina también
+});

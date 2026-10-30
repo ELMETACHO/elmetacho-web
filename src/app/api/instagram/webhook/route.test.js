@@ -21,6 +21,7 @@ test("sin Redis: eco, DM sin link y avisos sin mensajes ni comentarios dan 200; 
     assert.equal((await post(dm("111", { text: "hola" }))).status, 200);
     assert.equal((await post(dm("999", { is_echo: true, text: "eco" }))).status, 200);
     assert.equal((await post({ entry: [{ id: "999" }] })).status, 200);
+    assert.equal((await post({ entry: [{ id: "111", changes: [{ field: "comments", value: { id: "a", from: { id: "7" }, text: "curso" } }] }] })).status, 200);   // comentario a la Cabina
     assert.equal((await post(dm("111", { text: "https://vt.tiktok.com/A/" }))).status, 500);
   } finally { console.error = err; for (const k of Object.keys(process.env)) if (!(k in antes)) delete process.env[k]; Object.assign(process.env, antes); }
 });
