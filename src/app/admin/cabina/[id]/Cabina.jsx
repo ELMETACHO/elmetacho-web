@@ -147,7 +147,7 @@ export default function Cabina({ id, nombre, link, comentarios, version, revisio
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw Object.assign(new Error(d.error || "No se pudo aprobar."), { status: r.status });
-      setCerrada("Aprobado: sale en la franja de las 5 a. m.");
+      setCerrada("Aprobado: sale en la franja de las 5 p. m.");
     } catch (e) {
       if (e.status === 409) {
         viejaRef.current = true;

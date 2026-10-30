@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { almacenRedis } from "./lib/almacen.js";
 import { urlRedisDirecta } from "../api/lead/config.js";
 import { separarCabina } from "./lib/cabina.js";
-import { destinoDe, nombreVisible, ordenarLista, tipoDe } from "./lib/pedido.js";
+import { destinoDe, nombreVisible, ordenarLista, resumenBorrador, tipoDe } from "./lib/pedido.js";
 import { COOKIE, sesionValida } from "./lib/sesion.js";
 import ListaPedidos from "./ListaPedidos.jsx";
 
@@ -27,6 +27,7 @@ export default async function Admin() {
     pedidos = ordenarLista(separados.pedidos).map((p) => ({
       id: p.id, nombre: nombreVisible(p), creado: p.creado, estado: p.estado, motivo: p.motivo ?? null,
       tipo: tipoDe(p), listos: Boolean(p.pantallazos_listos), story: destinoDe(p) === "story",
+      borrador: p.estado === "subiendo" ? resumenBorrador(p) : null,
     }));
   } catch {
     error = "No se pudo leer la lista de pedidos (Redis no responde).";
