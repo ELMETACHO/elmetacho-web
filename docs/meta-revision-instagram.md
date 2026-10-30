@@ -103,7 +103,7 @@ Why it is needed: the private reply is the core of the product (deliver the bran
 
 What we store: only the Instagram-scoped ID of the person while they wait for the follow check (24 hours, then deleted) and a marker that a comment was already answered (8 days). We do not store the text of comments or messages, nor usernames. The brand's DM text and link are the brand's own configuration and are deleted when it disconnects.
 
-Note: our own accounts (@elmetacho_ and @metacholabs, owned by El Metacho S.A.S., our verified business) are connected to the same app. For @elmetacho_ the webhook receives reels that followers share by DM and stores only the shared link and its arrival time (no reply is sent). This is described in the privacy policy.
+Note: our own accounts (@elmetacho_ and @metacholabs, owned by El Metacho S.A.S., our verified business) are connected to the same app. For @elmetacho_ the webhook receives reels that followers share by DM and stores only the shared link and its arrival time and, if configured, an anonymous hash of the sender (an HMAC, not the ID or username) for 3 days to avoid duplicates (no reply is sent). This is described in the privacy policy.
 
 Privacy policy: https://mlabs.elmetacho.com/privacidad
 Data deletion instructions: https://mlabs.elmetacho.com/eliminar-datos
@@ -118,7 +118,7 @@ Reglas comunes (de la guía de Meta; ver sección A): grabar en 1080 o más, **s
 **Antes de grabar:**
 - Dos cuentas de Instagram de prueba **profesionales y públicas**, ambas con rol de probador en la app: la «marca» (A) y quien comenta (B). La marca A debe tener al menos una publicación.
 - La marca A **sin** conectar a MLABS (o desconectada), para grabar el inicio de sesión desde cero.
-- `MLABS_CODIGO_REVISION` puesto en Vercel. Si se activa con el código, que no se vea tecleado (campo oculto o editar el video). No mostrar nunca el código real.
+- `MLABS_CODIGO_REVISION` puesto en Vercel. Si se activa con el código, el código se escribe en un campo de texto VISIBLE (no es un campo de contraseña): difumina el código en la edición del video. No mostrar nunca el código real.
 - Palabras de ejemplo: «precio» (sin pedir seguir) y «guia» (con «Pedir que me siga»).
 - Los subtítulos se agregan en edición (o texto en pantalla).
 
@@ -229,6 +229,7 @@ Hazla el día del envío, en este orden. Lo marcado «(doc)» sale de la documen
 - [ ] Dos cuentas de prueba profesionales y públicas con rol de probador (marca A y comentarista B), ver sección C.
 - [ ] `MLABS_CODIGO_REVISION` puesto en Vercel (frase larga y aleatoria que solo tú ves). Sin la variable ningún código sirve.
 - [ ] Grabar y editar los tres videos (sección C) con subtítulos en inglés.
+- [ ] Glifo oficial de Instagram (pack de Meta): ya está en `public/marca/instagram-glyph.png` y el botón de `/automatizar` lo muestra.
 
 **Ajustes de la app (App Dashboard > Ajustes de la app > Básico)**
 - [ ] **Ícono de 1024×1024** (doc).
@@ -262,7 +263,7 @@ Hazla el día del envío, en este orden. Lo marcado «(doc)» sale de la documen
 ## F. Riesgos y dudas (para no llevarse sorpresas)
 
 1. **Comentarios: crear, actualizar y borrar.** Meta pide mostrar los tres. La app solo crea respuestas. Puede que el revisor lo cuestione; la descripción lo dice con claridad y el video 2 lo rotula. Si lo rechazan por eso, la salida honesta es explicar el uso real o añadir un borrado de nuestras propias respuestas (decisión de Oscar, no se hace sin spec).
-2. **Botón de inicio de sesión.** Meta dice que debe verse y seguir sus guías de marca (doc). Nuestro botón es de texto propio; **no se ha verificado** que cumpla las guías. Revisarlas antes de grabar.
+2. **Botón de inicio de sesión.** Meta dice que debe verse y seguir sus guías de marca (doc). El botón ya lleva el glifo oficial de Instagram (`public/marca/instagram-glyph.png`); **falta mirarlo en la vista previa** y comprobar que cumple las guías de marca antes de grabar.
 3. **Revisor sin rol en la app.** Mientras el acceso avanzado no esté aprobado, normalmente solo autorizan la app las cuentas con rol. **No está verificado** que el revisor de Meta pueda conectar su cuenta sin rol. Si responde que no puede, añadirlo como probador. Estar atento al correo de contacto.
 4. **El revisor no paga:** usa el código. Si Meta insiste en ver el cobro, ofrecer un video; nunca dar tarjetas.
 5. **Botón «Ya te sigo» no verificado.** La documentación de Meta no dice que una respuesta privada (con `recipient.comment_id`) acepte botones de respuesta rápida. El código trata cualquier mensaje del usuario con una espera vigente de 24 h como confirmación, así que el flujo funciona aunque el botón no aparezca (el usuario responde con cualquier texto). Antes de grabar el video 3, comprobar en vivo si el botón se ve; si no, grabar con respuesta de texto y ajustar el subtítulo.

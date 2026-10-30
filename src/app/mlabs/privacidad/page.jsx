@@ -44,7 +44,7 @@ export default function Privacidad() {
             <p>
               <strong className="text-black">En la cuenta de El Metacho (elmetacho_):</strong> cuando nos
               envías por mensaje directo un reel, o un link de TikTok o de Instagram, guardamos solo ese
-              link y la hora en que lo recibimos. No guardamos el texto del mensaje ni quién lo envió.
+              link y la hora en que lo recibimos y, si está configurada, una huella anónima (un código irreversible, no tu id ni tu usuario) de quien lo envía durante 3 días, para evitar duplicados. No guardamos el texto del mensaje ni tu nombre de usuario.
             </p>
             <p>
               <strong className="text-black">En la cuenta de MLABS (metacholabs):</strong> si tu comentario
@@ -119,7 +119,7 @@ export default function Privacidad() {
             <p>
               MLABS is a service of EL METACHO S.A.S. (Bogotá, Colombia). Through the Instagram app
               «MLABS» we store only: the links of reels or TikTok/Instagram links sent by direct
-              message to El Metacho, with the time received; and, for comments on the MLABS account that
+              message to El Metacho, with the time received and, if configured, an anonymous hash of the sender (not their ID or username) kept for 3 days to avoid duplicates; and, for comments on the MLABS account that
               contain a configured keyword, the comment id (8 days) and, only if the follow-first option is
               on, the commenter&apos;s Instagram-scoped id (24 hours). We do not store comment or message
               text, or usernames of the people who comment or message (brands that connect their account
