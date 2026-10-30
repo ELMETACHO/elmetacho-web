@@ -27,8 +27,7 @@ export default async function EliminarDatos({ searchParams }) {
             )}
             {codigo && (
               <p role="status" className="rounded bg-green-100 p-3 text-green-900">
-                Recibimos tu solicitud de eliminación de datos y quedó procesada: los datos de esa solicitud
-                ya se borraron. Código de confirmación: <strong className="font-mono">{codigo}</strong>
+                Recibimos tu solicitud de eliminación. Código de confirmación: <strong className="font-mono">{codigo}</strong>. Si tu cuenta estaba conectada, sus datos se eliminaron.
               </p>
             )}
             <p>
@@ -39,13 +38,11 @@ export default async function EliminarDatos({ searchParams }) {
               permiso a la app desde Instagram (Configuración, Apps y sitios web).
             </p>
             <p>
-              Si prefieres que lo hagamos nosotros, o para que borremos los datos que tengamos tuyos de la app de Instagram «M LABS REPLY»,
-              escribe a{" "}
+              O escríbenos a{" "}
               <a href="mailto:contacto@elmetacho.com" className="font-bold underline">
                 contacto@elmetacho.com
               </a>{" "}
-              con el asunto <strong className="text-black">«Borrar mis datos de Instagram»</strong>. Hazlo
-              desde tu correo o indícanos tu cuenta de Instagram para poder identificarte.
+              con el asunto <strong className="text-black">«Borrar mis datos de Instagram»</strong> e indícanos tu cuenta de Instagram.
             </p>
             <p>Borramos tus datos en máximo 15 días hábiles y te lo confirmamos por el mismo medio.</p>
             <p>

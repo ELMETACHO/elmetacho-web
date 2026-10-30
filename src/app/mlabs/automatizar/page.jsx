@@ -27,7 +27,9 @@ function formatoCop(valor) {
 }
 
 export default async function Automatizar({ searchParams }) {
-  const error = ERRORES[(await searchParams)?.error];
+  const motivo = (await searchParams)?.error;
+  // Solo motivos propios del mapa; cualquier otro valor (incluido __proto__) da el mensaje genérico.
+  const error = typeof motivo !== "string" || motivo === "" ? null : Object.hasOwn(ERRORES, motivo) ? ERRORES[motivo] : ERRORES.codigo;
   const precio = Number.parseInt(process.env.MLABS_PRECIO, 10);
   return (
     <main className="min-h-screen bg-white text-black">
