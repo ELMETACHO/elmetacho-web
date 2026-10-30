@@ -18,6 +18,13 @@ test("crear: POST /preapproval con COP, 7 días gratis, referencia = cuenta", as
   assert.deepEqual(pedido.cuerpo.auto_recurring, { frequency: 1, frequency_type: "months", transaction_amount: 59900, currency_id: "COP", free_trial: { frequency: 7, frequency_type: "days" } });
 });
 
+test("crear con gratis:false no manda free_trial", async () => {
+  let cuerpo;
+  const f = async (u, op) => { cuerpo = JSON.parse(op.body); return new Response(JSON.stringify({ id: "P1", init_point: "x" }), { status: 201 }); };
+  await crearSuscripcion({ cuenta: "1", correo: "a@b.co", precio: 1, backUrl: "x", gratis: false, token: "T", fetch: f });
+  assert.equal("free_trial" in cuerpo.auto_recurring, false);
+});
+
 test("errores de Mercado Pago se lanzan con su mensaje y su status HTTP", async () => {
   const f = async () => new Response(JSON.stringify({ message: "invalid currency" }), { status: 400 });
   await assert.rejects(crearSuscripcion({ cuenta: "1", correo: "a@b.co", precio: 1, backUrl: "x", token: "T", fetch: f }), (e) => e.message === "invalid currency" && e.status === 400);

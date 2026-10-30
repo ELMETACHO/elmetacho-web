@@ -68,7 +68,10 @@ test("volver a suscribirse tras cancelar: la suscripción nueva reemplaza a la v
   const r = await nueva(), avisos = [];
   await guardarMarca(r, "1", { ...(await leerMarca(r, "1")), estado: "cancelada", origen: "pago" });
   await guardarSuscripcion(r, "1", { id_mp: "VIEJA", estado_mp: "cancelled", proximo_cobro: DIA, fin_gratis: DIA, fin_servicio: DIA });
-  const mp = mpFalso({ crearSuscripcion: async () => ({ id: "NUEVA", init_point: "https://mp/n" }) });
+  const mp = mpFalso({
+    crearSuscripcion: async () => ({ id: "NUEVA", init_point: "https://mp/n" }),
+    consultarSuscripcion: async ({ id }) => ({ id, status: "cancelled", external_reference: "1" }),
+  });
   await activar({ r, env, mp, ahora: () => 9 * DIA, avisar: sinAviso }, "1", { correo: "a@b.co" });
   const s = await leerSuscripcion(r, "1");
   assert.equal(s.id_mp, "NUEVA");
@@ -77,6 +80,62 @@ test("volver a suscribirse tras cancelar: la suscripción nueva reemplaza a la v
   assert.equal(await recibirAviso(d, { tipo: "subscription_preapproval", id: "NUEVA" }), "activa");
   assert.equal(await recibirAviso(d, { tipo: "subscription_preapproval", id: "VIEJA" }), "ignorado");
   assert.equal((await leerMarca(r, "1")).estado, "activa");
+});
+
+const ahoraMp = (status) => mpFalso({ consultarSuscripcion: async ({ id }) => ({ id, status, external_reference: "1", next_payment_date: new Date(7 * DIA).toISOString() }) });
+
+test("reintentar activar con la suscripción anterior ya authorized (el aviso no llegó): se aplica y NO se crea otra", async () => {
+  const r = await nueva(); let creadas = 0;
+  await guardarSuscripcion(r, "1", { id_mp: "P1", estado_mp: "pending", proximo_cobro: null, fin_gratis: null, fin_servicio: null });
+  const mp = { ...ahoraMp("authorized"), crearSuscripcion: async () => { creadas++; return { id: "P2", init_point: "x" }; } };
+  const res = await activar({ r, env, mp, ahora: () => 0, avisar: sinAviso }, "1", { correo: "a@b.co" });
+  assert.deepEqual(res, { ok: true });
+  assert.equal(creadas, 0);
+  assert.equal((await leerMarca(r, "1")).estado, "activa");
+  assert.equal((await leerSuscripcion(r, "1")).id_mp, "P1");
+});
+
+test("reintentar activar con la anterior pending: se cancela en Mercado Pago y se crea la nueva; si cancelarla falla, sigue", async () => {
+  for (const falla of [false, true]) {
+    const r = await nueva(), canceladas = [];
+    await guardarSuscripcion(r, "1", { id_mp: "P1", estado_mp: "pending" });
+    const mp = { ...ahoraMp("pending"), crearSuscripcion: async () => ({ id: "P2", init_point: "https://mp/p2" }),
+      cancelarSuscripcion: async ({ id }) => { canceladas.push(id); if (falla) throw new Error("caído"); } };
+    const res = await activar({ r, env, mp, ahora: () => 0, avisar: sinAviso }, "1", { correo: "a@b.co" });
+    assert.deepEqual(res, { ok: true, ir: "https://mp/p2" });
+    assert.deepEqual(canceladas, ["P1"]);
+    assert.equal((await leerSuscripcion(r, "1")).id_mp, "P2");
+  }
+});
+
+test("reintentar activar con la anterior cancelada o inexistente (404): se crea la nueva; otro error de Mercado Pago sube", async () => {
+  const r = await nueva();
+  await guardarSuscripcion(r, "1", { id_mp: "P1" });
+  const crea = { crearSuscripcion: async () => ({ id: "P2", init_point: "https://mp/p2" }) };
+  const c = { ...ahoraMp("cancelled"), ...crea };
+  assert.equal((await activar({ r, env, mp: c, ahora: () => 0, avisar: sinAviso }, "1", { correo: "a@b.co" })).ir, "https://mp/p2");
+  await guardarSuscripcion(r, "1", { id_mp: "P1" });
+  const n = mpFalso({ ...crea, consultarSuscripcion: async () => { throw Object.assign(new Error("not found"), { status: 404 }); } });
+  assert.equal((await activar({ r, env, mp: n, ahora: () => 0, avisar: sinAviso }, "1", { correo: "a@b.co" })).ir, "https://mp/p2");
+  await guardarSuscripcion(r, "1", { id_mp: "P1" });
+  const e = mpFalso({ consultarSuscripcion: async () => { throw Object.assign(new Error("boom"), { status: 500 }); } });
+  await assert.rejects(activar({ r, env, mp: e, ahora: () => 0, avisar: sinAviso }, "1", { correo: "a@b.co" }), /boom/);
+});
+
+test("los 7 días gratis son solo la primera vez: tras haberlos usado, la suscripción nueva va sin free_trial", async () => {
+  const r = await nueva(), pedidos = [];
+  const mp = mpFalso({ crearSuscripcion: async (x) => { pedidos.push(x.gratis); return { id: `P${pedidos.length}`, init_point: "x" }; },
+    consultarSuscripcion: async ({ id }) => ({ id, status: id === "P1" ? "authorized" : "cancelled", external_reference: "1", next_payment_date: new Date(7 * DIA).toISOString() }) });
+  const d = { r, env, mp, ahora: () => 0, avisar: sinAviso };
+  await activar(d, "1", { correo: "a@b.co" });                                         // primera vez: con gratis
+  await recibirAviso(d, { tipo: "subscription_preapproval", id: "P1" });                // authorized: fija fin_gratis y uso_gratis
+  assert.equal((await leerMarca(r, "1")).uso_gratis, true);
+  await guardarMarca(r, "1", { ...(await leerMarca(r, "1")), estado: "cancelada" });
+  const vuelve = { ...d, mp: { ...mp, consultarSuscripcion: async ({ id }) => ({ id, status: "cancelled", external_reference: "1" }) } };
+  await activar(vuelve, "1", { correo: "a@b.co" });   // vuelve a suscribirse
+  await activar(vuelve, "1", { correo: "a@b.co" });   // y reintenta: sigue sin gratis aunque la suscripción se reemplace
+  assert.deepEqual(pedidos, [true, false, false]);
+  assert.equal((await leerMarca(r, "1")).uso_gratis, true);
 });
 
 test("aviso de suscripción: consulta Mercado Pago y activa; repetido no avisa dos veces", async () => {
@@ -142,6 +201,22 @@ test("cancelar en días gratis: sigue hasta fin_gratis y guarda fin_servicio", a
   const res = await cancelar({ r, mp: mpFalso() }, "1");
   assert.deepEqual(res, { ok: true, hasta: 7 * DIA });
   assert.equal((await leerSuscripcion(r, "1")).fin_servicio, 7 * DIA);
+});
+
+test("cancelar usa el next_payment_date que Mercado Pago dice ahora (no el guardado, que puede estar viejo); si la consulta falla, el guardado", async () => {
+  const r = await nueva();
+  await guardarSuscripcion(r, "1", { id_mp: "P1", proximo_cobro: 1 * DIA });
+  assert.deepEqual(await cancelar({ r, mp: mpFalso() }, "1"), { ok: true, hasta: 7 * DIA });
+  await guardarSuscripcion(r, "1", { id_mp: "P1", proximo_cobro: 2 * DIA });
+  const roto = mpFalso({ consultarSuscripcion: async () => { throw new Error("caído"); } });
+  assert.deepEqual(await cancelar({ r, mp: roto }, "1"), { ok: true, hasta: 2 * DIA });
+});
+
+test("cancelar: si el PUT falla Y la reversión también falla, sube el error ORIGINAL de Mercado Pago", async () => {
+  const r = await nueva();
+  await guardarSuscripcion(r, "1", { id_mp: "P1", proximo_cobro: 7 * DIA });
+  const mp = mpFalso({ cancelarSuscripcion: async () => { r.set = async () => { throw new Error("redis caído"); }; throw new Error("MP no pudo"); } });
+  await assert.rejects(cancelar({ r, mp }, "1"), /MP no pudo/);
 });
 
 test("cancelar guarda fin_servicio ANTES del PUT: si el aviso «cancelled» llega antes de que el PUT responda, la marca sigue activa", async () => {

@@ -23,13 +23,13 @@ async function llamar(f, token, metodo, ruta, cuerpo) {
   return d;
 }
 
-export async function crearSuscripcion({ cuenta, correo, precio, backUrl, token, fetch: f = fetch }) {
+export async function crearSuscripcion({ cuenta, correo, precio, backUrl, gratis = true, token, fetch: f = fetch }) {
   const d = await llamar(f, token, "POST", "/preapproval", {
     reason: "MLABS Automatización Instagram",
     external_reference: cuenta,
     payer_email: correo,
     back_url: backUrl,
-    auto_recurring: { frequency: 1, frequency_type: "months", transaction_amount: precio, currency_id: "COP", free_trial: { frequency: 7, frequency_type: "days" } },
+    auto_recurring: { frequency: 1, frequency_type: "months", transaction_amount: precio, currency_id: "COP", ...(gratis ? { free_trial: { frequency: 7, frequency_type: "days" } } : {}) },
     status: "pending",
   });
   return { id: d.id, init_point: d.init_point };

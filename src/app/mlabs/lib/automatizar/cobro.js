@@ -6,6 +6,8 @@ import { guardarMarca, guardarSuscripcion, leerMarca, leerSuscripcion } from "./
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BACK = "https://mlabs.elmetacho.com/panel";
+// Una vez que la suscripción fijó días gratis, la marca recuerda que ya los usó.
+const conGratis = (marca, susc) => (susc?.fin_gratis > 0 ? { ...marca, uso_gratis: true } : marca);
 
 export async function activar({ r, env, mp, ahora, avisar }, cuenta, { correo, codigo } = {}) {
   const m = await leerMarca(r, cuenta);
@@ -18,21 +20,40 @@ export async function activar({ r, env, mp, ahora, avisar }, cuenta, { correo, c
     await avisarSeguro(avisar, `🔑 MLABS: @${m.usuario} se activó con el código de acceso.`);
     return { ok: true };
   }
+  // Si ya había una suscripción (abandonó el checkout o pagó y el aviso no llegó), se mira qué dice Mercado Pago antes de crear otra.
+  const previa = await leerSuscripcion(r, cuenta);
+  if (previa?.id_mp) {
+    let pre = null;
+    try { pre = await mp.consultarSuscripcion({ id: previa.id_mp }); } catch (e) { if (e?.status !== 404) throw e; }
+    if (pre?.status === "authorized") {
+      const { marca, suscripcion } = aplicarSuscripcion(m, previa, pre, ahora());
+      await guardarMarca(r, cuenta, conGratis(marca, suscripcion));
+      if (suscripcion) await guardarSuscripcion(r, cuenta, suscripcion);
+      if (marca.estado !== m.estado) await avisarSeguro(avisar, `MLABS @${marca.usuario}: ✅ suscripción activa.`);
+      return { ok: true };
+    }
+    if (pre?.status === "pending") {
+      try { await mp.cancelarSuscripcion({ id: previa.id_mp }); } catch (e) { console.error("mlabs activar: no se pudo cancelar la suscripción pendiente anterior:", e?.message); }
+    }
+  }
   const c = String(correo ?? "").trim();
   if (!CORREO.test(c)) return { ok: false, error: "Escribe un correo válido." };
   const precio = Number.parseInt(env.MLABS_PRECIO, 10);
   if (!(precio > 0)) return { ok: false, error: "El cobro no está configurado todavía." };
+  // Los 7 días gratis son solo la primera vez por cuenta (la marca guarda `uso_gratis` aunque se reemplace la suscripción).
+  const sinGratis = Boolean(m.uso_gratis || previa?.fin_gratis);
   let s;
   try {
-    s = await mp.crearSuscripcion({ cuenta, correo: c, precio, backUrl: BACK });
+    s = await mp.crearSuscripcion({ cuenta, correo: c, precio, backUrl: BACK, gratis: !sinGratis });
   } catch (e) {
     // Con credenciales de prueba, Mercado Pago rechaza un correo que no sea el de la cuenta compradora.
     if (e?.status === 400 && /user bad request/i.test(e.message)) return { ok: false, error: "Ese correo no es el de tu cuenta de Mercado Pago" };
     throw e;
   }
-  await guardarMarca(r, cuenta, { ...m, correo: c });
+  await guardarMarca(r, cuenta, { ...m, correo: c, ...(sinGratis ? { uso_gratis: true } : {}) });
   // La suscripción nueva REEMPLAZA a la anterior (si la marca se cancela y vuelve): si no, aplicarSuscripcion ignoraría el id nuevo.
-  await guardarSuscripcion(r, cuenta, { id_mp: s.id, estado_mp: "pending", proximo_cobro: null, fin_gratis: null, fin_servicio: null });
+  // fin_gratis: 0 evita que aplicarSuscripcion lo rellene con el primer cobro cuando no hay días gratis.
+  await guardarSuscripcion(r, cuenta, { id_mp: s.id, estado_mp: "pending", proximo_cobro: null, fin_gratis: sinGratis ? 0 : null, fin_servicio: null });
   return { ok: true, ir: s.init_point };
 }
 
@@ -61,7 +82,7 @@ export async function recibirAviso({ r, mp, ahora, avisar }, { tipo, id }) {
   const antes = m.estado;
   let { marca, suscripcion } = aplicarSuscripcion(m, susc, pre, ahora());
   if (cobro) marca = aplicarCobro(marca, cobro);
-  await guardarMarca(r, cuenta, marca);
+  await guardarMarca(r, cuenta, conGratis(marca, suscripcion));
   if (suscripcion) await guardarSuscripcion(r, cuenta, suscripcion);
   if (marca.estado !== antes) {
     const texto = { activa: "✅ suscripción activa", pago_fallido: "⚠️ pago fallido (Mercado Pago reintenta)", cancelada: "🛑 suscripción cancelada" }[marca.estado];
@@ -74,14 +95,21 @@ export async function recibirAviso({ r, mp, ahora, avisar }, { tipo, id }) {
 export async function cancelar({ r, mp }, cuenta) {
   const s = await leerSuscripcion(r, cuenta);
   if (!s?.id_mp) return { ok: false, error: "No tienes una suscripción activa." };
-  const hasta = s.fin_servicio ?? s.proximo_cobro ?? s.fin_gratis ?? null;
+  // Se consulta el próximo cobro real; si la consulta falla, se usa el guardado.
+  let proximo = s.proximo_cobro ?? null;
+  try { proximo = Date.parse((await mp.consultarSuscripcion({ id: s.id_mp })).next_payment_date) || proximo; } catch { /* se usa el guardado */ }
+  const hasta = s.fin_servicio ?? proximo ?? s.fin_gratis ?? null;
   await guardarSuscripcion(r, cuenta, { ...s, fin_servicio: hasta });
   try {
     await mp.cancelarSuscripcion({ id: s.id_mp });
   } catch (e) {
-    const actual = (await leerSuscripcion(r, cuenta)) ?? s;
-    await guardarSuscripcion(r, cuenta, { ...actual, fin_servicio: s.fin_servicio ?? null });
-    throw e;
+    try {
+      const actual = (await leerSuscripcion(r, cuenta)) ?? s;
+      await guardarSuscripcion(r, cuenta, { ...actual, fin_servicio: s.fin_servicio ?? null });
+    } catch (e2) {
+      console.error("mlabs cancelar: no se pudo revertir fin_servicio:", e2?.message);
+    }
+    throw e;   // siempre el error original de Mercado Pago
   }
   return { ok: true, hasta };
 }

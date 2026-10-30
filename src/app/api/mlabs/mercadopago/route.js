@@ -15,6 +15,7 @@ export async function POST(req) {
   try { cuerpo = await req.json(); } catch { /* algunos avisos solo traen query */ }
   const tipo = cuerpo?.type ?? q.get("type") ?? q.get("topic");
   const id = String(cuerpo?.data?.id ?? q.get("data.id") ?? q.get("id") ?? "");
+  if (!process.env.MP_WEBHOOK_SECRETO) console.error("mercadopago: falta MP_WEBHOOK_SECRETO; se rechaza el aviso");
   // El manifiesto firma el data.id de la query (?data.id=…); firmaMpValida lo pasa a minúsculas.
   if (!firmaMpValida({ xSignature: req.headers.get("x-signature"), xRequestId: req.headers.get("x-request-id"), dataId: q.get("data.id") ?? id, secreto: process.env.MP_WEBHOOK_SECRETO })) {
     return new Response("Firma inválida", { status: 401 });

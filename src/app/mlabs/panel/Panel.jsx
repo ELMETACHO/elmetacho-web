@@ -14,10 +14,14 @@ export default function Panel() {
   const s = e.suscripcion;
   async function enviar(ruta, cuerpo) {
     setMsg("…");
-    const r = await fetch(ruta, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo ?? {}) });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) return setMsg(d.error || "No se pudo.");
-    if (d.ir) window.location.href = d.ir; else window.location.reload();
+    try {
+      const r = await fetch(ruta, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo ?? {}) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) return setMsg(d.error || "No se pudo.");
+      if (d.ir) window.location.href = d.ir; else window.location.reload();
+    } catch {
+      setMsg("No se pudo conectar. Revisa tu internet e intenta otra vez.");
+    }
   }
   return (
     <section>
