@@ -1,4 +1,6 @@
 // src/app/mlabs/automatizar/page.jsx — landing del servicio para marcas (spec 2026-10-26 §2 paso 1 y §8).
+import fs from "node:fs";
+import path from "node:path";
 import Link from "next/link";
 import { MlabsHeader, MlabsFooter } from "../MlabsMarco";
 
@@ -30,6 +32,8 @@ export default async function Automatizar({ searchParams }) {
   const motivo = (await searchParams)?.error;
   // Solo motivos propios del mapa; cualquier otro valor (incluido __proto__) da el mensaje genérico.
   const error = typeof motivo !== "string" || motivo === "" ? null : Object.hasOwn(ERRORES, motivo) ? ERRORES[motivo] : ERRORES.codigo;
+  // Glifo oficial de Instagram: lo pone Oscar en public/marca/ (ver LEEME.txt); si falta, el botón sale solo con texto.
+  const hayGlifo = fs.existsSync(path.join(process.cwd(), "public/marca/instagram-glyph.png"));
   const precio = Number.parseInt(process.env.MLABS_PRECIO, 10);
   return (
     <main className="min-h-screen bg-white text-black">
@@ -70,8 +74,9 @@ export default async function Automatizar({ searchParams }) {
             )}
             <a
               href="/api/mlabs/instagram/entrar"
-              className="inline-block rounded-lg bg-black px-5 py-3 font-bold text-white"
+              className="inline-flex items-center gap-2 rounded-lg bg-black px-5 py-3 font-bold text-white"
             >
+              {hayGlifo && <img src="/marca/instagram-glyph.png" alt="" width={20} height={20} />}
               Iniciar sesión con Instagram
             </a>
             <p className="text-sm">

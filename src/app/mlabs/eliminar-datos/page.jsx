@@ -3,7 +3,7 @@ import { MlabsHeader, MlabsFooter } from "../MlabsMarco";
 
 export const metadata = {
   title: { absolute: "Eliminar datos · MLABS" },
-  description: "Cómo pedir que borremos tus datos de la app de Instagram «M LABS REPLY» de MLABS.",
+  description: "Cómo pedir que borremos tus datos de la app de Instagram de MLABS.",
   alternates: { canonical: "https://mlabs.elmetacho.com/eliminar-datos" },
   openGraph: { title: "Eliminar datos · MLABS", url: "https://mlabs.elmetacho.com/eliminar-datos", siteName: "MLABS", type: "website" },
 };
@@ -47,8 +47,10 @@ export default async function EliminarDatos({ searchParams }) {
             <p>Borramos tus datos en máximo 15 días hábiles y te lo confirmamos por el mismo medio.</p>
             <p>
               Además, todo se borra solo: tu id de Instagram a las 24 horas y la marca de comentario
-              respondido a los 8 días. No guardamos el texto de comentarios ni de mensajes, ni nombres de
-              usuario.
+              respondido a los 8 días. De las personas que comentan o escriben no guardamos el texto de sus
+              comentarios ni de sus mensajes, ni su nombre de usuario (solo el id, que se borra solo). De
+              las marcas que conectan su cuenta sí guardamos el usuario de Instagram, como explica la
+              política de privacidad.
             </p>
             <p>
               <Link href="https://mlabs.elmetacho.com/privacidad" className="font-bold underline">
@@ -60,11 +62,13 @@ export default async function EliminarDatos({ searchParams }) {
           <section className="mt-10 rounded-[1.5rem] border-2 border-black bg-white p-5 sm:p-6">
             <h2 className="titular-ancho text-2xl">English summary</h2>
             <p className="mt-3 text-base leading-8 text-gris">
-              If you connected your Instagram account to MLABS, sign in at /automatizar and tap «Desconectar Instagram y borrar mis datos»: everything is deleted instantly (you can also remove the app permission in Instagram). Otherwise, to delete your data from the Instagram app «M LABS REPLY», email contacto@elmetacho.com
+              If you connected your Instagram account to MLABS, sign in at /automatizar and tap «Desconectar Instagram y borrar mis datos»: everything is deleted instantly (you can also remove the app permission in Instagram). Otherwise, to delete your data from the MLABS Instagram app, email contacto@elmetacho.com
               with the subject «Borrar mis datos de Instagram», from your email or naming your Instagram
               account. We delete it within 15 business days and confirm by the same channel. Data also
               expires automatically: Instagram ids after 24 hours and the answered-comment marker after 8
-              days.
+              days. For people who comment or message, we do not store comment or message text or usernames
+              (only the id, which expires automatically). For brands that connect their account, we do
+              store the Instagram username, as described in the privacy policy.
             </p>
           </section>
         </div>

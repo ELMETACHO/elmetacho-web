@@ -225,7 +225,7 @@ Hazla el día del envío, en este orden. Lo marcado «(doc)» sale de la documen
 
 **Antes de abrir el formulario**
 - [ ] **Prueba de punta a punta hecha** (Tarea 13, Paso 1 del plan): Meta exige al menos una llamada exitosa por permiso (doc), y «Ya te sigo» nunca se ha probado en vivo.
-- [ ] **Nombre de la app en Meta:** «MLABS». Las páginas `/privacidad` y `/eliminar-datos` del sitio todavía dicen «M LABS REPLY»; hay que cambiar ese texto en el código para que coincida (pendiente).
+- [ ] **Nombre de la app en Meta:** «MLABS». Las páginas `/privacidad` y `/eliminar-datos` del sitio ya dicen «MLABS» (corregido el 2026-10-30).
 - [ ] Dos cuentas de prueba profesionales y públicas con rol de probador (marca A y comentarista B), ver sección C.
 - [ ] `MLABS_CODIGO_REVISION` puesto en Vercel (frase larga y aleatoria que solo tú ves). Sin la variable ningún código sirve.
 - [ ] Grabar y editar los tres videos (sección C) con subtítulos en inglés.
@@ -266,5 +266,5 @@ Hazla el día del envío, en este orden. Lo marcado «(doc)» sale de la documen
 3. **Revisor sin rol en la app.** Mientras el acceso avanzado no esté aprobado, normalmente solo autorizan la app las cuentas con rol. **No está verificado** que el revisor de Meta pueda conectar su cuenta sin rol. Si responde que no puede, añadirlo como probador. Estar atento al correo de contacto.
 4. **El revisor no paga:** usa el código. Si Meta insiste en ver el cobro, ofrecer un video; nunca dar tarjetas.
 5. **Botón «Ya te sigo» no verificado.** La documentación de Meta no dice que una respuesta privada (con `recipient.comment_id`) acepte botones de respuesta rápida. El código trata cualquier mensaje del usuario con una espera vigente de 24 h como confirmación, así que el flujo funciona aunque el botón no aparezca (el usuario responde con cualquier texto). Antes de grabar el video 3, comprobar en vivo si el botón se ve; si no, grabar con respuesta de texto y ajustar el subtítulo.
-6. **Textos del sitio con el nombre viejo.** `/privacidad` y `/eliminar-datos` mencionan «M LABS REPLY». Mientras no se cambien, el nombre de la app en Meta y el del sitio no coinciden.
+6. **Textos del sitio con el nombre viejo.** Resuelto el 2026-10-30: `/privacidad` y `/eliminar-datos` ya dicen «MLABS».
 7. **Cuentas propias en la misma app.** @elmetacho_ (links por DM) y @metacholabs se atienden con la misma app; la política de privacidad lo explica y B.3 lo declara. El revisor puede preguntar.
