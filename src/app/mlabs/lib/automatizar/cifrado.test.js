@@ -20,7 +20,9 @@ test("sin clave o con clave corta falla cerrado (nunca guarda en claro)", () => 
 
 test("texto alterado u otra clave: descifrar lanza", () => {
   const c = cifrar("IGAAtoken", K);
-  const malo = c.slice(0, -2) + (c.endsWith("A") ? "B" : "A") + c.slice(-1);
+  const bytes = Buffer.from(c, "base64url");
+  bytes[bytes.length - 1] ^= 1;
+  const malo = bytes.toString("base64url");
   assert.throws(() => descifrar(malo, K));
   assert.throws(() => descifrar(c, randomBytes(32).toString("base64")));
 });
