@@ -2,6 +2,7 @@
 import { createHash } from "node:crypto";
 import { clave } from "./claves.js";
 import { tokenInvalido } from "./graph.js";
+import { guardarMarca, leerMarca } from "../../../mlabs/lib/automatizar/marcas.js";
 
 const PAUSA_S = 6 * 3600;
 
@@ -30,10 +31,18 @@ export async function pausar(r, cuenta, avisar, motivo, token = "") {
   if (nueva) await avisarSeguro(avisar, `⚠️ Instagram (${cuenta}): palabras clave en pausa 6 h — ${motivo}. Genera un token nuevo en Meta, pégalo en Vercel como IG_TOKEN_LABS y redespliega: la pausa se levanta sola con el token nuevo.`);
 }
 
-export function crearManejoDeError({ r, cuenta, ahora, avisar, token }) {
+// Cliente con token que no sirve (spec 2026-10-26 §6): su panel pide reconectar; Oscar recibe un solo aviso.
+export async function pedirReconexion(r, cuenta, avisar, ahoraMs) {
+  const m = await leerMarca(r, cuenta);
+  if (!m || m.reconectar_desde) return;
+  await guardarMarca(r, cuenta, { ...m, reconectar_desde: ahoraMs });
+  await avisarSeguro(avisar, `⚠️ MLABS: el token de @${m.usuario} (${cuenta}) ya no sirve. Su panel le pide volver a conectar Instagram.`);
+}
+
+export function crearManejoDeError({ r, cuenta, ahora, avisar, token, casa = true }) {
   return async (e) => {
     console.error(`instagram ${cuenta}:`, e?.message);
-    if (tokenInvalido(e)) return pausar(r, cuenta, avisar, "el token no sirve", token);
+    if (tokenInvalido(e)) return casa ? pausar(r, cuenta, avisar, "el token no sirve", token) : pedirReconexion(r, cuenta, avisar, ahora());
     const k = clave(cuenta, "fallos", new Date(ahora()).toISOString().slice(0, 13));
     const n = await r.incr(k);
     if (n === 1) await r.expire(k, 7200);
