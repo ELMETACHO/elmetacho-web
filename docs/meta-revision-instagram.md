@@ -54,7 +54,7 @@ How a brand uses it:
 3. The brand pays a monthly subscription through Mercado Pago (the first connection of an account includes a 7-day free trial). The automation only runs while the subscription is active.
 4. The brand can cancel the subscription at any time from the dashboard (the service keeps working until the end of the paid period) and can disconnect Instagram, which immediately and permanently deletes all its data.
 
-Data use: we use the data only to provide the service on behalf of the brand that connected its account. Access tokens are stored encrypted. We do not sell data, do not use it for advertising and do not share it with third parties. We do not store the text of comments or messages or the usernames of the people who comment.
+Data use: we use the data only to provide the service on behalf of the brand that connected its account. Access tokens are stored encrypted. We do not sell data, do not use it for advertising and share it only with the providers we need to run the service (Vercel, Redis, Mercado Pago and Telegram for internal alerts). We do not store the text of comments or messages or the usernames of the people who comment.
 
 Privacy policy: https://mlabs.elmetacho.com/privacidad
 Data deletion instructions and callback: https://mlabs.elmetacho.com/eliminar-datos

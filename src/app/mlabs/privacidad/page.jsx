@@ -26,7 +26,7 @@ export default function Privacidad() {
       <section className="papel-cuad min-h-[80svh] px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
         <div className="mx-auto max-w-2xl">
           <h1 className="titular-ancho text-5xl sm:text-6xl">Privacidad</h1>
-          <p className="mt-4 text-sm text-gris">Última actualización: 30 de octubre de 2026</p>
+          <p className="mt-4 text-sm text-gris">Última actualización: 31 de octubre de 2026</p>
 
           <Seccion titulo="1. Quién responde">
             <p>
@@ -94,9 +94,15 @@ export default function Privacidad() {
           <Seccion titulo="4. Para qué">
             <p>
               Para responder a quien pide un recurso y para proponer videos del formato «comentarios
-              cantados». No vendemos ni compartimos tus datos, y no los usamos para publicidad. Los datos
-              se almacenan con proveedores de alojamiento (hosting y base de datos) que los procesan solo
-              para prestar el servicio.
+              cantados». No vendemos tus datos, no los usamos para publicidad y solo los compartimos con
+              los proveedores que necesitamos para prestar el servicio:
+            </p>
+            <p>
+              Vercel (hosting) y Redis (base de datos) los almacenan. Mercado Pago procesa los pagos y
+              trata esos datos también según su propia política. Telegram nos lleva alertas internas
+              cuando una marca conecta su cuenta, cambia su suscripción o hay un error; esas alertas
+              pueden incluir el usuario de Instagram de la marca, el id de su cuenta y el id de su
+              suscripción; no les agregamos datos de quien comenta.
             </p>
           </Seccion>
 
@@ -124,7 +130,10 @@ export default function Privacidad() {
               on, the commenter&apos;s Instagram-scoped id (24 hours). We do not store comment or message
               text, or usernames of the people who comment or message (brands that connect their account
               are covered below). We use data only to send the requested resource and to suggest videos; we
-              do not sell, share or use it for advertising. Brands that connect their own Instagram account
+              do not sell it or use it for advertising, and we share it only with the providers we need to run
+              the service: Vercel (hosting), Redis (database), Mercado Pago (payments, also under its own policy)
+              and Telegram (internal alerts about brand accounts, which may include the brand&apos;s username,
+              account id and subscription id; we do not add commenter data to them). Brands that connect their own Instagram account
               to MLABS: we store the Instagram id and username, an encrypted access token, keywords, the
               Mercado Pago email and the subscription status, only to run and bill the service, and never
               sell them. Payments are processed by Mercado Pago; we never see card data. Everything is
