@@ -81,3 +81,42 @@ test("asid de la casa o de la Cabina: responde bien, NO borra y avisa a Oscar", 
   assert.notEqual(await r.get("ig:222:token"), null);
   assert.equal(await r.get(claveAsid("C1")), "222");
 });
+
+test("user_id PROFESIONAL con ficha (sin índice asid): borra todo; el segundo aviso responde ok sin alertar", async () => {
+  const r = await preparar(), avisos = [];
+  await r.del(claveAsid("A1"));
+  const llamadas = [];
+  const d = { ...deps(r, avisos), ig: { desuscribirWebhook: async (...a) => llamadas.push(["ig", ...a]) } };
+  const res1 = await atenderBorradoMeta(d, firmar({ ...valido, user_id: "1" }));
+  assert.deepEqual({ ok: res1.ok, borrada: res1.borrada, cuenta: res1.cuenta }, { ok: true, borrada: true, cuenta: "1" });
+  for (const k of ["ig:1:marca", "ig:1:token", "ig:1:disparadores"]) assert.equal(await r.get(k), null, k);
+  assert.deepEqual(await listarClientes(r), []);
+  const res2 = await atenderBorradoMeta(d, firmar({ ...valido, user_id: 1 }));
+  assert.match(res2.codigo, /^[0-9a-f]{16}$/);
+  assert.deepEqual({ ok: res2.ok, borrada: res2.borrada }, { ok: true, borrada: false });
+  assert.equal(avisos.length, 0);
+});
+
+test("user_id profesional DESCONOCIDO (sin ficha, índice ni marca): avisa y no borra", async () => {
+  const r = await preparar(), avisos = [];
+  const res = await atenderBorradoMeta(deps(r, avisos), firmar({ ...valido, user_id: "999" }));
+  assert.deepEqual({ ok: res.ok, borrada: res.borrada }, { ok: true, borrada: false });
+  assert.equal(avisos.length, 1);
+  assert.match(avisos[0], /999/);
+  assert.notEqual(await r.get("ig:1:token"), null);
+});
+
+test("user_id = IG_CUENTA_PALABRAS o IG_CUENTA_CABINA directo: no borra y avisa", async () => {
+  const r = await preparar(), avisos = [];
+  await guardarToken(r, env, "222", "CASA", 99);
+  await guardarToken(r, env, "111", "CABINA", 99);
+  await altaMarca(r, { cuenta: "222", usuario: "casa", ahora: () => 0 });
+  for (const id of ["222", "111"]) {
+    const res = await atenderBorradoMeta(deps(r, avisos), firmar({ ...valido, user_id: id }));
+    assert.deepEqual({ ok: res.ok, borrada: res.borrada }, { ok: true, borrada: false });
+  }
+  assert.equal(avisos.length, 2);
+  assert.notEqual(await r.get("ig:222:token"), null);
+  assert.notEqual(await r.get("ig:111:token"), null);
+  assert.notEqual(await r.get("ig:222:marca"), null);
+});
