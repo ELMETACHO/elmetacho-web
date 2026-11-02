@@ -59,6 +59,6 @@ test("aprobar un candidato exige gancho y un tramo (después de la versión); «
 });
 
 test("noEditable: el candidato vencido sale solo como story corta", () => {
-  assert.equal(noEditable(candidato(), T + 70 * H - 1), null);
-  assert.match(noEditable(candidato(), T + 70 * H), /story corta/);
+  assert.equal(noEditable(candidato(), T + 22 * H - 1), null);
+  assert.match(noEditable(candidato(), T + 22 * H), /story corta/);
 });

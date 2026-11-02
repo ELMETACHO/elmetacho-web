@@ -188,11 +188,11 @@ test("publicar: un archivo con otro tamaño del anunciado = 409", async () => {
   assert.equal((await m.api.pcCabinaPublicar(pc({}), id)).status, 409);
 });
 
-test("publicar: en_revision, vence a las 72 h, sin aviso por Telegram; repetir = 200 igual", async () => {
+test("publicar: en_revision, vence a las 24 h, sin aviso por Telegram; repetir = 200 igual", async () => {
   const m = montar();
   const id = await subido(m);
   const r = await m.api.pcCabinaPublicar(pc({}), id);
-  assert.deepEqual(await r.json(), { ok: true, version: 1, vence: new Date(T + 72 * H).toISOString() });
+  assert.deepEqual(await r.json(), { ok: true, version: 1, vence: new Date(T + 24 * H).toISOString() });
   const p = await m.almacen.leer(id);
   assert.deepEqual([p.estado, p.revision.orden, p.revision.fuera, "comentarios_cabina" in p], ["en_revision", ["c1", "c2"], ["c3"], false]);
   assert.equal(m.avisos.length, 0);
@@ -215,13 +215,13 @@ test("lista: aprobados con la lista de Oscar y el gancho firmado; vivos = todos 
   }]);
 });
 
-test("lista: a las 70 h (72 − 2 de holgura) sin revisar pasa a automatico con el orden propuesto; un instante antes no", async () => {
+test("lista: a las 22 h (24 − 2 de holgura) sin revisar pasa a automatico con el orden propuesto; un instante antes no", async () => {
   const reloj = { t: T };
   const m = montar(reloj);
   const id = await publicado(m);
-  reloj.t = T + 70 * H - 1;
+  reloj.t = T + 22 * H - 1;
   assert.deepEqual((await lista(m)).decididos, []);
-  reloj.t = T + 70 * H;
+  reloj.t = T + 22 * H;
   assert.deepEqual((await lista(m)).decididos.map((d) => [d.id, d.estado, d.orden, d.fuera, d.gancho]),
     [[id, "automatico", [{ id: "c1", linea: "jajaja," }, { id: "c2", linea: "uy no," }], ["c3"], null]]);
   assert.equal((await m.almacen.leer(id)).estado, "automatico");
@@ -232,6 +232,9 @@ test("lista: purga lo no publicado en 24 h y lo que lleva 7 días en revisión, 
   const m = montar(reloj);
   const sinPublicar = await crear(m);
   const olvidado = await publicado(m);
+  // con «Trae más» no vence a las 22 h: es el que puede quedarse una semana en revisión
+  const leido = await m.almacen.leer(olvidado);
+  await m.almacen.guardar({ ...leido, revision: { ...leido.revision, trae_mas: true } });
   reloj.t = T + 24 * H + 1000;
   assert.deepEqual((await lista(m)).vivos, [olvidado]);
   assert.equal(await m.almacen.leer(sinPublicar), null);

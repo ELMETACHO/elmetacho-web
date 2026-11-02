@@ -1,8 +1,10 @@
 // Candidatos de la Cabina: el sondeo del PC los crea y sube; Oscar los revisa en /admin. Spec 2026-10-23-admin-cabina-design §4.
 import { MSG_LINK, destinoDe, esCabina, linkValido, normalizarLink, nuevoPedido, prefijo } from "./pedido.js";
-import { HOLGURA_FRANJA_H, listaFinal, publicarPropuesta, validarPropuesta, vencida } from "./revision.js";
+import { HORAS_CABINA, limiteVencimiento, listaFinal, publicarPropuesta, validarPropuesta, vencida } from "./revision.js";
 
-export const HORAS_CABINA = 72;   // vence = publicada + 72 h; se da por vencido HOLGURA_FRANJA_H antes (70 h), como los pedidos por link
+// vence = publicada + HORAS_CABINA (24 h; Oscar 2026-11-02, antes 72 h); se da por vencido HOLGURA_FRANJA_H antes
+// (22 h), para que la franja de las 5 p. m. del día siguiente lo recoja como story automática.
+export { HORAS_CABINA };
 export const HORAS_SIN_PUBLICAR = 24;
 export const DIAS_EN_REVISION = 7;
 export const MAX_VISTA = 50 * 1024 ** 2;
@@ -86,6 +88,7 @@ export function paraElPc(p) {
   };
 }
 
+const limiteCabina = limiteVencimiento;
 export const vencerCandidato = (p, ahoraMs) => (esCabina(p) && vencida(p, ahoraMs) ? { ...p, estado: "automatico" } : p);
 
 export function aPurgar(p, ahoraMs) {
@@ -97,7 +100,7 @@ export function aPurgar(p, ahoraMs) {
 
 // Días hasta que sale solo: cuenta hasta el límite real (vence − holgura de la franja), el mismo que usa `vencida`.
 export const diasRestantes = (p, ahoraMs) =>
-  Math.max(0, Math.ceil((Date.parse(p.propuesta?.vence) - HOLGURA_FRANJA_H * 3600e3 - ahoraMs) / 864e5)) || 0;
+  Math.max(0, Math.ceil((limiteCabina(p) - ahoraMs) / 864e5)) || 0;
 export const textoDias = (dias) => (dias <= 0 ? "sale solo en la próxima franja" : dias === 1 ? "sale solo en 1 día" : `sale solo en ${dias} días`);
 export const nombreCabina = (p) => String(p.link || p.id).replace(/^https:\/\/(www\.)?/, "").replace(/\/$/, "");
 
@@ -105,7 +108,7 @@ export const nombreCabina = (p) => String(p.link || p.id).replace(/^https:\/\/(w
 export function separarCabina(lista, ahoraMs) {
   const cabina = lista
     .filter((p) => esCabina(p) && p.estado === "en_revision" && p.propuesta && p.revision)
-    .sort((x, y) => Date.parse(x.propuesta.vence) - Date.parse(y.propuesta.vence))
+    .sort((x, y) => limiteCabina(x) - limiteCabina(y))
     .map((p) => ({ id: p.id, nombre: nombreCabina(p), comentarios: p.revision.orden.length, dias: diasRestantes(p, ahoraMs) }));
   return { cabina, pedidos: lista.filter((p) => !esCabina(p)) };
 }

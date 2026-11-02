@@ -75,20 +75,25 @@ test("anotarTamano guarda el tamaño esperado; archivosDelCandidato lista la vis
     [[B + "vista.mp4", 4_000_000], [B + "m01.jpg", 1000], [B + "m03.mp4", null]]);
 });
 
-test("publicar: en_revision, vence a las 72 h, revisión con los dentro y sin el campo provisional", () => {
+test("publicar: en_revision, vence a las 24 h, revisión con los dentro y sin el campo provisional", () => {
   const p = publicado();
-  assert.deepEqual([p.estado, p.propuesta.version, p.propuesta.publicada, p.propuesta.vence], ["en_revision", 1, iso(T), iso(T + 72 * H)]);
+  assert.deepEqual([p.estado, p.propuesta.version, p.propuesta.publicada, p.propuesta.vence], ["en_revision", 1, iso(T), iso(T + 24 * H)]);
   assert.deepEqual([p.revision.orden, p.revision.fuera, p.revision.trae_mas], [["c1", "c2"], ["c3"], false]);
   assert.equal("comentarios_cabina" in p, false);
   assert.deepEqual([p.propuesta.comentarios[0].respuestas, p.propuesta.comentarios[0].medio.pathname], [4, B + "m01.jpg"]);
   assert.equal(yaPublicado(p), true);
 });
 
-test("vence con la holgura de la franja: a las 70 h menos 1 ms sigue en revisión; a las 70 h (72 − 2) pasa a automatico", () => {
+test("vence con la holgura de la franja: a las 22 h menos 1 ms sigue en revisión; a las 22 h (24 − 2) pasa a automatico", () => {
   const p = publicado();
-  assert.equal(p.propuesta.vence, iso(T + 72 * H));          // lo guardado sigue siendo publicada + 72 h
-  assert.equal(vencerCandidato(p, T + 70 * H - 1), p);
-  assert.equal(vencerCandidato(p, T + 70 * H).estado, "automatico");
+  assert.equal(p.propuesta.vence, iso(T + 24 * H));          // lo guardado es publicada + 24 h
+  assert.equal(vencerCandidato(p, T + 22 * H - 1), p);
+  assert.equal(vencerCandidato(p, T + 22 * H).estado, "automatico");
+  // publicado con el plazo viejo (vence guardado a las 72 h): también sale a las 22 h
+  const viejo = { ...p, propuesta: { ...p.propuesta, vence: iso(T + 72 * H) } };
+  assert.equal(vencerCandidato(viejo, T + 22 * H - 1), viejo);
+  assert.equal(vencerCandidato(viejo, T + 22 * H).estado, "automatico");
+  assert.equal(diasRestantes(viejo, T), 1);
   assert.equal(vencerCandidato({ ...p, estado: "aprobado" }, T + 99 * H).estado, "aprobado");
   const link = { tipo: "link", estado: "en_revision", revision: { trae_mas: false }, propuesta: { vence: iso(T + 24 * H) } };
   assert.equal(vencida(link, T + 22 * H), true);              // el de link sigue venciendo 2 h antes
@@ -104,7 +109,7 @@ test("paraElPc: el aprobado lleva la lista de Oscar; el automatico, el orden pro
     id: ID, estado: "aprobado", link: "https://www.tiktok.com/@x/video/7", destino: "story", titulo: null, tramos: [[2, 9]],
     orden: [{ id: "c2", linea: "uy no," }, { id: "c3", linea: "otra cosa," }], fuera: ["c1"],
   });
-  const auto = vencerCandidato(r.pedido, T + 70 * H);
+  const auto = vencerCandidato(r.pedido, T + 22 * H);
   assert.deepEqual([paraElPc(auto).orden, paraElPc(auto).fuera], [[{ id: "c1", linea: "jajaja," }, { id: "c2", linea: "uy no," }], ["c3"]]);
 });
 
@@ -129,16 +134,16 @@ test("candidato con link de Instagram: se acepta, se guarda canónico y se muest
 
 test("días que faltan, texto de la lista y separación de la Cabina y los pedidos", () => {
   const p = publicado();
-  // cuenta hasta el límite real (70 h): 70 h → 3 días; 21 h → 1; 1 h → 1; vencido → 0
-  assert.deepEqual([diasRestantes(p, T), diasRestantes(p, T + 49 * H), diasRestantes(p, T + 69 * H), diasRestantes(p, T + 70 * H), diasRestantes({}, T)], [3, 1, 1, 0, 0]);
+  // cuenta hasta el límite real (22 h): 22 h → 1 día; 1 h → 1; vencido → 0
+  assert.deepEqual([diasRestantes(p, T), diasRestantes(p, T + 21 * H), diasRestantes(p, T + 22 * H), diasRestantes({}, T)], [1, 1, 0, 0]);
   assert.deepEqual([textoDias(3), textoDias(1), textoDias(0)], ["sale solo en 3 días", "sale solo en 1 día", "sale solo en la próxima franja"]);
   const a = publicarCandidato(nuevo("c_a"), T);
   const b = publicarCandidato(nuevo("c_b"), T - 10 * H);      // vence antes: va primero
   const link = { id: "c_l", tipo: "link", estado: "en_revision", creado: iso(T) };
   const { cabina, pedidos } = separarCabina([link, nuevo("c_s"), a, { ...publicado(), id: "c_ap", estado: "aprobado" }, b], T);
   assert.deepEqual(cabina, [
-    { id: "c_b", nombre: "tiktok.com/@x/video/7", comentarios: 2, dias: 3 },
-    { id: "c_a", nombre: "tiktok.com/@x/video/7", comentarios: 2, dias: 3 },
+    { id: "c_b", nombre: "tiktok.com/@x/video/7", comentarios: 2, dias: 1 },
+    { id: "c_a", nombre: "tiktok.com/@x/video/7", comentarios: 2, dias: 1 },
   ]);
   assert.deepEqual(pedidos.map((x) => x.id), ["c_l"]);
 });
