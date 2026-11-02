@@ -89,7 +89,13 @@ export const yaPublicada = (p, comentarios) =>
 export const puedePublicarPropuesta = (p) =>
   p.estado === "en_pc" || p.estado === "necesita_pantallazos" || (p.estado === "en_revision" && p.revision?.trae_mas === true);
 
-const limite = (p) => Date.parse(p.propuesta?.vence) - HOLGURA_FRANJA_H * 3600e3;
+// Cabina (Oscar 2026-11-02): 24 h desde que se publicó, también para los publicados con el plazo viejo de 72 h, así que
+// se cuenta desde `publicada` y no desde el `vence` guardado.
+export const HORAS_CABINA = 24;
+const limite = (p) => (esCabina(p)
+  ? Date.parse(p.propuesta?.publicada) + (HORAS_CABINA - HOLGURA_FRANJA_H) * 3600e3
+  : Date.parse(p.propuesta?.vence) - HOLGURA_FRANJA_H * 3600e3);
+export const limiteVencimiento = limite;
 export const vencida = (p, ahoraMs) =>
   p.estado === "en_revision" && !p.revision?.trae_mas && Number.isFinite(limite(p)) && ahoraMs >= limite(p);
 export const horasRestantes = (p, ahoraMs) => (Number.isFinite(limite(p)) ? Math.max(0, Math.ceil((limite(p) - ahoraMs) / 3600e3)) : 0);
