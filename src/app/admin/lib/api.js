@@ -1,6 +1,7 @@
 // Lógica de las API de /admin con dependencias inyectadas (las rutas pasan Redis, Blob y Telegram reales). Spec admin §6.
 import { COOKIE, claveCorrecta, cookieBorrada, cookieSesion, firmarSesion, leerCookie, sesionValida, tokenPcValido } from "./sesion.js";
 import { estaBloqueado, limpiarIntentos, registrarFallo } from "./intentos.js";
+import { CLAVE_CATALOGO, validarCatalogo } from "./catalogo.js";
 import { DESTINOS, TIPOS_DISPONIBLES, TIPOS_STORY, destinoDe, esCabina, aplicarCambios, borradorVencido, erroresParaEnviar, nombreVisible, nuevoId, nuevoPedido, prefijo, sePuedeCancelar, subidaPermitida, tipoDe } from "./pedido.js";
 import { aplicarRevision, aprobarRevision, aprobarVencido, listaFinal, masAtendido, noEditable, pedirMas, publicarPropuesta, puedePublicarPropuesta, validarPropuesta, vencida, yaPublicada } from "./revision.js";
 import { rutasCabina } from "./api-cabina.js";
@@ -131,8 +132,17 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
         id: p.id, estado: p.estado, tipo: tipoDe(p), destino: destinoDe(p), link: p.link ?? null, creado: p.creado, titulo: p.titulo, estilo: p.estilo, tramos: p.tramos,
         original: await firmar(p.original), gancho: await firmar(p.gancho), publicado: await firmar(p.publicado ?? null),
         pantallazos: await Promise.all((p.pantallazos || []).map(firmar)), propios: p.propios ?? [],
+        base: p.base ?? null, nota: p.nota ?? null,
       }))));
     }),
+    // Versionar: el PC sube la lista de cantados; el buscador de Oscar la lee y filtra en el navegador.
+    pcCatalogo: delPc(async (req) => {
+      const { lista, error } = validarCatalogo((await cuerpo(req))?.lista);
+      if (error) return json({ error }, 400);
+      await almacen.guardarValor(CLAVE_CATALOGO, lista);
+      return json({ ok: true, n: lista.length });
+    }),
+    catalogo: conSesion(async () => json((await almacen.leerValor(CLAVE_CATALOGO)) ?? [])),
     pcBajado: delPc(async (req, id) => {
       const p = await almacen.leer(id);
       if (!p) return json({ error: "Ese pedido no existe." }, 404);

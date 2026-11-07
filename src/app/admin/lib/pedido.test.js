@@ -73,8 +73,8 @@ test("datos nulos o que no son objeto devuelven error sin lanzar", () => {
 const L = () => nuevoPedido("c_20261021_ab12", "2026-10-21T18:30:00.000Z", "link");
 
 test("tipos: pantallazos por defecto; los pedidos viejos sin tipo cuentan como pantallazos", () => {
-  assert.deepEqual(TIPOS, ["pantallazos", "link", "remix"]);
-  assert.deepEqual(TIPOS_DISPONIBLES, ["pantallazos", "link", "remix"]);
+  assert.deepEqual(TIPOS, ["pantallazos", "link", "remix", "version"]);
+  assert.deepEqual(TIPOS_DISPONIBLES, ["pantallazos", "link", "remix", "version"]);
   assert.equal(P().tipo, "pantallazos");
   assert.equal(L().tipo, "link");
   assert.equal(L().link, null);
@@ -231,4 +231,37 @@ test("para enviar con pantallazos basta con fotos o con comentarios tuyos", () =
   assert.deepEqual(erroresParaEnviar({ ...base, propios: ["hola"] }), []);
   assert.equal(erroresParaEnviar({ ...base, propios: [] }).length, 1);
   assert.equal(erroresParaEnviar({ ...base, propios: ["hola"], pantallazos: [{ ...arch("p01.jpg"), tamano: 0 }] }).length, 1);
+});
+
+// ---------- Versionar (spec 2026-11-07-admin-versionar-design) ----------
+const V = () => nuevoPedido("c_20261021_ab12", "2026-10-21T18:30:00.000Z", "version");
+
+test("versionar: tipo disponible, con base del catálogo o video editado (nunca los dos), nota y propios", () => {
+  assert.ok(TIPOS_DISPONIBLES.includes("version"));
+  let r = aplicarCambios(V(), { base: { clave: "2026-10-22-v-wc_20261022_ac94", titulo: "su novia cuida la moto" } });
+  assert.deepEqual(r.errores, []);
+  assert.deepEqual(r.pedido.base, { clave: "2026-10-22-v-wc_20261022_ac94", titulo: "su novia cuida la moto" });
+  assert.equal(r.pedido.publicado, null);
+  assert.match(aplicarCambios(V(), { base: { clave: "../etc", titulo: "x" } }).errores[0], /cantado/);
+  r = aplicarCambios(r.pedido, { publicado: arch("publicado.mp4") });
+  assert.deepEqual(r.errores, []);
+  assert.equal(r.pedido.base, null);                      // escoger la otra fuente borra la anterior
+  r = aplicarCambios(r.pedido, { base: null });
+  assert.deepEqual(r.errores, []);
+  assert.ok(r.pedido.publicado);
+  assert.equal(aplicarCambios(V(), { nota: "  el comentario 3 no lo uses " }).pedido.nota, "el comentario 3 no lo uses");
+  assert.equal(aplicarCambios(V(), { nota: "   " }).pedido.nota, null);
+  assert.match(aplicarCambios(V(), { nota: "x".repeat(501) }).errores[0], /500/);
+  assert.deepEqual(aplicarCambios(V(), { propios: ["hola"] }).pedido.propios, ["hola"]);
+  assert.match(aplicarCambios(V(), { link: "https://vt.tiktok.com/ZSpkx4ehQ/" }).errores[0], /no lleva link/);
+  assert.match(aplicarCambios(P(), { base: { clave: "x", titulo: "x" } }).errores[0], /no lleva/);
+  assert.match(aplicarCambios(P(), { nota: "hola" }).errores[0], /no lleva/);
+});
+
+test("para enviar una versión: original, bucle, gancho y una fuente de comentarios (sin link)", () => {
+  const base = { ...V(), original: arch("original.mp4", { duracion: 28 }), tramos: [[0, 4]], gancho: arch("gancho.mov") };
+  assert.deepEqual(erroresParaEnviar({ ...base, base: { clave: "a", titulo: "b" } }), []);
+  assert.deepEqual(erroresParaEnviar({ ...base, publicado: arch("publicado.mp4") }), []);
+  assert.deepEqual(erroresParaEnviar(base), ["Falta escoger el cantado o subir tu video editado."]);
+  assert.equal(erroresParaEnviar(V()).length, 4);
 });

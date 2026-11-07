@@ -10,5 +10,7 @@ export function almacenMemoria() {
     contador: async (k) => contadores.get(k) || 0,
     sumar: async (k) => { const n = (contadores.get(k) || 0) + 1; contadores.set(k, n); return n; },
     borrarClave: async (k) => void contadores.delete(k),
+    leerValor: async (k) => copia(contadores.get(`v:${k}`)),
+    guardarValor: async (k, v) => void contadores.set(`v:${k}`, copia(v)),
   };
 }
