@@ -556,3 +556,24 @@ test("un reel: el aviso no cambia y el PC recibe reel aunque el pedido sea viejo
   assert.equal(lista[0].destino, "reel");
   assert.equal(avisos.length, 0);
 });
+
+// ---------- Versionar: catálogo de cantados del PC ----------
+test("catálogo: el PC lo sube con su token y Oscar lo lee con su sesión", async () => {
+  const { api } = montar();
+  const lista = [{ clave: "2026-10-22-v-wc_20261022_ac94", titulo: "su novia cuida la moto", fecha: "2026-10-22", n: 12 }];
+  assert.deepEqual(await (await api.catalogo(conSesion(null, "GET"))).json(), []);
+  assert.equal((await api.pcCatalogo(pcCon({ lista }, "PUT"))).status, 200);
+  assert.equal((await api.pcCatalogo(conSesion({ lista }, "PUT"))).status, 401);
+  assert.equal((await api.pcCatalogo(pcCon({ lista: [{ clave: "../x" }] }, "PUT"))).status, 400);
+  assert.equal((await api.catalogo(sinSesion())).status, 401);
+  assert.deepEqual(await (await api.catalogo(conSesion(null, "GET"))).json(), lista);
+});
+
+test("pcPedidos entrega base y nota de una versión", async () => {
+  const { api, almacen } = montar();
+  await almacen.guardar({ id: "c_v", creado: "2026-10-21T18:30:00Z", tipo: "version", estado: "listo", tramos: [[0, 4]],
+    original: { pathname: "cantados/c_v/original.mp4", tamano: 1 }, gancho: { pathname: "cantados/c_v/gancho.mov", tamano: 1 },
+    pantallazos: [], publicado: null, base: { clave: "2026-10-20-perro", titulo: "perro" }, nota: "sin el 3", propios: ["hola"] });
+  const [p] = await (await api.pcPedidos(pc())).json();
+  assert.deepEqual([p.tipo, p.base, p.nota, p.propios], ["version", { clave: "2026-10-20-perro", titulo: "perro" }, "sin el 3", ["hola"]]);
+});

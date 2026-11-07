@@ -6,14 +6,17 @@ import ListaPantallazos from "../ListaPantallazos.jsx";
 import { encolarPatch } from "../cola.js";
 import { leerMeta, subirArchivo, usePantallazos, useTrabajos } from "../subidas.js";
 import EditorTramos from "./EditorTramos.jsx";
+import BuscarCantado from "./BuscarCantado.jsx";
+import TusComentarios from "./TusComentarios.jsx";
 import { extSegura } from "../../lib/editor.js";
-import { ESTILOS, MAX_PROPIOS_PEDIDO, MAX_TEXTO_PROPIO_PEDIDO, MSG_LINK, TIPOS_DISPONIBLES, linkValido, pedidoDeOpcion } from "../../lib/pedido.js";
+import { ESTILOS, MAX_NOTA, MSG_LINK, TIPOS_DISPONIBLES, linkValido, pedidoDeOpcion } from "../../lib/pedido.js";
 
 const boton = "adm-btn primario grande";
 const OPCIONES = [
   { tipo: "pantallazos", titulo: "Con pantallazos", detalle: "Tú escoges los comentarios: subes las fotos y, si quieres, escribes los tuyos." },
   { tipo: "link", titulo: "Por link", detalle: "Claude escoge los comentarios de TikTok o Instagram y tú los revisas aquí." },
   { tipo: "remix", titulo: "Remix", detalle: "Reeditar un cantado ya publicado: mismos comentarios en otro orden, otra canción. Sin revisión." },
+  { tipo: "version", titulo: "Versionar", detalle: "Otro video de una tendencia que ya cantaste: mismos comentarios (con nombres y fotos inventados), otra canción y, si quieres, comentarios tuyos." },
   { tipo: "story", titulo: "Story", detalle: "Igual que con pantallazos, pero sale como story de Facebook: un solo video, sin corto de YouTube." },
 ];
 // Orden de las secciones de cada tipo (los números de los títulos salen de aquí).
@@ -21,11 +24,13 @@ const SECCIONES = {
   pantallazos: ["original", "gancho", "pantallazos", "propios", "estilo"],
   link: ["link", "original", "gancho", "estilo"],
   remix: ["link", "publicado", "original", "gancho", "estilo"],
+  version: ["fuente", "original", "gancho", "propios", "nota", "estilo"],
 };
 const LISTO = {
   pantallazos: "Listo: sale a las 5 p. m.",
   link: "Listo: a las 5 p. m. Claude escoge los comentarios y te llega el enlace para revisarlos.",
   remix: "Listo: el remix sale a las 5 p. m., sin revisión.",
+  version: "Listo: la versión sale a las 5 p. m. y te llega por Telegram.",
 };
 const LISTO_STORY = "Listo: la story sale a las 5 p. m. y te llega por Telegram.";
 
@@ -55,7 +60,9 @@ export default function NuevoPedido({ inicial = null }) {
   const [estilo, setEstilo] = useState(ini?.estilo ?? ESTILOS[0]);
   const [titulo, setTitulo] = useState(ini?.titulo ?? "");
   const [propios, setPropios] = useState(ini?.propios ?? []); // comentarios que Oscar escribe (salen con nombres al azar)
-  const [propio, setPropio] = useState("");
+  const [base, setBase] = useState(ini?.base ?? null); // versionar: { clave, titulo, fecha?, n? } del catálogo
+  const [fuente, setFuente] = useState(ini?.publicado ? "video" : "base"); // versionar: de dónde salen los comentarios
+  const [nota, setNota] = useState(ini?.nota ?? "");
   const { trabajos, fijarTrabajo, conOcupado, subiendo } = useTrabajos(); // trabajos: barras; subiendo: hay handlers en curso
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(false);
@@ -207,7 +214,10 @@ export default function NuevoPedido({ inicial = null }) {
   }
 
   function elegirPublicado(e) {
-    return subirVideo(e, "publicado", setOcupPub, () => setPublicado(null), () => {}, (file) => setPublicado({ nombre: file.name }));
+    return subirVideo(e, "publicado", setOcupPub, () => setPublicado(null), () => {}, (file) => {
+      setPublicado({ nombre: file.name });
+      setBase(null); // versionar: el servidor suelta el cantado elegido al guardar el video editado
+    });
   }
 
   function elegirEstilo(s) {
@@ -220,11 +230,10 @@ export default function NuevoPedido({ inicial = null }) {
     patch({ propios: lista }).catch((err) => setErrorGlobal(err.message));
   }
 
-  function agregarPropio() {
-    const t = propio.trim();
-    if (!t || !idRef.current || propios.length >= MAX_PROPIOS_PEDIDO) return;
-    setPropio("");
-    guardarPropios([...propios, t.slice(0, MAX_TEXTO_PROPIO_PEDIDO)]);
+  function elegirBase(x) {
+    setBase(x);
+    if (x) setPublicado(null); // el servidor también suelta el video editado: una sola fuente
+    patch({ base: x ? { clave: x.clave, titulo: x.titulo } : null }).catch((err) => setErrorGlobal(err.message));
   }
 
   function guardarLink() {
@@ -257,6 +266,7 @@ export default function NuevoPedido({ inicial = null }) {
   }
 
   const esRemix = tipo === "remix";
+  const esVersion = tipo === "version";
   const conLink = tipo === "link" || esRemix;
   const faltan = [
     !original?.subido && (esRemix ? "clip original" : "video original"),
@@ -265,6 +275,7 @@ export default function NuevoPedido({ inicial = null }) {
     conLink && !linkGuardado && "link de TikTok o Instagram",
     esRemix && !publicado && "video publicado",
     tipo === "pantallazos" && pants.length === 0 && propios.length === 0 && "al menos un pantallazo o un comentario tuyo",
+    esVersion && !base && !publicado && (fuente === "video" ? "tu video editado" : "escoger el cantado"),
   ].filter(Boolean);
   const falta = !id || faltan.length > 0;
   const num = (s) => (SECCIONES[tipo] || []).indexOf(s) + 1;
@@ -298,7 +309,7 @@ export default function NuevoPedido({ inicial = null }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="adm-titulo">{esRemix ? "Remix" : story ? "Story" : "Nuevo video"}</h1>
+        <h1 className="adm-titulo">{esRemix ? "Remix" : esVersion ? "Versionar" : story ? "Story" : "Nuevo video"}</h1>
         <a href="/admin" className="adm-btn secundario chico">
           Volver
         </a>
@@ -338,7 +349,36 @@ export default function NuevoPedido({ inicial = null }) {
         </Seccion>
       )}
 
-      <Seccion titulo={`${num("original")}. ${esRemix ? "Clip original (el de TikTok o Instagram, sin editar)" : "Video original"}`}>
+      {esVersion && (
+        <Seccion titulo={`${num("fuente")}. ¿De dónde salen los comentarios?`}>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              ["base", "Un cantado que ya hice"],
+              ["video", "Tu video ya editado"],
+            ].map(([k, t]) => (
+              <button key={k} onClick={() => setFuente(k)} className={`adm-opcion p-3 text-center text-sm ${fuente === k ? "on font-bold" : ""}`}>
+                {t}
+              </button>
+            ))}
+          </div>
+          {fuente === "base" ? (
+            <BuscarCantado elegido={base} onElegir={elegirBase} deshabilitado={!id} />
+          ) : (
+            <>
+              <input type="file" accept="video/*" onChange={elegirPublicado} disabled={!id || ocupPub} />
+              <Barra t={trabajos.publicado} />
+              <p className="adm-sub text-sm">
+                El video tal como lo publicaste: de sus tarjetas salen los comentarios. Los memes de las tarjetas no se recuperan por esta vía.
+              </p>
+              {publicado && <p className="text-sm font-semibold text-[var(--verde)]">Subido: {publicado.nombre}</p>}
+            </>
+          )}
+          {fuente === "base" && publicado && <p className="adm-sub text-sm">Si escoges un cantado, se deja de usar tu video editado.</p>}
+          {fuente === "video" && base && <p className="adm-sub text-sm">Si subes tu video, se deja de usar «{base.titulo}».</p>}
+        </Seccion>
+      )}
+
+      <Seccion titulo={`${num("original")}. ${esRemix ? "Clip original (el de TikTok o Instagram, sin editar)" : esVersion ? "Video nuevo (el de la tendencia)" : "Video original"}`}>
         <input type="file" accept="video/*" onChange={elegirOriginal} disabled={!id || ocupOrig} />
         <Barra t={trabajos.original} />
         {original?.url && (
@@ -375,43 +415,42 @@ export default function NuevoPedido({ inicial = null }) {
         </Seccion>
       )}
 
-      {tipo === "pantallazos" && (
-        <Seccion titulo={`${num("propios")}. Tus comentarios (opcional)`}>
-          <p className="adm-sub text-sm">Escribe comentarios inventados por ti: salen después de los de los pantallazos, con nombres al azar.</p>
-          <textarea
-            value={propio}
-            rows={2}
-            maxLength={MAX_TEXTO_PROPIO_PEDIDO}
-            className="adm-campo"
-            placeholder="Escribe un comentario"
-            aria-label="Escribe un comentario"
-            disabled={!id || propios.length >= MAX_PROPIOS_PEDIDO}
-            onChange={(e) => setPropio(e.target.value)}
+      {(tipo === "pantallazos" || esVersion) && (
+        <Seccion titulo={`${num("propios")}. ${esVersion ? "Más comentarios tuyos (opcional)" : "Tus comentarios (opcional)"}`}>
+          <TusComentarios
+            propios={propios}
+            onCambio={guardarPropios}
+            deshabilitado={!id}
+            ayuda={
+              esVersion
+                ? "Se suman a los del video anterior, al final, con nombres al azar."
+                : "Escribe comentarios inventados por ti: salen después de los de los pantallazos, con nombres al azar."
+            }
           />
-          <button className="adm-btn secundario" onClick={agregarPropio} disabled={!id || !propio.trim() || propios.length >= MAX_PROPIOS_PEDIDO}>
-            Agregar comentario
-          </button>
-          {propios.length >= MAX_PROPIOS_PEDIDO && <p className="adm-sub text-sm">Ya agregaste {MAX_PROPIOS_PEDIDO} comentarios tuyos.</p>}
-          {propios.length > 0 && (
-            <ol className="flex flex-col gap-2">
-              {propios.map((t, i) => (
-                <li key={`${i}-${t}`} className="adm-tarjeta flex items-start justify-between gap-2 p-3">
-                  <span className="text-sm">
-                    <span className="adm-etq neutro mr-2">Tuyo</span>
-                    {t}
-                  </span>
-                  <button className="adm-btn secundario chico" aria-label={`Quitar «${t}»`} onClick={() => guardarPropios(propios.filter((_, j) => j !== i))}>
-                    Quitar
-                  </button>
-                </li>
-              ))}
-            </ol>
-          )}
         </Seccion>
       )}
 
-      <Seccion titulo={`${num("estilo")}. ${esRemix ? "Título" : "Estilo y título"}`}>
-        {esRemix ? (
+      {esVersion && (
+        <Seccion titulo={`${num("nota")}. Mensaje a Claude (opcional)`}>
+          <textarea
+            value={nota}
+            rows={3}
+            maxLength={MAX_NOTA}
+            className="adm-campo"
+            placeholder="P. ej.: el comentario 3 no lo uses"
+            aria-label="Mensaje a Claude"
+            disabled={!id}
+            onChange={(e) => setNota(e.target.value)}
+            onBlur={() => patch({ nota }).catch((err) => setErrorGlobal(err.message))}
+          />
+          <p className="adm-sub text-sm">Los números son los del video anterior, en su orden. Si escribes algo, Claude lo revisa antes de hacer la canción.</p>
+        </Seccion>
+      )}
+
+      <Seccion titulo={`${num("estilo")}. ${esRemix || esVersion ? "Título" : "Estilo y título"}`}>
+        {esVersion ? (
+          <p className="adm-sub text-sm">El estilo y el color del karaoke salen al contrario del video anterior (salsa ↔ merengue).</p>
+        ) : esRemix ? (
           <p className="adm-sub text-sm">Si tu video publicado lo hizo este sistema, el estilo y el color del karaoke salen al contrario (salsa ↔ merengue); si no, salen por turno.</p>
         ) : (
           <div className="grid grid-cols-3 gap-2">

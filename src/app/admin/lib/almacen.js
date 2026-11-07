@@ -20,6 +20,8 @@ export async function almacenRedis(url) {
     // Atómico (MULTI): INCR y EXPIRE viajan juntos, así la clave nunca queda sin TTL. EXPIRE en cada fallo (válido en cualquier Redis; NX exige Redis 7).
     sumar: async (k, ttlS) => { const [n] = await c.multi().incr(k).expire(k, ttlS).exec(); return Number(n); },
     borrarClave: async (k) => void (await c.del(k)),
+    leerValor: async (k) => { const v = await c.get(k); return v ? JSON.parse(v) : null; },
+    guardarValor: async (k, v) => void (await c.set(k, JSON.stringify(v))),
     cerrar: () => c.quit().catch(() => {}),
   };
 }

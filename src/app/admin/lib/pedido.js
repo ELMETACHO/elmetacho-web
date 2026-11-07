@@ -1,5 +1,6 @@
 // Pedido de cantados armado en /admin. Spec admin §5.
 import { validarTramos } from "./tramos.js";
+import { CLAVE_PROYECTO } from "./catalogo.js";
 
 export const ESTILOS = ["Salsa, merengue", "Salsa", "Merengue"];
 export const HORAS_BORRADOR = 48;
@@ -21,8 +22,13 @@ export function nuevoId(fecha, azar) {
   const d = fecha.toISOString().slice(0, 10).replaceAll("-", "");
   return `c_${d}_${azar}`;
 }
-export const TIPOS = ["pantallazos", "link", "remix"];
-export const TIPOS_DISPONIBLES = ["pantallazos", "link", "remix"];
+export const TIPOS = ["pantallazos", "link", "remix", "version"];
+export const TIPOS_DISPONIBLES = ["pantallazos", "link", "remix", "version"];
+// Versionar (2026-11-07): mismos comentarios de otro cantado (o del video editado de Oscar) con otro video.
+export const MAX_NOTA = 500;
+const CON_PROPIOS = ["pantallazos", "version"];
+const CON_PUBLICADO = ["remix", "version"];
+const SIN_LINK = ["pantallazos", "version"];
 export const EN_EL_PC = ["en_pc", "en_revision", "aprobado"];   // el PC ya tiene el proyecto: no se cancela desde la web
 const LINK = /^https:\/\/(www\.|vm\.|vt\.)tiktok\.com\/\S+$/;
 // Reels de Instagram (la misma regla que el PC en Python): /reel/, /reels/, /p/ o /tv/ + código, con /<usuario>/ delante
@@ -55,7 +61,7 @@ export function normalizarLink(x) {
 }
 export const nuevoPedido = (id, creado, tipo = "pantallazos", destino = "reel") => ({
   id, creado, tipo, destino, estado: "subiendo", titulo: null, estilo: ESTILOS[0], tramos: [],
-  original: null, gancho: null, pantallazos: [], propios: [], link: null, publicado: null, motivo: null,
+  original: null, gancho: null, pantallazos: [], propios: [], base: null, nota: null, link: null, publicado: null, motivo: null,
 });
 
 // Número finito >= 0, o undefined si el campo no viene. Otro valor = inválido (null).
@@ -100,16 +106,17 @@ export function aplicarCambios(p, c) {
   if ("estilo" in c) ESTILOS.includes(c.estilo) ? (out.estilo = c.estilo) : errores.push("Estilo no válido.");
   for (const campo of ["original", "gancho", "publicado"]) {
     if (campo in c) {
-      if (campo === "publicado" && tipoDe(p) !== "remix") {
+      if (campo === "publicado" && !CON_PUBLICADO.includes(tipoDe(p))) {
         errores.push("Este pedido no lleva video publicado.");
         continue;
       }
       const a = archivoValido(p.id, c[campo], PATRON[campo]);
       a ? (out[campo] = a) : errores.push(`El archivo de ${campo} no es de este pedido.`);
+      if (a && campo === "publicado" && tipoDe(p) === "version") out.base = null;   // una sola fuente de comentarios
     }
   }
   if ("link" in c) {
-    if (tipoDe(p) === "pantallazos") errores.push("Este pedido no lleva link.");
+    if (SIN_LINK.includes(tipoDe(p))) errores.push("Este pedido no lleva link.");
     else if (linkValido(c.link)) out.link = normalizarLink(c.link);
     else errores.push(MSG_LINK);
   }
@@ -124,11 +131,28 @@ export function aplicarCambios(p, c) {
   }
   if ("propios" in c) {
     const lista = Array.isArray(c.propios) ? c.propios.map((t) => (typeof t === "string" ? t.trim() : "")) : null;
-    if (tipoDe(p) !== "pantallazos") errores.push("Este pedido no lleva comentarios tuyos.");
+    if (!CON_PROPIOS.includes(tipoDe(p))) errores.push("Este pedido no lleva comentarios tuyos.");
     else if (lista && lista.length > MAX_PROPIOS_PEDIDO) errores.push(`Máximo ${MAX_PROPIOS_PEDIDO} comentarios tuyos.`);
     else if (!lista || lista.some((t) => !t || t.length > MAX_TEXTO_PROPIO_PEDIDO))
       errores.push(`Cada comentario tuyo debe tener entre 1 y ${MAX_TEXTO_PROPIO_PEDIDO} caracteres.`);
     else out.propios = lista;
+  }
+  if ("base" in c) {
+    const b = c.base;
+    if (tipoDe(p) !== "version") errores.push("Este pedido no lleva cantado a versionar.");
+    else if (b === null) out.base = null;
+    else if (!b || typeof b.clave !== "string" || !CLAVE_PROYECTO.test(b.clave) || b.clave.includes("..") || typeof b.titulo !== "string")
+      errores.push("Ese cantado no es válido: escógelo del buscador.");
+    else {
+      out.base = { clave: b.clave, titulo: b.titulo.trim().slice(0, 200) };
+      out.publicado = null;                                  // una sola fuente de comentarios
+    }
+  }
+  if ("nota" in c) {
+    const t = typeof c.nota === "string" ? c.nota.trim() : c.nota == null ? "" : null;
+    if (tipoDe(p) !== "version") errores.push("Este pedido no lleva mensaje a Claude.");
+    else if (t === null || t.length > MAX_NOTA) errores.push(`El mensaje a Claude debe tener hasta ${MAX_NOTA} caracteres.`);
+    else out.nota = t || null;
   }
   if ("tramos" in c) {
     const r = validarTramos(c.tramos, esCabina(p) ? p.vista_previa?.duracion : out.original?.duracion);
@@ -144,7 +168,8 @@ export function erroresParaEnviar(p) {
   if (!(p.original?.tamano > 0)) e.push("Falta el video original.");
   if (!p.tramos?.length) e.push("Falta marcar el bucle.");
   if (!(p.gancho?.tamano > 0)) e.push("Falta tu gancho.");
-  if (tipo !== "pantallazos" && !linkValido(p.link)) e.push("Falta el link de TikTok o Instagram.");
+  if (!SIN_LINK.includes(tipo) && !linkValido(p.link)) e.push("Falta el link de TikTok o Instagram.");
+  if (tipo === "version" && !p.base?.clave && !(p.publicado?.tamano > 0)) e.push("Falta escoger el cantado o subir tu video editado.");
   if (tipo === "remix" && !(p.publicado?.tamano > 0)) e.push("Falta tu video ya publicado.");
   if (tipo === "pantallazos") {
     const fotos = p.pantallazos || [];
@@ -156,12 +181,12 @@ export function erroresParaEnviar(p) {
 export const archivos = (p) => [p.original, p.gancho, p.publicado, ...(p.pantallazos || [])].filter(Boolean).map((a) => a.pathname);
 export const borradorVencido = (p, ahoraMs) =>
   p.estado === "subiendo" && ahoraMs - Date.parse(p.creado) > HORAS_BORRADOR * 3600e3;
-const NOMBRE_TIPO = { pantallazos: "Con pantallazos", link: "Por link", remix: "Remix" };
+const NOMBRE_TIPO = { pantallazos: "Con pantallazos", link: "Por link", remix: "Remix", version: "Versionar" };
 const linkCorto = (l) => l && l.replace(/^https:\/\/(www\.|vm\.|vt\.|m\.)?/, "").replace(/\/$/, "");
 export const nombreTipo = (p) => (destinoDe(p) === "story" ? "Story" : NOMBRE_TIPO[tipoDe(p)] || tipoDe(p));
 // Sin título ni original, el id (c_2026…) no le dice nada a Oscar: el link o el gancho dicen de qué video es.
 export const nombreVisible = (p) =>
-  p.titulo || p.original?.nombre || linkCorto(p.link) || (p.gancho?.nombre && `Gancho ${p.gancho.nombre}`) || `${nombreTipo(p)} sin título`;
+  p.titulo || (p.base?.titulo && `Versión de ${p.base.titulo}`) || p.original?.nombre || linkCorto(p.link) || (p.gancho?.nombre && `Gancho ${p.gancho.nombre}`) || `${nombreTipo(p)} sin título`;
 
 // Borrador (Oscar 2026-10-29: «saber de qué video es y continuarlo»): qué tiene ya y qué le falta para enviarlo.
 export function resumenBorrador(p) {
@@ -170,7 +195,8 @@ export function resumenBorrador(p) {
     p.original && `original (${p.original.nombre || "subido"})`,
     p.tramos?.length && "bucle",
     p.gancho && "gancho",
-    p.publicado && "video publicado",
+    p.publicado && (tipoDe(p) === "version" ? "tu video editado" : "video publicado"),
+    p.base && `cantado «${p.base.titulo}»`,
     p.pantallazos?.length && `${p.pantallazos.length} pantallazo${p.pantallazos.length === 1 ? "" : "s"}`,
     p.propios?.length && `${p.propios.length} comentario${p.propios.length === 1 ? "" : "s"} tuyo${p.propios.length === 1 ? "" : "s"}`,
   ].filter(Boolean);
