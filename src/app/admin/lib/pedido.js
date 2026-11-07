@@ -4,6 +4,9 @@ import { validarTramos } from "./tramos.js";
 export const ESTILOS = ["Salsa, merengue", "Salsa", "Merengue"];
 export const HORAS_BORRADOR = 48;
 export const MAX_PANTALLAZOS = 40;
+// Oscar 2026-11-07: en «con pantallazos» también escribe comentarios suyos; en el video salen con nombres al azar.
+export const MAX_PROPIOS_PEDIDO = 20;
+export const MAX_TEXTO_PROPIO_PEDIDO = 300;
 
 // Resto del pathname (tras `cantados/<id>/`) permitido por cada ranura.
 const PATRON = {
@@ -52,7 +55,7 @@ export function normalizarLink(x) {
 }
 export const nuevoPedido = (id, creado, tipo = "pantallazos", destino = "reel") => ({
   id, creado, tipo, destino, estado: "subiendo", titulo: null, estilo: ESTILOS[0], tramos: [],
-  original: null, gancho: null, pantallazos: [], link: null, publicado: null, motivo: null,
+  original: null, gancho: null, pantallazos: [], propios: [], link: null, publicado: null, motivo: null,
 });
 
 // Número finito >= 0, o undefined si el campo no viene. Otro valor = inválido (null).
@@ -119,6 +122,14 @@ export function aplicarCambios(p, c) {
       lista.every(Boolean) ? (out.pantallazos = lista) : errores.push("Hay un archivo de pantallazo que no es de este pedido.");
     }
   }
+  if ("propios" in c) {
+    const lista = Array.isArray(c.propios) ? c.propios.map((t) => (typeof t === "string" ? t.trim() : "")) : null;
+    if (tipoDe(p) !== "pantallazos") errores.push("Este pedido no lleva comentarios tuyos.");
+    else if (lista && lista.length > MAX_PROPIOS_PEDIDO) errores.push(`Máximo ${MAX_PROPIOS_PEDIDO} comentarios tuyos.`);
+    else if (!lista || lista.some((t) => !t || t.length > MAX_TEXTO_PROPIO_PEDIDO))
+      errores.push(`Cada comentario tuyo debe tener entre 1 y ${MAX_TEXTO_PROPIO_PEDIDO} caracteres.`);
+    else out.propios = lista;
+  }
   if ("tramos" in c) {
     const r = validarTramos(c.tramos, esCabina(p) ? p.vista_previa?.duracion : out.original?.duracion);
     r.errores.length ? errores.push(...r.errores) : (out.tramos = r.tramos);
@@ -135,7 +146,11 @@ export function erroresParaEnviar(p) {
   if (!(p.gancho?.tamano > 0)) e.push("Falta tu gancho.");
   if (tipo !== "pantallazos" && !linkValido(p.link)) e.push("Falta el link de TikTok o Instagram.");
   if (tipo === "remix" && !(p.publicado?.tamano > 0)) e.push("Falta tu video ya publicado.");
-  if (tipo === "pantallazos" && (!p.pantallazos?.length || !p.pantallazos.every((a) => a.tamano > 0))) e.push("Faltan los pantallazos.");
+  if (tipo === "pantallazos") {
+    const fotos = p.pantallazos || [];
+    if (!fotos.every((a) => a.tamano > 0)) e.push("Faltan los pantallazos.");
+    else if (!fotos.length && !p.propios?.length) e.push("Faltan los pantallazos o tus comentarios.");
+  }
   return e;
 }
 export const archivos = (p) => [p.original, p.gancho, p.publicado, ...(p.pantallazos || [])].filter(Boolean).map((a) => a.pathname);
@@ -157,6 +172,7 @@ export function resumenBorrador(p) {
     p.gancho && "gancho",
     p.publicado && "video publicado",
     p.pantallazos?.length && `${p.pantallazos.length} pantallazo${p.pantallazos.length === 1 ? "" : "s"}`,
+    p.propios?.length && `${p.propios.length} comentario${p.propios.length === 1 ? "" : "s"} tuyo${p.propios.length === 1 ? "" : "s"}`,
   ].filter(Boolean);
   return { tipo: nombreTipo(p), tiene, faltan: erroresParaEnviar(p).map((e) => e.replace(/^Faltan? (el |la |los |tu )?/, "").replace(/\.$/, "")) };
 }

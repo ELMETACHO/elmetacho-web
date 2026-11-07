@@ -7,18 +7,18 @@ import { encolarPatch } from "../cola.js";
 import { leerMeta, subirArchivo, usePantallazos, useTrabajos } from "../subidas.js";
 import EditorTramos from "./EditorTramos.jsx";
 import { extSegura } from "../../lib/editor.js";
-import { ESTILOS, MSG_LINK, TIPOS_DISPONIBLES, linkValido, pedidoDeOpcion } from "../../lib/pedido.js";
+import { ESTILOS, MAX_PROPIOS_PEDIDO, MAX_TEXTO_PROPIO_PEDIDO, MSG_LINK, TIPOS_DISPONIBLES, linkValido, pedidoDeOpcion } from "../../lib/pedido.js";
 
 const boton = "adm-btn primario grande";
 const OPCIONES = [
-  { tipo: "pantallazos", titulo: "Con pantallazos", detalle: "Tú escoges los comentarios y subes las fotos." },
+  { tipo: "pantallazos", titulo: "Con pantallazos", detalle: "Tú escoges los comentarios: subes las fotos y, si quieres, escribes los tuyos." },
   { tipo: "link", titulo: "Por link", detalle: "Claude escoge los comentarios de TikTok o Instagram y tú los revisas aquí." },
   { tipo: "remix", titulo: "Remix", detalle: "Reeditar un cantado ya publicado: mismos comentarios en otro orden, otra canción. Sin revisión." },
   { tipo: "story", titulo: "Story", detalle: "Igual que con pantallazos, pero sale como story de Facebook: un solo video, sin corto de YouTube." },
 ];
 // Orden de las secciones de cada tipo (los números de los títulos salen de aquí).
 const SECCIONES = {
-  pantallazos: ["original", "gancho", "pantallazos", "estilo"],
+  pantallazos: ["original", "gancho", "pantallazos", "propios", "estilo"],
   link: ["link", "original", "gancho", "estilo"],
   remix: ["link", "publicado", "original", "gancho", "estilo"],
 };
@@ -54,6 +54,8 @@ export default function NuevoPedido({ inicial = null }) {
   const [avisoGancho, setAvisoGancho] = useState("");
   const [estilo, setEstilo] = useState(ini?.estilo ?? ESTILOS[0]);
   const [titulo, setTitulo] = useState(ini?.titulo ?? "");
+  const [propios, setPropios] = useState(ini?.propios ?? []); // comentarios que Oscar escribe (salen con nombres al azar)
+  const [propio, setPropio] = useState("");
   const { trabajos, fijarTrabajo, conOcupado, subiendo } = useTrabajos(); // trabajos: barras; subiendo: hay handlers en curso
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(false);
@@ -213,6 +215,18 @@ export default function NuevoPedido({ inicial = null }) {
     patch({ estilo: s }).catch((err) => setErrorGlobal(err.message));
   }
 
+  function guardarPropios(lista) {
+    setPropios(lista);
+    patch({ propios: lista }).catch((err) => setErrorGlobal(err.message));
+  }
+
+  function agregarPropio() {
+    const t = propio.trim();
+    if (!t || !idRef.current || propios.length >= MAX_PROPIOS_PEDIDO) return;
+    setPropio("");
+    guardarPropios([...propios, t.slice(0, MAX_TEXTO_PROPIO_PEDIDO)]);
+  }
+
   function guardarLink() {
     const v = link.trim();
     if (!v || !idRef.current) return;
@@ -250,7 +264,7 @@ export default function NuevoPedido({ inicial = null }) {
     !gancho && (esRemix ? "gancho nuevo" : "gancho"),
     conLink && !linkGuardado && "link de TikTok o Instagram",
     esRemix && !publicado && "video publicado",
-    tipo === "pantallazos" && pants.length === 0 && "al menos un pantallazo",
+    tipo === "pantallazos" && pants.length === 0 && propios.length === 0 && "al menos un pantallazo o un comentario tuyo",
   ].filter(Boolean);
   const falta = !id || faltan.length > 0;
   const num = (s) => (SECCIONES[tipo] || []).indexOf(s) + 1;
@@ -358,6 +372,41 @@ export default function NuevoPedido({ inicial = null }) {
               <Barra key={k} t={t} />
             ))}
           <ListaPantallazos pants={pants} onMover={moverPant} onMoverA={moverPantA} onQuitar={quitarPant} />
+        </Seccion>
+      )}
+
+      {tipo === "pantallazos" && (
+        <Seccion titulo={`${num("propios")}. Tus comentarios (opcional)`}>
+          <p className="adm-sub text-sm">Escribe comentarios inventados por ti: salen después de los de los pantallazos, con nombres al azar.</p>
+          <textarea
+            value={propio}
+            rows={2}
+            maxLength={MAX_TEXTO_PROPIO_PEDIDO}
+            className="adm-campo"
+            placeholder="Escribe un comentario"
+            aria-label="Escribe un comentario"
+            disabled={!id || propios.length >= MAX_PROPIOS_PEDIDO}
+            onChange={(e) => setPropio(e.target.value)}
+          />
+          <button className="adm-btn secundario" onClick={agregarPropio} disabled={!id || !propio.trim() || propios.length >= MAX_PROPIOS_PEDIDO}>
+            Agregar comentario
+          </button>
+          {propios.length >= MAX_PROPIOS_PEDIDO && <p className="adm-sub text-sm">Ya agregaste {MAX_PROPIOS_PEDIDO} comentarios tuyos.</p>}
+          {propios.length > 0 && (
+            <ol className="flex flex-col gap-2">
+              {propios.map((t, i) => (
+                <li key={`${i}-${t}`} className="adm-tarjeta flex items-start justify-between gap-2 p-3">
+                  <span className="text-sm">
+                    <span className="adm-etq neutro mr-2">Tuyo</span>
+                    {t}
+                  </span>
+                  <button className="adm-btn secundario chico" aria-label={`Quitar «${t}»`} onClick={() => guardarPropios(propios.filter((_, j) => j !== i))}>
+                    Quitar
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
         </Seccion>
       )}
 

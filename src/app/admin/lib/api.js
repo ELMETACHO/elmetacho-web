@@ -130,7 +130,7 @@ export function crearApi({ almacen, blob, avisar, env, ahora, azar }) {
       return json(await Promise.all(paraPc.map(async (p) => ({
         id: p.id, estado: p.estado, tipo: tipoDe(p), destino: destinoDe(p), link: p.link ?? null, creado: p.creado, titulo: p.titulo, estilo: p.estilo, tramos: p.tramos,
         original: await firmar(p.original), gancho: await firmar(p.gancho), publicado: await firmar(p.publicado ?? null),
-        pantallazos: await Promise.all((p.pantallazos || []).map(firmar)),
+        pantallazos: await Promise.all((p.pantallazos || []).map(firmar)), propios: p.propios ?? [],
       }))));
     }),
     pcBajado: delPc(async (req, id) => {

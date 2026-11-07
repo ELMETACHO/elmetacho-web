@@ -214,3 +214,21 @@ test("borrador: nombre que dice de qué video es y qué le falta", async () => {
   assert.deepEqual(r.tiene, ["link tiktok.com/ZSabc"]);
   assert.ok(r.faltan.includes("video original") && r.faltan.includes("gancho"));
 });
+
+test("con pantallazos: comentarios escritos por Oscar (texto limpio, máximo 20, solo en este tipo)", () => {
+  let { pedido, errores } = aplicarCambios(P(), { propios: ["  ese perro baila mejor que yo  ", "yo quiero uno"] });
+  assert.deepEqual(errores, []);
+  assert.deepEqual(pedido.propios, ["ese perro baila mejor que yo", "yo quiero uno"]);
+  assert.match(aplicarCambios(P(), { propios: ["ok", "   "] }).errores[0], /comentario/i);
+  assert.match(aplicarCambios(P(), { propios: ["x".repeat(301)] }).errores[0], /comentario/i);
+  assert.match(aplicarCambios(P(), { propios: Array(21).fill("hola") }).errores[0], /20/);
+  assert.match(aplicarCambios(P(), { propios: "hola" }).errores[0], /comentario/i);
+  assert.match(aplicarCambios({ ...P(), tipo: "link" }, { propios: ["hola"] }).errores[0], /no lleva/);
+});
+
+test("para enviar con pantallazos basta con fotos o con comentarios tuyos", () => {
+  const base = { ...P(), original: arch("original.mp4", { duracion: 28 }), tramos: [[0, 4]], gancho: arch("gancho.mov") };
+  assert.deepEqual(erroresParaEnviar({ ...base, propios: ["hola"] }), []);
+  assert.equal(erroresParaEnviar({ ...base, propios: [] }).length, 1);
+  assert.equal(erroresParaEnviar({ ...base, propios: ["hola"], pantallazos: [{ ...arch("p01.jpg"), tamano: 0 }] }).length, 1);
+});
