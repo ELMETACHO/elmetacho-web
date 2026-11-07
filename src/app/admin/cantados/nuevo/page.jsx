@@ -24,6 +24,7 @@ export default async function Nuevo({ searchParams }) {
     id: p.id, tipo: tipoDe(p), story: destinoDe(p) === "story", link: p.link || "", titulo: p.titulo || "", estilo: p.estilo,
     tramos: p.tramos || [], original: meta(p.original), gancho: meta(p.gancho), publicado: meta(p.publicado),
     pantallazos: (p.pantallazos || []).map(({ pathname, tamano, nombre }) => ({ pathname, tamano, nombre: nombre || "" })),
+    propios: p.propios ?? [],
   };
   return <NuevoPedido inicial={inicial} />;
 }
