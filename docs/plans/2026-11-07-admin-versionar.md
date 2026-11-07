@@ -13,7 +13,10 @@ Spec: `docs/superpowers/specs/2026-11-07-admin-versionar-design.md`. Cada tarea 
    - Prueba en `tests/test_remix.py`.
 5. **`pasada._nuevo_version`** y despacho en la línea ~859 (`modo == "version"`):
    - Si falta la base: fallido, `web.fallido` y aviso por Telegram.
-   - Si la base existe: aprobado con `version_de`.
+   - Si la base existe: aprobado con `version_de`, o `por_revisar` si trae nota.
+   - Si viene video editado: el camino de `_remix_por_tarjetas` con `fuente=[]` (todas dibujadas) y `por_revisar`.
+   - La nota va en el informe con los comentarios numerados.
+   - Actualizar `C:/Users/delga/.claude/scheduled-tasks/cantados-pasada/SKILL.md`: cómo aplicar la nota.
    - Prueba en `tests/test_web_version.py`.
 6. **Pruebas:** la suite completa con `pytest -q`.
 
@@ -21,7 +24,8 @@ Spec: `docs/superpowers/specs/2026-11-07-admin-versionar-design.md`. Cada tarea 
 
 7. **`lib/pedido.js`:**
    - `TIPOS` y `TIPOS_DISPONIBLES` incluyen `version`.
-   - `base` válida.
+   - `base` válida, o `publicado` en `version`, nunca los dos.
+   - `nota` de hasta 500 caracteres.
    - `propios` en `pantallazos` y en `version`.
    - `erroresParaEnviar` y `nombreTipo` / `nombreVisible` cubren `version`.
    - Pruebas en `pedido.test.js`.
@@ -32,7 +36,8 @@ Spec: `docs/superpowers/specs/2026-11-07-admin-versionar-design.md`. Cada tarea 
    - `pcPedidos` entrega `base`.
    - Pruebas en `api.test.js`.
 10. **`NuevoPedido.jsx`:**
-    - opción «Versionar», con la sección «Cantado a versionar» (buscador con sugerencias);
+    - opción «Versionar», con la sección «De dónde salen los comentarios»: buscador con sugerencias o subir tu video editado;
+    - la sección «Mensaje a Claude»;
     - la sección «Tus comentarios» se vuelve un componente reutilizado;
     - el texto de LISTO y la nota del estilo.
 11. **Pruebas y compilación:** `npm test` y `next build`. Después PR, checks de Vercel y fusión a main.
