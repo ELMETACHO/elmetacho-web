@@ -12,7 +12,23 @@ const DIA_S = 86400;
 const conBoton = (text) => ({ text, quick_replies: [{ content_type: "text", title: BOTON, payload: PAYLOAD }] });
 const conLink = (d) => ({ text: `${d.mensaje_dm}\n${d.link}` });
 
-export async function atenderComentario({ r, graph, disparadores, fallo, token }, a) {
+// Último DM que MLABS envió por la cuenta: el panel lo muestra para que la marca (y el revisor de Meta) vea el envío.
+// Solo la hora, la palabra, el tipo y el texto (que es de la marca); nada de quien lo recibe. Se borra con la cuenta.
+const ULTIMO_DM_S = 8 * DIA_S;
+async function anotarDm(r, cuenta, ahora, d, tipo, mensaje) {
+  try {
+    await r.set(clave(cuenta, "ultimo_dm"), JSON.stringify({ hora: ahora(), palabra: d.palabra, tipo, texto: mensaje.text }), { expiration: { type: "EX", value: ULTIMO_DM_S } });
+  } catch (e) {
+    console.error(`instagram: no se pudo anotar el último DM de ${cuenta} (${e?.message})`);
+  }
+}
+export async function leerUltimoDm(r, cuenta) {
+  const v = await r.get(clave(cuenta, "ultimo_dm"));
+  if (!v) return null;
+  try { return JSON.parse(v); } catch { return null; }
+}
+
+export async function atenderComentario({ r, graph, disparadores, fallo, token, ahora = Date.now }, a) {
   if (!a.id || !a.usuario || a.usuario === a.cuenta) return "propio";
   if (await pausaVigente(r, a.cuenta, token)) return "pausa";
   const d = buscarDisparador(a.texto, disparadores);
@@ -29,9 +45,11 @@ export async function atenderComentario({ r, graph, disparadores, fallo, token }
   try {
     if (d.pedir_seguir) {
       await r.set(clave(a.cuenta, "esperando", a.usuario), d.id, { expiration: { type: "EX", value: DIA_S } });   // antes de enviar: el toque puede llegar enseguida
-      await privadoConRespaldo(graph, a.cuenta, a.id);
+      await anotarDm(r, a.cuenta, ahora, d, "comentario", await privadoConRespaldo(graph, a.cuenta, a.id));
     } else {
-      await graph.privado(a.cuenta, a.id, conLink(d));
+      const m = conLink(d);
+      await graph.privado(a.cuenta, a.id, m);
+      await anotarDm(r, a.cuenta, ahora, d, "comentario", m);
     }
     return "enviado";
   } catch (e) {
@@ -41,16 +59,21 @@ export async function atenderComentario({ r, graph, disparadores, fallo, token }
 }
 
 // Si Meta rechaza el botón en la respuesta privada, se reintenta una vez con solo texto (cualquier mensaje cuenta).
+// Devuelve el mensaje que salió.
 async function privadoConRespaldo(graph, cuenta, id) {
+  const m = conBoton("Para recibirlo, sígueme y toca 👇");
   try {
-    await graph.privado(cuenta, id, conBoton("Para recibirlo, sígueme y toca 👇"));
+    await graph.privado(cuenta, id, m);
+    return m;
   } catch (e) {
     if (tokenInvalido(e)) throw e;
-    await graph.privado(cuenta, id, { text: "Para recibirlo, sígueme y respóndeme cualquier mensaje 👇" });
+    const solo = { text: "Para recibirlo, sígueme y respóndeme cualquier mensaje 👇" };
+    await graph.privado(cuenta, id, solo);
+    return solo;
   }
 }
 
-export async function atenderMensaje({ r, graph, disparadores, fallo, token }, a) {
+export async function atenderMensaje({ r, graph, disparadores, fallo, token, ahora = Date.now }, a) {
   const k = clave(a.cuenta, "esperando", a.usuario);
   const idD = a.usuario ? await r.get(k) : null;
   if (!idD) return "sin espera";
@@ -59,11 +82,15 @@ export async function atenderMensaje({ r, graph, disparadores, fallo, token }, a
   if (!d) { await r.del(k); return "sin disparador"; }
   try {
     if (await graph.sigue(a.usuario)) {
-      await graph.mensaje(a.cuenta, a.usuario, conLink(d));
+      const m = conLink(d);
+      await graph.mensaje(a.cuenta, a.usuario, m);
+      await anotarDm(r, a.cuenta, ahora, d, "mensaje", m);
       await r.del(k);
       return "enviado";
     }
-    await graph.mensaje(a.cuenta, a.usuario, conBoton("Aún no me sigues 🙂 Sígueme y vuelve a tocar el botón"));
+    const m = conBoton("Aún no me sigues 🙂 Sígueme y vuelve a tocar el botón");
+    await graph.mensaje(a.cuenta, a.usuario, m);
+    await anotarDm(r, a.cuenta, ahora, d, "mensaje", m);
     return "no sigue";
   } catch (e) {
     await fallo(e);

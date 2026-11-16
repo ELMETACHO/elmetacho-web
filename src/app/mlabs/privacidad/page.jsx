@@ -62,7 +62,9 @@ export default function Privacidad() {
               Si eres una marca y conectas tu cuenta de Instagram a MLABS (en /automatizar), guardamos:
               el id y el usuario de tu cuenta de Instagram, tu token de acceso (cifrado), las palabras
               clave, respuestas y links que configuras, tu correo de Mercado Pago y el estado de tu
-              suscripción (fechas del periodo gratis y de cobro).
+              suscripción (fechas del periodo gratis y de cobro). También guardamos, durante 8 días, el
+              último DM que MLABS envió por tu cuenta (hora, palabra clave y el texto de tu propia respuesta,
+              sin datos de quien lo recibe), para mostrártelo en tu panel.
             </p>
             <p>
               Los usamos solo para responder, en tu nombre, los comentarios de tu cuenta que traen una de
