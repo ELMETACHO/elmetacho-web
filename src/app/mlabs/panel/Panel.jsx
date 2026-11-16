@@ -2,6 +2,7 @@
 // Panel.jsx — estado de la cuenta (se amplía en las Tareas 8, 10 y 11).
 import { useEffect, useState } from "react";
 import Palabras from "../../admin/palabras/Palabras.jsx";
+import UltimoDm from "./UltimoDm.jsx";
 
 export default function Panel() {
   const [e, setE] = useState(null);
@@ -53,6 +54,7 @@ export default function Panel() {
       <div className="mt-6">
         <Palabras Titulo="h2" api="/api/mlabs/palabras" titulo="Tus palabras clave" volver={null} avisoPausa="" />
       </div>
+      <UltimoDm />
       {!e.casa && (
         <button disabled={enviando} className="mt-8 text-sm text-red-700 underline disabled:opacity-50" onClick={() => confirm("Se borran tu conexión, tus palabras clave y tus datos, y se cancela tu suscripción. ¿Seguir?") && enviar("/api/mlabs/desconectar")}>
           Desconectar Instagram y borrar mis datos

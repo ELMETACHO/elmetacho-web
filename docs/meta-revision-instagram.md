@@ -269,3 +269,116 @@ Hazla el día del envío, en este orden. Lo marcado «(doc)» sale de la documen
 5. **Botón «Ya te sigo» no verificado.** La documentación de Meta no dice que una respuesta privada (con `recipient.comment_id`) acepte botones de respuesta rápida. El código trata cualquier mensaje del usuario con una espera vigente de 24 h como confirmación, así que el flujo funciona aunque el botón no aparezca (el usuario responde con cualquier texto). Antes de grabar el video 3, comprobar en vivo si el botón se ve; si no, grabar con respuesta de texto y ajustar el subtítulo.
 6. **Textos del sitio con el nombre viejo.** Resuelto el 2026-10-30: `/privacidad` y `/eliminar-datos` ya dicen «MLABS».
 7. **Cuentas propias en la misma app.** @elmetacho_ (links por DM) y @metacholabs se atienden con la misma app; la política de privacidad lo explica y B.3 lo declara. El revisor puede preguntar.
+
+---
+
+## G. Reenvío de `instagram_business_manage_messages` (rechazado el 2026-11-16)
+
+**Qué pasó.** El envío del 31 oct salió el 16 nov (unos 16 días):
+
+- `instagram_business_basic` y `instagram_business_manage_comments`: **aprobados**.
+- `instagram_business_manage_messages`: **rechazado** solo por el video. Meta dice que el caso de uso está permitido.
+
+Nota del revisor: el video no muestra «a message being sent from your app UI and the same message appearing in the native client». Pide tres cosas:
+
+1. La cuenta elegida a la vista.
+2. Un envío en vivo desde la app.
+3. El mensaje entregado en el cliente nativo.
+
+**Qué buscamos (2026-11-16).** No encontramos ningún relato real verificable de alguien rechazado con este texto y aprobado después. Reddit y Stack Overflow no se dejaron leer. Lo que más se repite es la receta oficial:
+
+- el login y la concesión del permiso;
+- la app enviando el mensaje;
+- el inbox nativo (web o móvil) recibiéndolo;
+- el cURL de envío.
+
+Fuentes:
+- https://developers.facebook.com/docs/permissions
+- https://developers.facebook.com/docs/app-review/submission-guide/screen-recordings
+- https://developers.chatwoot.com/self-hosted/instagram-app-review
+
+**Qué cambió en la app.** El panel tiene un bloque nuevo, «Último DM enviado por MLABS (Last DM sent by MLABS)»:
+
+- Se actualiza solo cada 4 s.
+- Muestra hace cuánto salió, la palabra, el tipo y el texto enviado.
+- Es el «envío desde la app» que el revisor no vio.
+- La política de privacidad lo declara: se guarda 8 días, sin datos de quien recibe.
+
+### G.1 Preparación (antes de grabar)
+
+- [ ] Cuenta **A (marca)**:
+  - profesional, pública, con al menos una publicación y rol de probador;
+  - **desconectada** de MLABS para grabar el login desde cero.
+- [ ] Cuenta **B (persona)**: otra cuenta **sin** conversación previa con A, para que se vea que el DM nace del comentario.
+- [ ] Texto del DM **único y con la hora**, para reconocer el mismo mensaje en las dos pantallas:
+  - Texto: `MLABS test 16-Nov 4:10 pm: here is the price list you asked for`
+  - Link: `https://mlabs.elmetacho.com`
+- [ ] Navegador e Instagram en **inglés** (instagram.com → Settings → Language → English).
+- [ ] Dos ventanas de Chrome lado a lado, 1920×1080:
+  - **Izquierda:** perfil normal → `https://mlabs.elmetacho.com/automatizar`. Aquí entra la marca A.
+  - **Derecha:** ventana de incógnito → `https://www.instagram.com` con la cuenta B.
+  - La derecha es el cliente nativo web, que Meta acepta («web or mobile»). Evita el celular: hay reportes de pantalla negra al grabar el inbox en Android.
+- [ ] Al final de la toma, la cuenta A en `instagram.com/direct/inbox`, para mostrar el mensaje como **enviado** desde la marca. Puede ser un perfil de Chrome aparte.
+- [ ] Grabador:
+  - OBS o la barra de juegos de Windows (Win+Alt+R);
+  - pantalla completa, **sin audio** y con el cursor visible.
+
+### G.2 Guion del video
+
+Una sola toma, sin cortes. Los subtítulos en inglés se agregan en la edición.
+
+| # | Qué se ve y qué se hace | Subtítulo (inglés) |
+|---|---|---|
+| 1 | Izquierda: `/automatizar`, clic en «Iniciar sesión con Instagram». Pantalla de Instagram con la cuenta A y los permisos. «Allow». | The brand logs in with Instagram (Business Login) and grants instagram_business_manage_messages. |
+| 2 | Vuelve al panel: **@cuentaA** arriba. Señalarla con el mouse. | Asset selection: the connected Instagram account is @A. All messages are sent from this account. |
+| 3 | Si está sin activar: código de acceso (difuminado en la edición) → «Activar». | Reviewer access code (blurred). |
+| 4 | En «Tus palabras clave», editar «precio»: pegar el texto único en «Mensaje del DM» y el link. «Guardar» → «Guardado ✓». | The brand writes the exact DM text that MLABS will send. |
+| 5 | Bajar al bloque «Último DM enviado por MLABS». Mostrar que está vacío o con un envío viejo. | This box shows, live, every DM that MLABS sends from this account. |
+| 6 | Derecha (cuenta B): abrir una publicación de A y comentar `precio`. | Another Instagram user comments the keyword "precio" on the brand's post. |
+| 7 | Izquierda: en segundos el bloque cambia a «hace 2 s · palabra «precio»» con el texto único. Señalarlo. | SEND ACTION: MLABS sends the DM now via POST /{ig-id}/messages (private reply to the comment). The app shows the message it just sent. |
+| 8 | Derecha: abrir el inbox de B (`instagram.com/direct/inbox`). Está el DM de A con el mismo texto y el link. Abrir el link. | The same message is delivered in the native Instagram client of the person who commented. |
+| 9 | Cuenta A en `instagram.com/direct/inbox`: el mismo mensaje como enviado por la marca. | It also appears as sent in the brand's own Instagram inbox. |
+| 10 | Opcional: panel de Meta → la app → Instagram → configuración de la API. Mostrar el ejemplo de envío de mensaje (cURL `POST /{ig-id}/messages`). **No** enviar desde ahí. | Equivalent API request. |
+| 11 | Rótulo final. | MLABS has no manual "compose" box by design: it only sends private replies to people who commented a keyword (one per comment), and replies to people who wrote first. |
+
+Duración objetivo: entre 1:30 y 2:30. El paso 10 depende de que ese ejemplo siga existiendo en el panel de Meta (no está verificado).
+
+### G.3 Nota para el revisor (inglés, para pegar al reenviar)
+
+```
+Thank you for the review. We re-recorded the screencast for instagram_business_manage_messages in a single continuous take, split screen: left = our app (MLABS dashboard), right = the native Instagram client (instagram.com) of the person who receives the message.
+
+How MLABS sends messages: MLABS has no manual compose box by design. The brand writes the DM text in its dashboard; when a person comments the brand's keyword, MLABS sends that text as a private reply with POST /{ig-id}/messages (recipient.comment_id). To make the send visible in our UI, the dashboard now shows "Last DM sent by MLABS" live: time, keyword and the exact text that was sent.
+
+Screencast timeline:
+0:00 Log in with Instagram and grant instagram_business_manage_messages.
+M:SS Asset selection: the connected account @A at the top of the dashboard.
+M:SS The brand writes the DM text and saves it.
+M:SS Account B comments the keyword "precio" on the brand's post (right side).
+M:SS Send action: the dashboard shows the DM MLABS just sent (left side).
+M:SS The same message is delivered in account B's native Instagram inbox (right side).
+M:SS The same message appears as sent in the brand's Instagram inbox.
+
+The optional "follow first" step uses the same endpoint and is described in the test instructions.
+```
+
+Antes de pegar, cambia los `M:SS` por los minutos reales del video y `@A` por el usuario de la cuenta A.
+
+### G.4 Cambio en la descripción B.3 al reenviar
+
+Agregar al final de B.3, antes de «Privacy policy»:
+
+```
+To show the brand what was sent, MLABS keeps for 8 days only the last DM it sent from the brand's account (time, keyword and the brand's own message text, with no data about the recipient) and displays it in the dashboard as "Last DM sent by MLABS".
+```
+
+### G.5 Al reenviar
+
+- [ ] App Review → el envío → «Volver a solicitar», solo para `instagram_business_manage_messages`.
+- [ ] Subir el video nuevo.
+- [ ] Pegar B.3 con el párrafo de G.4.
+- [ ] Pegar la nota de G.3 con los minutos reales.
+- [ ] Instrucciones de prueba (sección D): iguales. El código de acceso es el mismo (vigente un año).
+- [ ] Anotar la fecha del reenvío aquí y en `docs/BRIEF.md`.
+
+**Riesgo abierto.** Mientras `manage_messages` no esté aprobado, una marca **sin rol** en la app recibe la respuesta pública, pero probablemente no el DM. No está probado con una cuenta ajena.

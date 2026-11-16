@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { redisMemoria } from "./redis-memoria.js";
 import { pausar } from "./estado.js";
 import { ErrorMeta } from "./graph.js";
-import { atenderComentario, atenderMensaje, BOTON } from "./automatizacion.js";
+import { atenderComentario, atenderMensaje, BOTON, leerUltimoDm } from "./automatizacion.js";
 
 const curso = { id: "d1", palabra: "curso", respuesta_publica: "¡Enviado! Revisa tu DM 📩", mensaje_dm: "Aquí está el curso", link: "https://mlabs.elmetacho.com/recursos/curso", pedir_seguir: false, activa: true };
 const conSeguir = { ...curso, id: "d2", palabra: "guia", pedir_seguir: true };
@@ -106,4 +106,28 @@ test("la pausa termina al llegar un token distinto", async () => {
   assert.equal(await atenderComentario({ ...deps, token: "VIEJO" }, com("curso")), "pausa");
   assert.equal(await atenderComentario({ ...deps, token: "NUEVO" }, com("curso")), "enviado");
   assert.equal(llamadas.length, 2);
+});
+
+test("cada DM enviado queda anotado como el último (hora, palabra, tipo y texto), 8 días", async () => {
+  const { deps } = montar({ sigue: false });
+  deps.ahora = () => 1000;
+  assert.equal(await leerUltimoDm(deps.r, "222"), null);
+  await atenderComentario(deps, com("curso"));
+  assert.deepEqual(await leerUltimoDm(deps.r, "222"), { hora: 1000, palabra: "curso", tipo: "comentario", texto: "Aquí está el curso\nhttps://mlabs.elmetacho.com/recursos/curso" });
+  deps.ahora = () => 2000;
+  await atenderComentario(deps, com("la guía", { id: "c2" }));
+  assert.equal((await leerUltimoDm(deps.r, "222")).texto, "Para recibirlo, sígueme y toca 👇");
+  deps.ahora = () => 3000;
+  await atenderMensaje(deps, { tipo: "mensaje", cuenta: "222", usuario: "u1" });
+  assert.deepEqual(await leerUltimoDm(deps.r, "222"), { hora: 3000, palabra: "guia", tipo: "mensaje", texto: "Aún no me sigues 🙂 Sígueme y vuelve a tocar el botón" });
+});
+
+test("si el DM falla no se anota; si anotar falla, el envío sigue contando como enviado", async () => {
+  const a = montar({ falla: "privado" });
+  await atenderComentario(a.deps, com("curso"));
+  assert.equal(await leerUltimoDm(a.deps.r, "222"), null);
+  const b = montar();
+  const setReal = b.deps.r.set;
+  b.deps.r.set = async (k, ...x) => { if (k.endsWith(":ultimo_dm")) throw new Error("redis caído"); return setReal(k, ...x); };
+  assert.equal(await atenderComentario(b.deps, com("curso")), "enviado");
 });
