@@ -222,3 +222,8 @@
 .m-pie a { color: var(--m-gris); }
 
 @media (prefers-reduced-motion: reduce) { .mlabs * { transition: none !important; } }
+
+/* Campos de formularios de la tienda */
+.m-campo { display: block; width: 100%; min-height: 50px; margin-top: 4px; border-radius: 14px; border: 1.5px solid var(--m-borde); padding: 0 14px;
+  font: inherit; font-size: 17px; color: var(--m-tinta); background: #fff; }
+.m-campo:focus { outline: none; border-color: var(--m-tinta); }

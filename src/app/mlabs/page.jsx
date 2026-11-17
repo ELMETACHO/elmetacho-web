@@ -4,7 +4,8 @@ import FormularioLead from "./FormularioLead";
 import Buscador from "./componentes/Buscador";
 import Catalogo from "./componentes/Catalogo";
 import TarjetaProducto from "./componentes/TarjetaProducto";
-import { productos, publicos, novedadesRecientes, enlaceNovedad } from "./contenido/index.js";
+import { productosVisibles, publicos, novedadesRecientes, enlaceNovedad } from "./contenido/index.js";
+import { modoTienda } from "./lib/tienda/tienda.js";
 import { contenidoGuias } from "./contenido/recursos.js";
 
 // Las guías salen de Redis (sin deploy) con ISR: la página se regenera cada 5 minutos o al guardar un recurso.
@@ -130,7 +131,7 @@ export default async function Mlabs() {
           <div className="m-titulo-seccion"><h2>Productos</h2></div>
           <p className="m-intro">Lo que usamos en Metacho LABS, listo para tu computador. Apártalo y te avisamos primero cuando abra.</p>
           <div className="m-rejilla">
-            {productos.map((p) => (
+            {productosVisibles(modoTienda(process.env)).map((p) => (
               <TarjetaProducto key={p.slug} producto={p} />
             ))}
           </div>
