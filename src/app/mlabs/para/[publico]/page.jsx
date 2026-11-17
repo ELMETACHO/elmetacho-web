@@ -2,7 +2,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MlabsHeader, MlabsFooter } from "../../MlabsMarco";
 import TarjetaContenido from "../../componentes/TarjetaContenido";
-import { guias, productos, publicos, publicoPorSlug } from "../../contenido/index.js";
+import { productos, publicos, publicoPorSlug } from "../../contenido/index.js";
+import { contenidoGuias } from "../../contenido/recursos.js";
+
+export const revalidate = 300;
 
 export function generateStaticParams() {
   return publicos.map((p) => ({ publico: p.slug }));
@@ -24,17 +27,18 @@ export default async function Pilar({ params }) {
   const { publico } = await params;
   const p = publicoPorSlug(publico);
   if (!p) notFound();
+  const { guias } = await contenidoGuias();
   const suyas = guias.filter((g) => g.publicos.includes(publico));
   const relacionados = productos.filter((x) => suyas.some((g) => g.productoRelacionado === x.slug));
 
   return (
-    <main className="min-h-screen bg-white text-stone-950">
+    <main>
       <MlabsHeader />
-      <div className="mx-auto max-w-3xl px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
-        <p className="text-sm font-bold uppercase tracking-[0.3em] text-rojo">Para {p.nombre.toLowerCase()}</p>
-        <h1 className="titular-ancho mt-3 text-4xl sm:text-6xl">{p.titulo}</h1>
-        <p className="mt-4 text-lg leading-8 text-gris">{p.intro}</p>
-        <div className="mt-10 grid gap-3 sm:grid-cols-2">
+      <div className="m-ancho m-post">
+        <p className="m-migas"><Link href="/recursos">Guías gratis</Link> / Para {p.nombre.toLowerCase()}</p>
+        <h1 style={{ marginTop: 0 }}>{p.titulo}</h1>
+        <p className="m-resumen">{p.intro}</p>
+        <div className="m-rejilla" style={{ marginTop: 16 }}>
           {suyas.map((g) => (
             <TarjetaContenido key={g.slug} guia={g} />
           ))}

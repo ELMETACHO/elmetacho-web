@@ -61,45 +61,45 @@ export default function Desbloqueo({
     }
   };
 
-  const campo = "w-full rounded-2xl border border-black/15 bg-white px-4 py-4 text-base outline-none focus:border-rojo focus:ring-2 focus:ring-rojo/20";
   return (
     <>
       {!libre && (
-        <form onSubmit={enviar} className="formulario-desbloqueo mt-10 space-y-3 rounded-[1.75rem] border-2 border-black p-5 sm:p-8">
-          <p className="text-2xl font-black">{titulo}</p>
-          <p className="leading-7 text-gris">{texto}</p>
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">Nombre</span>
-            <input name="nombre" required autoComplete="name" className={campo} />
+        <form onSubmit={enviar} className="formulario-desbloqueo m-candado">
+          <p>{titulo}</p>
+          <p>{texto}</p>
+          <label>
+            <span>Nombre</span>
+            <input name="nombre" required autoComplete="name" />
           </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">Correo</span>
-            <input name="correo" required type="email" autoComplete="email" inputMode="email" className={campo} />
+          <label>
+            <span>Correo</span>
+            <input name="correo" required type="email" autoComplete="email" inputMode="email" placeholder="tu@correo.com" />
           </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">WhatsApp (opcional)</span>
-            <input name="telefono" type="tel" inputMode="tel" autoComplete="tel" placeholder="+57 300 000 0000" className={campo} />
+          <label>
+            <span>WhatsApp (opcional)</span>
+            <input name="telefono" type="tel" inputMode="tel" autoComplete="tel" placeholder="+57 300 000 0000" />
           </label>
           <input name="empresa_web" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
-          <label className="flex gap-3 text-sm leading-5 text-gris">
-            <input type="checkbox" name="acepta" required className="mt-0.5 h-5 w-5 shrink-0 accent-rojo" />
+          <label className="m-acepto">
+            <input type="checkbox" name="acepta" required />
             <span>
               Acepto que EL METACHO S.A.S. me contacte y trate mis datos según la{" "}
-              <a href="https://www.elmetacho.com/privacidad" className="underline">política de privacidad</a>.
+              <a href="https://www.elmetacho.com/privacidad">política de privacidad</a>.
             </span>
           </label>
           {estado === "error" && (
-            <p className="rounded-2xl bg-rojo/10 p-3 text-sm text-rojo" role="alert">
-              {error} Intenta de nuevo o escríbenos por{" "}
-              <a href={MLABS_WHATSAPP} className="font-bold underline">WhatsApp</a>.
+            <p role="alert">
+              {error} Intenta de nuevo o escríbenos por <a href={MLABS_WHATSAPP}>WhatsApp</a>.
             </p>
           )}
-          <button type="submit" disabled={estado === "enviando"} className="w-full rounded-full bg-rojo px-6 py-4 text-base font-bold text-white disabled:opacity-60">
+          <button type="submit" disabled={estado === "enviando"} className="m-boton m-boton-primario m-boton-ancho">
             {estado === "enviando" ? "Abriendo…" : boton}
           </button>
         </form>
       )}
-      <div className={libre ? "mt-10 space-y-10" : "contenido-bloqueado mt-10 space-y-10"}>{children}</div>
+      <div className={libre ? "" : "contenido-bloqueado"}>
+        <div className="m-cuerpo">{children}</div>
+      </div>
     </>
   );
 }

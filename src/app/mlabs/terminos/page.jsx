@@ -13,7 +13,7 @@ export default function Terminos() {
   return (
     <main className="min-h-screen bg-white text-black">
       <MlabsHeader />
-      <section className="papel-cuad min-h-[80svh] px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
+      <section className="papel-cuad min-h-[80svh] px-4 pb-16 pt-24 sm:px-8 sm:pt-28">
         <div className="mx-auto max-w-2xl">
           <h1 className="titular-ancho text-5xl sm:text-6xl">Términos del servicio</h1>
           <div className="mt-6 space-y-4 text-base leading-8 text-gris">

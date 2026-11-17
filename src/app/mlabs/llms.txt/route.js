@@ -1,9 +1,11 @@
 // llms.txt: resumen en texto plano para buscadores con IA (ChatGPT, Perplexity, Claude…). Se arma solo desde el contenido.
-import { guias, productos, publicos, novedadesRecientes } from "../contenido/index.js";
+import { productos, publicos, novedadesRecientes } from "../contenido/index.js";
+import { contenidoGuias } from "../contenido/recursos.js";
 
-export const dynamic = "force-static";
+export const revalidate = 300;
 
-export function GET() {
+export async function GET() {
+  const { guias } = await contenidoGuias();
   const base = "https://mlabs.elmetacho.com";
   const txt = `# MLABS
 
@@ -19,7 +21,7 @@ Contacto: WhatsApp +57 320 264 6716 · contacto@elmetacho.com
 ## Guías
 ${guias.map((g) => `- [${g.titulo}](${base}/recursos/${g.slug}): ${g.resumen}`).join("\n")}
 
-## Productos (preventa)
+## Productos (muy pronto)
 ${productos.map((p) => `- [${p.nombre}](${base}/productos/${p.slug}): ${p.promesa}`).join("\n")}
 
 ## Por público

@@ -76,7 +76,7 @@ export default function EdicionNovedades({ edicion }) {
   const anteriores = edicionesRecientes.filter((e) => e.slug !== edicion.slug);
   const guias = (edicion.guiasRelacionadas ?? []).map(guiaPorSlug).filter(Boolean);
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
+    <div className="mx-auto max-w-2xl px-4 pb-16 pt-24 sm:px-8 sm:pt-28">
       {actual ? (
         <p className="text-sm font-bold text-rojo">¿Comentaste {PALABRA_NOVEDADES}? Esta es la edición de esta semana.</p>
       ) : (

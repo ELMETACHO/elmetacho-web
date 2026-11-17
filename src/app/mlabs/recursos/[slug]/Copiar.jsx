@@ -12,7 +12,7 @@ export default function Copiar({ texto }) {
     } catch {}
   };
   return (
-    <button type="button" onClick={copiar} className="rounded-full bg-[#E10600] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white active:scale-95">
+    <button type="button" onClick={copiar} className="m-boton m-boton-primario" style={{ minHeight: 34, padding: "0 14px", fontSize: 14 }}>
       {ok ? "¡Copiado!" : "Copiar"}
     </button>
   );

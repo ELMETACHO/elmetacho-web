@@ -1,9 +1,11 @@
 // Sitemap de mlabs.elmetacho.com (el subdominio reescribe /sitemap.xml a esta ruta)
-import { guias, productos, publicos, edicionesRecientes } from "../contenido/index.js";
+import { productos, publicos, edicionesRecientes } from "../contenido/index.js";
+import { contenidoGuias } from "../contenido/recursos.js";
 
-export const dynamic = "force-static";
+export const revalidate = 300;
 
-export function GET() {
+export async function GET() {
+  const { guias } = await contenidoGuias();
   const base = "https://mlabs.elmetacho.com";
   const urls = [
     { u: "" },

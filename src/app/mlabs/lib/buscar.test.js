@@ -5,7 +5,7 @@ import { crearIndice, buscar } from "./buscar.js";
 const indice = crearIndice([
   { href: "/recursos/resena", titulo: "Cómo responder reseñas sin sonar a robot", tipo: "prompt", palabra: "RESEÑA", resumen: "Usa la IA para responder", publicos: ["marcas"] },
   { href: "/recursos/recicla", titulo: "Un video, siete piezas de contenido", tipo: "prompt", palabra: "RECICLA", resumen: "Grabas una vez", publicos: ["creadores"] },
-  { href: "/productos/editor-automatico", titulo: "Editor automático con Claude", tipo: "producto", resumen: "Claude te edita el video" },
+  { href: "/productos/edita-con-claude", titulo: "Editor automático con Claude", tipo: "producto", resumen: "Claude te edita el video" },
 ]);
 
 test("la palabra exacta del video encuentra la guía, sin importar tildes ni mayúsculas", () => {
@@ -26,7 +26,7 @@ test("una palabra parcial encuentra resultados y la coincidencia de palabra clav
 });
 
 test("encuentra productos", () => {
-  assert.deepEqual(buscar(indice, "editor").resultados.map((x) => x.href), ["/productos/editor-automatico"]);
+  assert.deepEqual(buscar(indice, "editor").resultados.map((x) => x.href), ["/productos/edita-con-claude"]);
 });
 
 test("sin resultados y consulta vacía", () => {

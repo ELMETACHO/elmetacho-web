@@ -10,7 +10,7 @@ export const guias = [
     publicos: ["creadores", "ia-y-developers"],
     tiempo: 3,
     actualizado: "2026-10-15",
-    productoRelacionado: "editor-automatico",
+    productoRelacionado: "edita-con-claude",
     secciones: [
       { titulo: "Qué hace", bloques: [
         { p: "Antes me demoraba unas dos horas editando un video de un minuto. Ahora grabo y el video sale listo para publicar:" },

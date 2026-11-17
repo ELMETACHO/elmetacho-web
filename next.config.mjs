@@ -3,6 +3,13 @@
 const MLABS_HOST = [{ type: "host", value: "mlabs\\..*" }];
 
 const nextConfig = {
+  // El «Editor automático» pasó a ser el Kit Edita con Claude (2026-11-16): los links viejos de los DMs siguen sirviendo.
+  async redirects() {
+    return [
+      { source: "/productos/editor-automatico", has: MLABS_HOST, destination: "/productos/edita-con-claude", permanent: true },
+      { source: "/mlabs/productos/editor-automatico", destination: "/mlabs/productos/edita-con-claude", permanent: true },
+    ];
+  },
   async rewrites() {
     return {
       beforeFiles: [

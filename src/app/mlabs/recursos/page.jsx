@@ -1,6 +1,10 @@
 import { MlabsHeader, MlabsFooter } from "../MlabsMarco";
 import Catalogo from "../componentes/Catalogo";
-import { tarjetasGuias, publicos } from "../contenido/index.js";
+import Buscador from "../componentes/Buscador";
+import { publicos } from "../contenido/index.js";
+import { contenidoGuias } from "../contenido/recursos.js";
+
+export const revalidate = 300;
 
 export const metadata = {
   title: { absolute: "Guías gratis · MLABS by El Metacho" },
@@ -14,13 +18,15 @@ export const metadata = {
   },
 };
 
-export default function Recursos() {
+export default async function Recursos() {
+  const { tarjetasGuias, indiceBusqueda } = await contenidoGuias();
   return (
-    <main className="min-h-screen bg-white text-stone-950">
+    <main>
       <MlabsHeader />
-      <div className="mx-auto max-w-3xl px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
-        <h1 className="titular-ancho text-5xl sm:text-7xl">Guías y prompts gratis</h1>
-        <p className="mt-4 text-lg leading-8 text-gris">Busca la palabra que comentaste en el video arriba o filtra por lo que te interesa.</p>
+      <div className="m-ancho m-post">
+        <h1 style={{ marginTop: 0 }}>Guías gratis</h1>
+        <p className="m-resumen" style={{ marginBottom: 16 }}>Escribe la palabra que comentaste en el reel o filtra por lo que te interesa.</p>
+        <Buscador indice={indiceBusqueda} id="buscar-recursos" />
         <Catalogo guias={tarjetasGuias} publicos={publicos} />
       </div>
       <MlabsFooter />

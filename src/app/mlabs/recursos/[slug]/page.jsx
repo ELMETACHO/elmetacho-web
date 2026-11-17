@@ -2,18 +2,25 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MlabsHeader, MlabsFooter } from "../../MlabsMarco";
 import FormularioLead from "../../FormularioLead";
-import { guias, guiaPorSlug, productoPorSlug, publicoPorSlug } from "../../contenido/index.js";
-import TarjetaProducto from "../../componentes/TarjetaProducto";
+import { productoPorSlug, publicoPorSlug } from "../../contenido/index.js";
+import { contenidoGuias } from "../../contenido/recursos.js";
+import { SiguientePaso } from "../../componentes/TarjetaProducto";
+import Portada, { COLOR_TIPO, ETIQUETA_TIPO } from "../../componentes/Portada";
 import Bloque from "../../componentes/Bloque";
 import Desbloqueo from "../../componentes/Desbloqueo";
 
-export function generateStaticParams() {
+// Guías desde Redis con ISR: las nuevas se generan en la primera visita, sin deploy.
+export const revalidate = 300;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const { guias } = await contenidoGuias();
   return guias.map((g) => ({ slug: g.slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const g = guiaPorSlug(slug);
+  const g = (await contenidoGuias()).guiaPorSlug(slug);
   if (!g) return {};
   return {
     title: { absolute: `${g.titulo} · MLABS by El Metacho` },
@@ -27,26 +34,28 @@ export async function generateMetadata({ params }) {
   };
 }
 
-const fecha = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+const fecha = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "short" });
+// JSON-LD dentro de <script>: «<» escapado para que un texto no pueda cerrar la etiqueta.
+const ld = (o) => JSON.stringify(o).replace(/</g, "\\u003c");
 
 function Seccion({ s, n }) {
   return (
-    <section id={`paso-${n}`} className="scroll-mt-44">
-      <h2 className="text-2xl font-black tracking-tight sm:text-3xl">{s.titulo}</h2>
-      <div className="mt-4 space-y-4">
-        {s.bloques.map((b, i) => (
-          <Bloque key={i} b={b} />
-        ))}
-      </div>
+    <section id={`paso-${n}`} style={{ scrollMarginTop: 80 }}>
+      <h2>{s.titulo}</h2>
+      {s.bloques.map((b, i) => (
+        <Bloque key={i} b={b} />
+      ))}
     </section>
   );
 }
 
 export default async function Guia({ params }) {
   const { slug } = await params;
-  const g = guiaPorSlug(slug);
+  const g = (await contenidoGuias()).guiaPorSlug(slug);
   if (!g) notFound();
   const libres = g.seccionesLibres ?? 1;
+  const bloqueadas = g.secciones.slice(libres);
+  const producto = g.productoRelacionado && productoPorSlug(g.productoRelacionado);
   const url = `https://mlabs.elmetacho.com/recursos/${slug}`;
   const articulo = {
     "@context": "https://schema.org",
@@ -68,58 +77,56 @@ export default async function Guia({ params }) {
     totalTime: `PT${g.tiempo}M`,
     step: g.secciones.map((s, i) => ({ "@type": "HowToStep", position: i + 1, name: s.titulo, url: `${url}#paso-${i + 1}` })),
   };
+  // «Te faltan 2 partes: el prompt y los ejemplos»: el candado dice exactamente qué se abre.
+  const faltan = bloqueadas.map((s) => s.titulo.toLowerCase());
+  const tituloCandado =
+    bloqueadas.length === 1 ? `Te falta 1 parte: ${faltan[0]}` : `Te faltan ${bloqueadas.length} partes: ${faltan.slice(0, -1).join(", ")} y ${faltan.at(-1)}`;
 
   return (
-    <main className="min-h-screen bg-white text-stone-950">
+    <main>
       <MlabsHeader />
-      <article className="mx-auto max-w-2xl px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
-        <Link href="/recursos" className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-500 hover:text-[var(--color-rojo)]">
-          ← Guías gratis
-        </Link>
-        <p className="mt-6 text-sm font-bold text-rojo">Material del video · comentaste {g.palabra}</p>
-        <h1 className="titular-ancho mt-3 text-4xl sm:text-6xl">{g.titulo}</h1>
-        <p className="mt-4 text-lg leading-8 text-stone-600">{g.resumen}</p>
-
-        <p className="mt-3 text-sm text-stone-500">
-          {g.tiempo} min · Actualizada el <time dateTime={g.actualizado}>{fecha(g.actualizado)}</time>
-        </p>
-        <p className="mt-2 flex flex-wrap gap-x-4 text-sm font-semibold">
+      <article className="m-post m-lectura">
+        <p className="m-migas"><Link href="/recursos">Guías gratis</Link> / {ETIQUETA_TIPO[g.tipo]}</p>
+        <div className="m-autor">
+          <span className="m-avatar">LABS</span>
+          <div>
+            <b>Metacho LABS</b>
+            <span>{ETIQUETA_TIPO[g.tipo]} · {g.tiempo} min · <time dateTime={g.actualizado}>{fecha(g.actualizado)}</time></span>
+          </div>
+        </div>
+        <Portada palabra={g.palabra} chip="Comentaste" color={g.portada ?? COLOR_TIPO[g.tipo]} />
+        <h1>{g.titulo}</h1>
+        <p className="m-resumen">{g.resumen}</p>
+        <div className="m-etiquetas" style={{ marginTop: 14 }}>
           {g.publicos.map((s) => (
-            <Link key={s} href={`/para/${s}`} className="text-stone-500 underline hover:text-rojo">
-              {publicoPorSlug(s).nombre}
-            </Link>
+            <Link key={s} href={`/para/${s}`}>{publicoPorSlug(s)?.nombre ?? s}</Link>
           ))}
-        </p>
+        </div>
 
-        <div className="mt-10 space-y-10">
+        <div className="m-cuerpo">
           {g.secciones.slice(0, libres).map((s, i) => (
             <Seccion key={s.titulo} s={s} n={i + 1} />
           ))}
         </div>
 
-        {g.secciones.length > libres && (
-          <Desbloqueo slug={slug}>
-            {g.secciones.slice(libres).map((s, i) => (
+        {bloqueadas.length > 0 && (
+          <Desbloqueo slug={slug} titulo={tituloCandado} texto="Deja tu correo y se abren aquí mismo, gratis." boton="Abrir la guía completa">
+            {bloqueadas.map((s, i) => (
               <Seccion key={s.titulo} s={s} n={i + libres + 1} />
             ))}
           </Desbloqueo>
         )}
 
-        {g.productoRelacionado && <TarjetaProducto producto={productoPorSlug(g.productoRelacionado)} />}
+        {producto && <SiguientePaso producto={producto} />}
 
-        <div className="mt-14 rounded-[1.75rem] bg-black p-6 text-white sm:p-10">
-          <p className="text-2xl font-black sm:text-3xl">¿Prefieres que lo montemos por ti?</p>
-          <p className="mt-2 leading-7 text-white/75">Déjanos tu WhatsApp y te contamos cómo lo hacemos para tu negocio.</p>
-          <div className="mt-6 rounded-[1.25rem] bg-white p-4 text-black sm:p-6">
+        <div className="m-oscuro" style={{ marginTop: 28 }}>
+          <p style={{ fontSize: 22, fontWeight: 750, lineHeight: 1.25, margin: 0 }}>¿Prefieres que lo montemos por ti?</p>
+          <p style={{ margin: "6px 0 14px" }}>Déjanos tu WhatsApp y te contamos cómo lo hacemos para tu negocio.</p>
+          <div style={{ background: "#fff", color: "var(--m-tinta)", borderRadius: 16, padding: 16 }}>
             <FormularioLead origen={`instalar-${slug}`} boton="Quiero que me escriban" pedirMensaje={false} />
           </div>
         </div>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(g.howto ? [articulo, howto] : articulo),
-          }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(g.howto ? [articulo, howto] : articulo) }} />
       </article>
       <MlabsFooter />
     </main>
