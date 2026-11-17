@@ -21,7 +21,7 @@
 - La cuenta de Vercel es **Pro**, no Hobby, así que Web Analytics admite eventos personalizados. Hoy los correos por guía se cuentan con el campo `origen` de cada lead en Redis; se puede agregar `track()` después.
 
 ## Cómo funciona (para la próxima sesión)
-- **Contenido:** `src/app/mlabs/contenido/` (guías, productos, novedades, públicos). `index.js` valida todo al importarse; si algo está mal, `npm run build` falla con la lista de errores. La lógica pura va en `src/app/mlabs/lib/` y se prueba con `npm test` (`node:test`, sin librerías).
+- **Contenido:** las **guías viven en Redis** (`mlabs:recursos`, desde el 2026-11-16; ver `docs/mlabs-recursos.md`). Productos, novedades y públicos siguen en `src/app/mlabs/contenido/`. `index.js` valida todo al importarse; si algo está mal, `npm run build` falla con la lista de errores. La lógica pura va en `src/app/mlabs/lib/` y se prueba con `npm test` (`node:test`, sin librerías).
 - **Desbloqueo por correo:** sin correo se ven el resumen y la primera sección (`seccionesLibres`). El resto viene en el HTML (bueno para SEO), oculto con `.contenido-bloqueado`. Un `<script>` plano en el `<head>` del layout raíz lo muestra antes de pintar si la persona ya dejó el correo (CLS 0). Si `/api/lead` falla, el primer intento muestra el error y el segundo desbloquea igual, con el lead pendiente en el navegador para reintentarlo.
 - **Orígenes de los leads** (lista `mlabs:leads` en Redis + aviso a Telegram): `guia-<slug>`, `preventa-<slug>`, `instalar-<slug>` (CTA «Lo instalamos por ti»), `novedades-AAAA-MM-DD`, `mlabs-inicio`.
 - **Componentes de cliente:** no pueden importar `contenido/index.js` ni `MlabsMarco.jsx`, porque meterían todo el contenido en el JS que baja el teléfono. Los enlaces de contacto están en `src/app/mlabs/enlaces.js`, y al catálogo se le pasa `tarjetasGuias`, que no lleva el texto de las guías.
@@ -93,3 +93,28 @@
 - **2026-10-21/22 (admin de cantados):** lluvia de ideas → spec → plan (13 tareas) ejecutado con subagentes y revisión por tarea + revisión final de toda la rama. Publicado `elmetacho.com/admin` (PR #8) y `Disallow: /admin` (PR #9); comprobado en vivo (portada, MLABS, robots, `/admin` pide clave, API sin clave = 401) y el PC ya lee los pedidos desde producción. El dueño creó el Blob privado y puso `ADMIN_CLAVE`/`ADMIN_PC_TOKEN`; primer pedido real subido desde el admin y en producción en una sesión aparte. Decisiones: franja de las 2 p. m.; sin aprobación de letra en pedidos web; bucle sin tope con aviso > 25 s; Telegram queda de respaldo sin rehacer repetidos; nada vive en la nube tras bajar. Riesgo conocido: un pedido atascado en «el PC lo está haciendo» no se cancela desde la web (ver `docs/admin.md`).
   - Sigue: fase 2 del admin (subir video + gancho, Claude escoge comentarios y Oscar los revisa en la web), investigación de la política de Meta para reeditar videos monetizados (fase de «remix»), revisión de las 5 vulnerabilidades altas de npm (sesión aparte) y Parte B (sesión aparte).
 - **2026-10-22 (madrugada, fase 2 y remix):** con autorización del dueño («vayas avanzando y publiques») se construyeron y publicaron la fase 2 «por link» (PR #11: propuesta de comentarios que Oscar revisa en `/admin/cantados/<id>/revisar`, pantallazos cuando TikTok bloquea) y el **remix** (PR #13: rehacer un cantado publicado con los mismos comentarios reales, otro orden y otra canción). Spec y planes en el PR #12 (lo aprueba el dueño). Comprobado en vivo: portada, MLABS, `/admin` y API sin credencial = 401. Pendiente: un pedido real por link y un remix real de punta a punta; mirar las pantallas nuevas en el celular; el primer remix es la prueba de monetización (panel de riesgo de Meta).
+- **2026-11-16 (LABS · rediseño C + recursos como datos, sesión labs-web):** Oscar eligió la maqueta C de 4 (A/B tipo red social; C/D con la estructura de converzzo.com). Sus palabras: «Me quedo con la C. Despliega y publica». Publicado y comprobado en vivo:
+  - PR #38: diseño C con tokens en `src/app/mlabs/mlabs.css`.
+    - Portada oscura con cifras «+4 M entre Facebook e Instagram» (FB 2.436.835 + IG 2.054.638, sonda del 4-nov), 10 años y el número de guías.
+    - Franja de confianza, buscador por palabra y tarjetas con la palabra gigante.
+    - Guía tipo post con un candado que dice qué partes faltan.
+    - Productos reales **sin precio**: Kit Edita con Claude (reemplaza al Editor automático, con 301), PC en piloto automático y Carruseles. Todos con «Muy pronto · Apártalo» (lead `preventa-<slug>`).
+  - PR #38 también trae la API `PUT /admin/api/pc/recursos` (token del PC), que guarda la guía y crea o actualiza la regla PALABRA → link en @metacholabs en un solo paso, con candado de cuenta. La herramienta es `scripts/mlabs-recurso.mjs`.
+  - PR #39: el avatar.
+  - PR #40: borra `guias.js`. Las 11 guías ya estaban migradas a Redis con `--sin-regla`, y el texto bloqueado salió del repo.
+  - Verificado en vivo:
+    - 200 en portada, guías, producto, novedades, públicos, sitemap y llms.txt;
+    - 308 de `/productos/editor-automatico`;
+    - 401 de la API sin token;
+    - el desbloqueo por localStorage abre las secciones;
+    - un cambio de una guía en Redis sale sin deploy.
+  - Capturas en `PREMIERE-CLAUDE/LABS/maquetas-web/VIVO-*.png`.
+  - Pendiente de Oscar:
+    - Precios del Kit y del PC en piloto automático (fichas en `MLABS-PRODUCTOS/productos/*/FICHA-VENTA.md`).
+    - Llaves de Bold en Vercel.
+    - Decidir si la regla «lo gratis no revela el método» (prohíbe «Claude Code», «Python»…) aplica a las guías nuevas de LABS. Hoy la API la exige.
+  - Aprendizajes:
+    - La vista previa protegida se revisa con `npx vercel curl <url>/mlabs/... -- -s` (la CLI tiene sesión como `elmetacho`).
+    - `next build` local a veces se detiene con un aviso de seguridad de Next y al reintentar pasa; en Vercel no pasa.
+    - Los `gh` de este repo van con `GH_TOKEN="$(gh auth token -u ELMETACHO)"` **y `-R ELMETACHO/elmetacho-web`**: sin `-R`, desde otra carpeta apuntan a otro repo.
+  - Sigue: PR 2 (catálogo con precio COP/USD, checkout Bold en pruebas, webhook con firma, entrega con link firmado y retracto) y PR 3 (publicador de Reels sin activar).
