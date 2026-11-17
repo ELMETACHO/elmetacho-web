@@ -7,14 +7,14 @@ import { conRedis } from "../../../lib/instagram/conexion.js";
 import { guardarDisparadores, leerDisparadores } from "../../../lib/instagram/palabras.js";
 import { guardarRecurso, listarRecursos } from "../../../../mlabs/lib/recursos/api.js";
 import { CLAVE_RECURSOS, leerRecursosRedis } from "../../../../mlabs/contenido/recursos.js";
-import { guias, productos, publicos, PALABRA_NOVEDADES } from "../../../../mlabs/contenido/index.js";
+import { productos, publicos, PALABRA_NOVEDADES } from "../../../../mlabs/contenido/index.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const NO = () => Response.json({ error: "No autorizado." }, { status: 401 });
 const contexto = {
-  heredadas: guias,
+  heredadas: [],
   slugsPublicos: new Set(publicos.map((p) => p.slug)),
   slugsProductos: new Set(productos.map((p) => p.slug)),
   reservadas: [PALABRA_NOVEDADES],

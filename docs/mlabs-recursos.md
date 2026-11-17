@@ -37,7 +37,8 @@ ADMIN_PC_TOKEN=… node scripts/mlabs-recurso.mjs recurso.json
 - **Candado:** solo crea reglas para @metacholabs (`17841480070378472`).
 - Revisa el límite de 50 reglas y de 1000 bytes por DM (validación de `palabras.js`).
 
-## Transición
-- `contenido/guias.js` sigue en el repo como **respaldo**: si Redis no responde, se muestran esas guías. Cuando un slug existe en Redis, gana la versión de Redis.
-- Las 11 guías heredadas se subieron a Redis con `--sin-regla`, porque sus reglas ya existen.
-- En el PR siguiente se borra `guias.js` (las ediciones de novedades se validan contra Redis) y así el texto bloqueado deja de estar en el repo. El historial de git conserva las versiones viejas, que ya eran públicas.
+## Transición (hecha el 2026-11-16)
+- Las 11 guías heredadas se subieron a Redis con `--sin-regla` (sus reglas ya existían) y se comprobó en vivo que el cambio de una (portada de FICHA a azul) sale sin deploy.
+- Después se borró `contenido/guias.js`: el texto bloqueado ya no está en el repo. El historial de git conserva las 11 versiones viejas, que ya eran públicas.
+- **Sin Redis:** en local (sin `KV_REDIS_URL`) no hay guías y la página sale vacía. En Vercel, si Redis falla, la regeneración se cae y el ISR sigue mostrando la última versión buena.
+- **Respaldo:** cada guía se puede volver a subir desde su JSON. Antes de cambiar una, guarda una copia con `--lista` y el GET de la API.

@@ -12,6 +12,8 @@ export function validarContenido({ guias, productos, novedades, publicos, edicio
   const slugsPublicos = slugs(publicos);
   const slugsProductos = slugs(productos);
   const slugsGuias = slugs(guias);
+  // Desde 2026-11-16 las guías viven en Redis: sin guías en el código, las referencias de novedades se resuelven al mostrar.
+  const revisarGuias = guias.length > 0;
 
   const repetidos = (lista, que) => {
     const vistos = new Set();
@@ -59,7 +61,7 @@ export function validarContenido({ guias, productos, novedades, publicos, edicio
     faltan(n, id, ["titulo", "queEs", "paraQueTeSirve"]);
     if (!FECHA.test(n.fecha ?? "")) e.push(`${id}: fecha debe ser AAAA-MM-DD`);
     if (!fuenteValida(n.fuente)) e.push(`${id}: falta fuente con nombre y URL https`);
-    if (n.guiaRelacionada && !slugsGuias.has(n.guiaRelacionada)) e.push(`${id}: guía relacionada inexistente ${n.guiaRelacionada}`);
+    if (revisarGuias && n.guiaRelacionada && !slugsGuias.has(n.guiaRelacionada)) e.push(`${id}: guía relacionada inexistente ${n.guiaRelacionada}`);
     if (n.aclaracion && (!n.aclaracion.texto || !fuenteValida(n.aclaracion.fuente)))
       e.push(`${id}: la aclaración necesita texto y fuente con nombre y URL https`);
     for (const c of n.cursos ?? []) if (!c.nombre || !c.paraQuien) e.push(`${id}: cada curso necesita nombre y paraQuien`);
@@ -73,7 +75,7 @@ export function validarContenido({ guias, productos, novedades, publicos, edicio
     if (!FECHA.test(ed.fecha ?? "") || ed.slug !== ed.fecha) e.push(`${id}: el slug de la edición debe ser su fecha AAAA-MM-DD`);
     faltan(ed, id, ["titulo", "intro", "destacado"]);
     if (!Array.isArray(ed.novedades)) e.push(`${id}: novedades debe ser una lista`);
-    for (const g of ed.guiasRelacionadas ?? []) if (!slugsGuias.has(g)) e.push(`${id}: guía relacionada inexistente ${g}`);
+    for (const g of ed.guiasRelacionadas ?? []) if (revisarGuias && !slugsGuias.has(g)) e.push(`${id}: guía relacionada inexistente ${g}`);
   }
 
   for (const p of publicos) faltan(p, `público ${p.slug}`, ["nombre", "titulo", "intro"]);

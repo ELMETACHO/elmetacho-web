@@ -1,8 +1,8 @@
-// recursos.js — guías de MLABS en tiempo de ejecución (solo servidor). Une las de Redis (hash mlabs:recursos, que
-// llena /admin/api/pc/recursos) con las heredadas de guias.js; si un slug está en las dos, gana Redis. Si Redis no
-// responde, se usan las heredadas: la página nunca se cae por eso.
+// recursos.js — guías de MLABS en tiempo de ejecución (solo servidor). Viven en Redis (hash mlabs:recursos, que llena
+// /admin/api/pc/recursos); desde 2026-11-16 ya no hay guías en el código: el texto bloqueado no está en el repo público.
 import { cache } from "react";
-import { guias as heredadas, productos, publicos } from "./index.js";
+import { productos, publicos } from "./index.js";
+import { urlRedisDirecta } from "../../api/lead/config.js";
 import { combinarRecursos, erroresRecurso } from "../lib/recursos/esquema.js";
 import { crearIndice } from "../lib/buscar.js";
 import { conRedis } from "../../admin/lib/instagram/conexion.js";
@@ -29,13 +29,14 @@ export async function leerRecursosRedis(r) {
   return lista;
 }
 
+// Sin Redis configurado (desarrollo local) no hay guías. Con Redis configurado, un fallo se lanza: así el ISR sigue
+// mostrando la última versión buena en vez de una página vacía, y un build sin Redis no se publica.
 export const obtenerGuias = cache(async () => {
-  try {
-    return combinarRecursos(heredadas, await conRedis(leerRecursosRedis));
-  } catch (e) {
-    console.error(`[mlabs] sin Redis para recursos, uso las guías del código: ${e.message}`);
-    return heredadas;
+  if (!urlRedisDirecta(process.env)) {
+    console.warn("[mlabs] sin KV_REDIS_URL: las guías salen vacías (solo en local)");
+    return [];
   }
+  return combinarRecursos([], await conRedis(leerRecursosRedis));
 });
 
 // Solo lo que muestra una tarjeta: el catálogo es componente de cliente y no debe cargar el texto de las guías.
