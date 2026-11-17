@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { MlabsHeader, MlabsFooter, MLABS_WHATSAPP } from "./MlabsMarco";
 import FormularioLead from "./FormularioLead";
-import CatalogoInicio from "./componentes/CatalogoInicio";
+import Buscador from "./componentes/Buscador";
+import Catalogo from "./componentes/Catalogo";
+import TarjetaProducto from "./componentes/TarjetaProducto";
+import { productos, publicos, novedadesRecientes, enlaceNovedad } from "./contenido/index.js";
+import { contenidoGuias } from "./contenido/recursos.js";
+
+// Las guías salen de Redis (sin deploy) con ISR: la página se regenera cada 5 minutos o al guardar un recurso.
+export const revalidate = 300;
 
 const URL = "https://mlabs.elmetacho.com";
 
@@ -60,7 +67,8 @@ const preguntas = [
   { q: "¿Las guías gratis tienen algún costo?", a: "No. Son el material de los videos de Metacho Labs y puedes usarlas en tu negocio." },
 ];
 
-export default function Mlabs() {
+export default async function Mlabs() {
+  const { tarjetasGuias, indiceBusqueda } = await contenidoGuias();
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -70,88 +78,138 @@ export default function Mlabs() {
   };
 
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main>
       <MlabsHeader />
-      <CatalogoInicio />
+
+      {/* PORTADA */}
+      <section className="m-heroe">
+        <div className="m-ancho">
+          <div className="m-autor" style={{ marginBottom: 18 }}>
+            <span className="m-avatar">LABS</span>
+            <div><b>Metacho LABS</b><span>de El Metacho</span></div>
+          </div>
+          <h1>La IA que uso para mis videos y mi negocio, <span>lista para que la uses tú.</span></h1>
+          <p>Guías gratis de cada reel de Metacho LABS y herramientas que se instalan en tu computador.</p>
+          <div className="m-heroe-botones">
+            <a href="#guias" className="m-boton m-boton-primario">Ver las guías gratis</a>
+            <a href="#buscar" className="m-boton m-boton-borde">Comenté una palabra</a>
+          </div>
+          <div className="m-cifras">
+            <div><b>+4 M</b><span>seguidores entre Facebook e Instagram</span></div>
+            <div><b>10 años</b><span>creando contenido</span></div>
+            <div><b>{tarjetasGuias.length}</b><span>guías gratis</span></div>
+          </div>
+        </div>
+      </section>
+
+      {/* CONFIANZA */}
+      <section className="m-confianza" aria-label="Cómo funciona">
+        <ul className="m-ancho">
+          <li><i aria-hidden="true">✓</i><div><b>Gratis</b>solo con tu correo</div></li>
+          <li><i aria-hidden="true">⚡</i><div><b>Al instante</b>se abre aquí mismo</div></li>
+          <li><i aria-hidden="true">▶</i><div><b>De los reels</b>el material de cada video</div></li>
+          <li><i aria-hidden="true">?</i><div><b>¿Dudas?</b><a href={MLABS_WHATSAPP} style={{ color: "inherit" }}>escríbenos por WhatsApp</a></div></li>
+        </ul>
+      </section>
+
+      {/* GUÍAS */}
+      <section id="guias" className="m-seccion" style={{ scrollMarginTop: 64 }}>
+        <div className="m-ancho">
+          <div className="m-titulo-seccion"><h2>Guías gratis</h2><Link href="/recursos">Ver todas</Link></div>
+          <p className="m-intro">¿Viste un reel? Escribe la palabra que comentaste y se abre su guía.</p>
+          <div id="buscar" style={{ scrollMarginTop: 80 }}>
+            <Buscador indice={indiceBusqueda} id="buscar-inicio" />
+          </div>
+          <Catalogo guias={tarjetasGuias} publicos={publicos} max={6} />
+        </div>
+      </section>
+
+      {/* PRODUCTOS */}
+      <section id="productos" className="m-seccion" style={{ scrollMarginTop: 64 }}>
+        <div className="m-ancho">
+          <div className="m-titulo-seccion"><h2>Productos</h2></div>
+          <p className="m-intro">Lo que usamos en Metacho LABS, listo para tu computador. Apártalo y te avisamos primero cuando abra.</p>
+          <div className="m-rejilla">
+            {productos.map((p) => (
+              <TarjetaProducto key={p.slug} producto={p} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* NOVEDADES */}
+      {novedadesRecientes.length > 0 && (
+        <section className="m-seccion">
+          <div className="m-ancho">
+            <div className="m-titulo-seccion"><h2>Novedades de IA</h2><Link href="/novedades">Ver todas</Link></div>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
+              {novedadesRecientes.slice(0, 3).map((n) => (
+                <li key={n.slug}>
+                  <Link href={enlaceNovedad(n)} className="m-boton m-boton-suave m-boton-ancho" style={{ justifyContent: "flex-start", textAlign: "left", borderRadius: 16, padding: "12px 16px" }}>
+                    {n.titulo}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* AGENCIA */}
-      <section id="agencia" className="papel-cuad border-t border-black/10 px-4 pb-14 pt-14 sm:px-8 sm:pb-24 sm:pt-24">
-        <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.25fr_0.75fr] md:items-end">
-          <div>
-            <h2 className="titular-ancho text-[13vw] md:text-[6.4vw] xl:text-[6rem]">Tu marca publica todos los días.</h2>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-gris">
-              Sin que tú grabes todos los días. Montamos para tu negocio los sistemas de IA con los que producimos nuestras propias cuentas: videos, edición, mensajes automáticos y fidelización.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a href={MLABS_WHATSAPP} className="rounded-full bg-rojo px-7 py-4 text-center text-base font-bold text-white">
-                Escríbenos por WhatsApp
-              </a>
-              <Link href="/recursos" className="rounded-full border-2 border-black px-7 py-4 text-center text-base font-bold">
-                Ver guías gratis
-              </Link>
+      <section id="agencia" className="m-seccion" style={{ paddingTop: 44 }}>
+        <div className="m-ancho">
+          <div className="m-oscuro" style={{ display: "grid", gap: 18 }}>
+            <div>
+              <h2 style={{ fontSize: 28, lineHeight: 1.15, letterSpacing: "-0.025em", margin: 0 }}>¿Prefieres que lo montemos para tu marca?</h2>
+              <p style={{ margin: "10px 0 0" }}>
+                Montamos para tu negocio los sistemas de IA con los que producimos nuestras propias cuentas: videos, edición, mensajes automáticos y fidelización.
+              </p>
+            </div>
+            <div className="m-faq">
+              {servicios.map((s) => (
+                <details key={s.titulo} style={{ borderColor: "rgba(255,255,255,.18)" }}>
+                  <summary>{s.titulo}</summary>
+                  <p>
+                    {s.texto}{" "}
+                    {s.href && <a href={s.href} style={{ color: "#fff" }}>Ver el sistema de fidelización</a>}
+                  </p>
+                </details>
+              ))}
+            </div>
+            <div style={{ display: "grid", gap: 10, maxWidth: 460 }}>
+              <a href={MLABS_WHATSAPP} className="m-boton m-boton-primario">Escríbenos por WhatsApp</a>
+              <a href="#contacto" className="m-boton m-boton-borde" style={{ color: "#fff" }}>Pedir una propuesta</a>
             </div>
           </div>
-          <video src="/videos/gps.mp4" poster="/videos/gps.jpg" autoPlay muted loop playsInline preload="none" aria-label="Ejemplo de video de Metacho Tips hecho con el sistema de MLABS" className="mx-auto w-60 rounded-[2rem] border-[6px] border-black shadow-[0_30px_70px_rgba(0,0,0,0.28)] sm:w-72" />
         </div>
       </section>
 
-      {/* QUÉ MONTAMOS */}
-      <section className="px-4 py-16 sm:px-8 sm:py-24">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="titular-ancho text-5xl sm:text-7xl">Qué montamos</h2>
-          <ul className="mt-10 border-t-2 border-black">
-            {servicios.map((s) => (
-              <li key={s.titulo} className="border-b border-black/15">
-                <details className="group py-5 [&_summary::-webkit-details-marker]:hidden">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-2xl font-black leading-tight sm:text-4xl">
-                    {s.titulo}
-                    <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-black text-2xl transition group-open:rotate-45 group-open:bg-rojo group-open:border-rojo group-open:text-white">+</span>
-                  </summary>
-                  <div className="mt-4 grid gap-6 sm:grid-cols-[1fr_auto] sm:items-start">
-                    <p className="max-w-2xl text-lg leading-8 text-gris">
-                      {s.texto}{" "}
-                      {s.href && (
-                        <a href={s.href} className="font-bold text-rojo underline underline-offset-4">
-                          Ver el sistema de fidelización
-                        </a>
-                      )}
-                    </p>
-                    {s.video && <video src={`/videos/${s.video}.mp4`} poster={`/videos/${s.video}.jpg`} muted loop playsInline autoPlay preload="none" aria-hidden="true" className="w-40 rounded-2xl border-4 border-black" />}
-                  </div>
-                </details>
-              </li>
-            ))}
-          </ul>
+      {/* HECHOS CON ESTE SISTEMA */}
+      <section className="m-seccion">
+        <div className="m-ancho">
+          <div className="m-titulo-seccion"><h2>Hechos con este sistema</h2></div>
+          <p className="m-intro">Nuestras propias cuentas. Desliza para verlos.</p>
         </div>
-      </section>
-
-      {/* MUESTRAS */}
-      <section className="bg-black py-16 text-white sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-8">
-          <h2 className="titular-ancho text-5xl sm:text-7xl">Hechos con este sistema</h2>
-          <p className="mt-4 max-w-xl text-lg leading-8 text-white/75">Nuestras propias cuentas. Desliza para verlos.</p>
-        </div>
-        <ul className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:px-8 [scrollbar-width:none]">
+        <ul className="m-ancho" style={{ display: "flex", gap: 12, overflowX: "auto", listStyle: "none", scrollSnapType: "x mandatory", scrollbarWidth: "none", paddingBottom: 8 }}>
           {muestras.map((m) => (
-            <li key={m.video} className="w-[62vw] max-w-[260px] shrink-0 snap-start">
-              <video src={`/videos/${m.video}.mp4`} poster={`/videos/${m.video}.jpg`} muted loop playsInline autoPlay preload="none" aria-label={`${m.cuenta}: ${m.tema}`} className="aspect-[9/16] w-full rounded-[1.6rem] object-cover" />
-              <p className="mt-3 font-bold">{m.cuenta}</p>
-              <p className="text-sm text-white/70">{m.tema}</p>
+            <li key={m.video} style={{ width: "58vw", maxWidth: 240, flex: "none", scrollSnapAlign: "start" }}>
+              <video src={`/videos/${m.video}.mp4`} poster={`/videos/${m.video}.jpg`} muted loop playsInline autoPlay preload="none" aria-label={`${m.cuenta}: ${m.tema}`} style={{ width: "100%", aspectRatio: "9 / 16", objectFit: "cover", borderRadius: 20, background: "#000" }} />
+              <p style={{ margin: "8px 0 0", fontWeight: 650 }}>{m.cuenta}</p>
+              <p className="m-meta" style={{ margin: 0 }}>{m.tema}</p>
             </li>
           ))}
         </ul>
       </section>
 
-      {/* CÓMO */}
-      <section className="papel-cuad px-4 py-16 sm:px-8 sm:py-24">
-        <div className="mx-auto max-w-7xl">
-          <h2 className="titular-ancho text-5xl sm:text-7xl">Cómo trabajamos</h2>
-          <ol className="mt-10 grid gap-8 sm:grid-cols-3">
+      {/* CÓMO TRABAJAMOS */}
+      <section className="m-seccion">
+        <div className="m-ancho">
+          <div className="m-titulo-seccion"><h2>Cómo trabajamos</h2></div>
+          <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
             {pasos.map((p, i) => (
-              <li key={p.titulo}>
-                <span className="titular-ancho text-7xl text-rojo">{i + 1}</span>
-                <h3 className="mt-2 text-2xl font-black">{p.titulo}</h3>
-                <p className="mt-2 text-lg leading-7 text-gris">{p.texto}</p>
+              <li key={p.titulo} style={{ display: "flex", gap: 12, background: "var(--m-superficie)", borderRadius: 16, padding: 14 }}>
+                <span className="m-avatar" style={{ width: 32, height: 32, background: "var(--m-rojo)", fontSize: 15 }}>{i + 1}</span>
+                <div><b style={{ display: "block" }}>{p.titulo}</b><span className="m-meta" style={{ fontSize: 16 }}>{p.texto}</span></div>
               </li>
             ))}
           </ol>
@@ -159,42 +217,31 @@ export default function Mlabs() {
       </section>
 
       {/* CONTACTO */}
-      <section id="contacto" className="scroll-mt-20 px-4 py-16 sm:px-8 sm:py-24">
-        <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-2">
+      <section id="contacto" className="m-seccion" style={{ scrollMarginTop: 64 }}>
+        <div className="m-ancho" style={{ display: "grid", gap: 18 }}>
           <div>
-            <h2 className="titular-ancho text-5xl sm:text-7xl">Cuéntanos tu caso</h2>
-            <p className="mt-6 max-w-md text-lg leading-8 text-gris">Te respondemos por WhatsApp con una propuesta y un precio cerrado.</p>
-            <a href={MLABS_WHATSAPP} className="mt-6 inline-block font-bold text-rojo underline underline-offset-4">
-              Prefiero escribir ya por WhatsApp
-            </a>
-            <p className="mt-8 rounded-[1.25rem] border-2 border-black p-5 text-lg leading-7">
-              ¿Ya tienes tu cotización?{" "}
-              <Link href="/pagar" className="font-bold text-rojo underline underline-offset-4">
-                Paga aquí con tarjeta o PSE
-              </Link>
+            <div className="m-titulo-seccion"><h2>Cuéntanos tu caso</h2></div>
+            <p className="m-intro" style={{ margin: 0 }}>Te respondemos por WhatsApp con una propuesta y un precio cerrado.</p>
+            <p style={{ marginTop: 12, fontSize: 16 }}>
+              ¿Ya tienes tu cotización? <Link href="/pagar" style={{ color: "var(--m-rojo)", fontWeight: 650 }}>Págala aquí</Link>
             </p>
           </div>
-          <FormularioLead origen="mlabs-inicio" boton="Quiero mi propuesta" />
+          <div className="m-caja" style={{ marginTop: 0 }}>
+            <FormularioLead origen="mlabs-inicio" boton="Quiero mi propuesta" />
+          </div>
         </div>
       </section>
 
       {/* PREGUNTAS */}
-      <section className="bg-black px-4 py-16 text-white sm:px-8 sm:py-24">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="titular-ancho text-5xl sm:text-6xl">Preguntas</h2>
-          <ul className="mt-8 border-t border-white/25">
-            {preguntas.map((p) => (
-              <li key={p.q} className="border-b border-white/25">
-                <details className="group py-5 [&_summary::-webkit-details-marker]:hidden">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-xl font-bold">
-                    {p.q}
-                    <span aria-hidden="true" className="text-2xl transition group-open:rotate-45">+</span>
-                  </summary>
-                  <p className="mt-3 text-lg leading-8 text-white/75">{p.a}</p>
-                </details>
-              </li>
-            ))}
-          </ul>
+      <section className="m-seccion">
+        <div className="m-ancho m-faq">
+          <div className="m-titulo-seccion"><h2>Preguntas</h2></div>
+          {preguntas.map((p) => (
+            <details key={p.q}>
+              <summary>{p.q}</summary>
+              <p>{p.a}</p>
+            </details>
+          ))}
         </div>
       </section>
 

@@ -2,26 +2,25 @@ import Link from "next/link";
 import { MlabsHeader, MlabsFooter } from "./MlabsMarco";
 import Buscador from "./componentes/Buscador";
 import TarjetaContenido from "./componentes/TarjetaContenido";
-import { guias, indiceBusqueda } from "./contenido/index.js";
+import { contenidoGuias } from "./contenido/recursos.js";
 
 // 404 de MLABS (guía, producto o público que no existe): buscador + guías destacadas.
-export default function NoEncontrado() {
+export default async function NoEncontrado() {
+  const { guias, indiceBusqueda } = await contenidoGuias();
   return (
-    <main className="min-h-screen bg-white text-stone-950">
+    <main>
       <MlabsHeader />
-      <div className="mx-auto max-w-3xl px-4 pb-16 pt-40 sm:px-8 sm:pt-44">
-        <h1 className="titular-ancho text-4xl sm:text-6xl">No encontramos esa página</h1>
-        <p className="mt-4 text-lg leading-8 text-gris">Escribe la palabra que comentaste en el video:</p>
-        <div className="mt-6">
-          <Buscador indice={indiceBusqueda} grande />
-        </div>
-        <div className="mt-10 grid gap-3 sm:grid-cols-2">
+      <div className="m-ancho m-post">
+        <h1 style={{ marginTop: 0 }}>No encontramos esa página</h1>
+        <p className="m-resumen" style={{ marginBottom: 16 }}>Escribe la palabra que comentaste en el video:</p>
+        <Buscador indice={indiceBusqueda} id="buscar-404" />
+        <div className="m-rejilla">
           {guias.slice(0, 4).map((g) => (
             <TarjetaContenido key={g.slug} guia={g} />
           ))}
         </div>
-        <Link href="/recursos" className="mt-6 inline-block font-bold underline">
-          Ver todas las guías →
+        <Link href="/recursos" className="m-boton m-boton-suave" style={{ marginTop: 20 }}>
+          Ver todas las guías
         </Link>
       </div>
       <MlabsFooter />

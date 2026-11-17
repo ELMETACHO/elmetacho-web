@@ -2,43 +2,40 @@ import Copiar from "../recursos/[slug]/Copiar";
 
 // Un bloque de contenido de una guía: { p }, { lista }, { prompt }, { tabla } u { ojo }.
 export default function Bloque({ b }) {
-  if (b.p) return <p className="text-base leading-7 text-stone-700">{b.p}</p>;
+  if (b.p) return <p>{b.p}</p>;
   if (b.lista)
     return (
-      <ul className="space-y-3">
+      <ul>
         {b.lista.map((x) => (
-          <li key={x} className="flex gap-3 text-base leading-7 text-stone-700">
-            <span className="mt-2.5 h-2 w-2 shrink-0 rounded-full bg-[var(--color-rojo)]" />
-            <span>{x}</span>
-          </li>
+          <li key={x}>{x}</li>
         ))}
       </ul>
     );
   if (b.prompt)
     return (
-      <div className="overflow-hidden rounded-2xl border border-stone-900/10 bg-stone-950">
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-stone-400">Prompt</span>
+      <div className="m-prompt">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <b style={{ fontSize: 14, color: "var(--m-gris)" }}>Prompt</b>
           <Copiar texto={b.prompt} />
         </div>
-        <pre className="whitespace-pre-wrap break-words p-4 font-mono text-[13px] leading-6 text-stone-100 sm:text-sm">{b.prompt}</pre>
+        {b.prompt}
       </div>
     );
   if (b.tabla)
     return (
-      <div className="space-y-3">
+      <div style={{ display: "grid", gap: 10, marginBottom: 12 }}>
         {b.tabla.map(([mal, bien]) => (
-          <div key={mal} className="rounded-2xl border border-stone-900/10 p-4 text-sm leading-6">
-            <p className="text-stone-500 line-through decoration-[var(--color-rojo)]/60">✕ {mal}</p>
-            <p className="mt-2 font-semibold text-stone-900">✓ {bien}</p>
+          <div key={mal} style={{ border: "1px solid var(--m-borde)", borderRadius: 16, padding: "12px 14px", fontSize: 16.5 }}>
+            <p style={{ color: "var(--m-gris)", textDecoration: "line-through", margin: 0 }}>✕ {mal}</p>
+            <p style={{ fontWeight: 650, color: "var(--m-tinta)", margin: "6px 0 0" }}>✓ {bien}</p>
           </div>
         ))}
       </div>
     );
   if (b.ojo)
     return (
-      <p className="rounded-2xl border border-[var(--color-rojo)]/25 bg-[var(--color-rojo)]/5 p-4 text-sm leading-6 text-stone-800">
-        <strong className="text-[var(--color-rojo)]">Ojo: </strong>
+      <p className="m-ojo">
+        <strong>Ojo: </strong>
         {b.ojo}
       </p>
     );

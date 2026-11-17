@@ -1,3 +1,5 @@
+import "./mlabs.css";
+
 // Metadatos por defecto de mlabs.elmetacho.com: sin esto, las páginas que no traen su propio openGraph heredan el de
 // El Metacho (título, foto y og:url de www.elmetacho.com) y la tarjeta del link sale como El Metacho, p. ej. en los DM
 // de Instagram. Next reemplaza openGraph completo, así que aquí va la marca MLABS y cada página puede pisarlo.
@@ -17,5 +19,5 @@ export const metadata = {
 };
 
 export default function MlabsLayout({ children }) {
-  return children;
+  return <div className="mlabs">{children}</div>;
 }
