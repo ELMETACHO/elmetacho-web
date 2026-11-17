@@ -20,3 +20,6 @@ export const edicionesRecientes = [...ediciones].sort((a, b) => b.fecha.localeCo
 export const edicionPorSlug = (slug) => ediciones.find((e) => e.slug === slug);
 // Enlace a una novedad: la edición más reciente vive en /novedades; las anteriores en /novedades/<fecha>.
 export const enlaceNovedad = (n) => `${n.edicion === edicionesRecientes[0]?.slug ? "/novedades" : `/novedades/${n.edicion}`}#${n.slug}`;
+
+// Lo que se muestra al público: el producto de prueba solo existe en modo de pruebas de la tienda.
+export const productosVisibles = (modo) => productos.filter((p) => !p.soloPruebas || modo === "pruebas");

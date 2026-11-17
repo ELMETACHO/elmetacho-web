@@ -28,6 +28,8 @@ export const productos = [
     estado: "preventa",
     precioLanzamiento: null,
     precio: null,
+    precios: { COP: null, USD: null },   // los pone Oscar; con los dos y el archivo, estado: "disponible"
+    archivo: null,                        // pathname en Vercel Blob privado, p. ej. "mlabs/productos/<slug>/<archivo>.zip"
     moneda: "COP",
     fechaEstimada: null,
     faq: [
@@ -58,6 +60,8 @@ export const productos = [
     estado: "preventa",
     precioLanzamiento: null,
     precio: null,
+    precios: { COP: null, USD: null },   // los pone Oscar; con los dos y el archivo, estado: "disponible"
+    archivo: null,                        // pathname en Vercel Blob privado, p. ej. "mlabs/productos/<slug>/<archivo>.zip"
     moneda: "COP",
     fechaEstimada: null,
     faq: [
@@ -89,11 +93,36 @@ export const productos = [
     estado: "preventa",
     precioLanzamiento: null,
     precio: null,
+    precios: { COP: null, USD: null },   // los pone Oscar; con los dos y el archivo, estado: "disponible"
+    archivo: null,                        // pathname en Vercel Blob privado, p. ej. "mlabs/productos/<slug>/<archivo>.zip"
     moneda: "COP",
     fechaEstimada: null,
     faq: [
       { q: "¿Ya lo puedo comprar?", a: "Todavía no. Apártalo gratis y te avisamos primero cuando abra, con el precio de lanzamiento." },
       { q: "¿Apartar el cupo me obliga a comprar?", a: "No. Solo te avisamos. Decides cuando veas el precio y la fecha." },
     ],
+  },
+  {
+    // Solo existe con MLABS_TIENDA = "pruebas" (vista previa con llaves de prueba de Bold): sirve para probar el flujo
+    // completo (checkout, webhook, entrega). En producción no aparece en ningún lado y su página da 404.
+    slug: "prueba-tienda",
+    nombre: "Producto de prueba",
+    etiqueta: "Prueba",
+    palabraPortada: "PRUEBA",
+    portada: "claro",
+    soloPruebas: true,
+    promesa: "Producto para probar la tienda en modo de pruebas de Bold. No se cobra nada.",
+    paraQuien: ["El equipo de MLABS, para probar la compra."],
+    noEsPara: ["Clientes reales."],
+    queIncluye: ["Un archivo de texto de prueba."],
+    requisitos: ["Las llaves de prueba de Bold en la vista previa."],
+    estado: "disponible",
+    precioLanzamiento: null,
+    precio: null,
+    precios: { COP: 1000, USD: 1 },
+    archivo: "mlabs/productos/prueba-tienda/prueba.txt",
+    moneda: "COP",
+    fechaEstimada: null,
+    faq: [],
   },
 ];
