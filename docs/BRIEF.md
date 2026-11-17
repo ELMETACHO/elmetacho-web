@@ -117,4 +117,7 @@
     - La vista previa protegida se revisa con `npx vercel curl <url>/mlabs/... -- -s` (la CLI tiene sesión como `elmetacho`).
     - `next build` local a veces se detiene con un aviso de seguridad de Next y al reintentar pasa; en Vercel no pasa.
     - Los `gh` de este repo van con `GH_TOKEN="$(gh auth token -u ELMETACHO)"` **y `-R ELMETACHO/elmetacho-web`**: sin `-R`, desde otra carpeta apuntan a otro repo.
-  - Sigue: PR 2 (catálogo con precio COP/USD, checkout Bold en pruebas, webhook con firma, entrega con link firmado y retracto) y PR 3 (publicador de Reels sin activar).
+  - Hecho el mismo día:
+    - **PR #42, tienda Bold APAGADA** (interruptor `MLABS_TIENDA`): precio COP/USD por país con selector, checkout con el precio del servidor, webhook con firma verificada y deduplicado, validación de monto y moneda, compradores en Redis, `/compra` que confirma con Bold, `/descargar/<token>` firmado por 7 días con Blob privado, producto de prueba y `/retracto`. Ver `docs/mlabs-tienda.md`.
+    - **PR #43, publicador de Reels APAGADO** (`MLABS_PUBLICADOR`, candado en 17841480070378472): cola en Redis, cron de 5 min, límite leído en vivo, simulacro y herramienta `scripts/mlabs-publicar.mjs`. Recomienda una app aparte para no tocar la App Review. Ver `docs/mlabs-publicador.md`.
+  - Pendiente de Oscar para encender: llaves de Bold de prueba y de producción, `MLABS_ENTREGA_SECRETO`, precios aprobados, el texto de `/retracto` revisado con la Ley 1480 (no se pudo leer la fuente oficial), la app «Metacho Publicador» con su token y el OK para la primera publicación real.
