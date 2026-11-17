@@ -86,7 +86,7 @@
 .m-cifras span { display: block; font-size: 13px; line-height: 1.3; color: #aeb4be; }
 .m-autor { display: flex; align-items: center; gap: 10px; }
 .m-avatar { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--m-tinta);
-  color: #fff; font-family: var(--m-fuente-marca); font-stretch: 100%; font-weight: 900; font-size: 10px; letter-spacing: 0; }
+  color: #fff; font-family: var(--m-fuente-marca); font-stretch: 100%; font-weight: 900; font-size: 9px; letter-spacing: 0; overflow: hidden; }
 .m-heroe .m-avatar { background: var(--m-rojo); }
 .m-autor b { display: block; font-size: 16.5px; line-height: 1.2; }
 .m-autor span { font-size: 14.5px; color: var(--m-gris); }
@@ -159,7 +159,7 @@
 .m-post h1 { font-size: clamp(28px, 6vw, 44px); line-height: 1.12; letter-spacing: -0.025em; font-weight: 800; margin: 16px 0 0; }
 .m-post .m-resumen { font-size: 19px; line-height: 1.55; color: var(--m-texto); margin: 12px 0 0; }
 .m-post h2 { font-size: 23px; line-height: 1.25; letter-spacing: -0.015em; font-weight: 750; margin: 0 0 10px; }
-.m-post .m-portada { aspect-ratio: 16 / 9; margin-top: 14px; }
+.m-post .m-portada { aspect-ratio: 16 / 9; max-height: 300px; margin-top: 14px; }
 .m-cuerpo { margin-top: 28px; display: grid; gap: 30px; }
 .m-cuerpo p { margin: 0 0 12px; color: var(--m-texto); }
 .m-cuerpo ul { list-style: none; margin: 0 0 12px; padding: 0; }
