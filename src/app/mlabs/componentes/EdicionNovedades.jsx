@@ -1,10 +1,11 @@
 import Link from "next/link";
 import Desbloqueo from "./Desbloqueo";
-import { guiaPorSlug, edicionesRecientes, PALABRA_NOVEDADES } from "../contenido/index.js";
+import { edicionesRecientes, PALABRA_NOVEDADES } from "../contenido/index.js";
+import { contenidoGuias } from "../contenido/recursos.js";
 
 const fecha = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
 
-function Fuentes({ n }) {
+function Fuentes({ n, guiaPorSlug }) {
   const guia = n.guiaRelacionada && guiaPorSlug(n.guiaRelacionada);
   return (
     <p className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
@@ -20,7 +21,7 @@ function Fuentes({ n }) {
   );
 }
 
-function Novedad({ n, destacada = false }) {
+function Novedad({ n, destacada = false, guiaPorSlug }) {
   return (
     <article
       id={n.slug}
@@ -64,14 +65,15 @@ function Novedad({ n, destacada = false }) {
         </div>
       )}
       <div className={destacada ? "[&_a]:text-white" : ""}>
-        <Fuentes n={n} />
+        <Fuentes n={n} guiaPorSlug={guiaPorSlug} />
       </div>
     </article>
   );
 }
 
 // Una edición semanal de /novedades: el destacado se ve libre; el resto se abre con el correo (igual que las guías).
-export default function EdicionNovedades({ edicion }) {
+export default async function EdicionNovedades({ edicion }) {
+  const { guiaPorSlug } = await contenidoGuias();
   const actual = edicionesRecientes[0]?.slug === edicion.slug;
   const anteriores = edicionesRecientes.filter((e) => e.slug !== edicion.slug);
   const guias = (edicion.guiasRelacionadas ?? []).map(guiaPorSlug).filter(Boolean);
@@ -90,7 +92,7 @@ export default function EdicionNovedades({ edicion }) {
       <p className="mt-2 text-sm text-stone-500">Solo lo que le sirve a tu negocio, explicado corto y con la fuente oficial.</p>
 
       <div className="mt-10">
-        <Novedad n={edicion.destacado} destacada />
+        <Novedad n={edicion.destacado} destacada guiaPorSlug={guiaPorSlug} />
       </div>
 
       {edicion.novedades.length > 0 && (
@@ -102,7 +104,7 @@ export default function EdicionNovedades({ edicion }) {
           boton="Ver todas las novedades"
         >
           {edicion.novedades.map((n) => (
-            <Novedad key={n.slug} n={n} />
+            <Novedad key={n.slug} n={n} guiaPorSlug={guiaPorSlug} />
           ))}
         </Desbloqueo>
       )}

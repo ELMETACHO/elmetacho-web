@@ -75,19 +75,10 @@ test("slug repetido", () => {
   assert.ok(e.some((x) => x.includes("repetido")), e.join("|"));
 });
 
-test("el contenido real del sitio es válido", async () => {
+test("el contenido real del sitio es válido y las guías ya no viven en el código", async () => {
   const c = await import("./index.js"); // lanza error si no es válido
-  assert.ok(c.guias.length >= 4);
-  assert.equal(c.guiaPorSlug("resena").palabra, "RESEÑA");
-});
-
-test("la guía EDITOR existe y lleva al Kit Edita con Claude", async () => {
-  const c = await import("./index.js");
-  const g = c.guiaPorSlug("editor");
-  assert.ok(g, "falta la guía editor");
-  assert.equal(g.palabra, "EDITOR");
-  assert.equal(g.productoRelacionado, "edita-con-claude");
-  assert.ok(g.secciones.length >= 3);
+  assert.equal(c.guias, undefined, "las guías viven en Redis (mlabs:recursos), no en el repo público");
+  assert.ok(c.productos.some((p) => p.slug === "edita-con-claude"));
 });
 
 test("hay al menos una novedad publicada y todas tienen fuente https", async () => {
@@ -96,34 +87,15 @@ test("hay al menos una novedad publicada y todas tienen fuente https", async () 
   for (const n of c.novedades) assert.match(n.fuente.url, /^https:\/\//);
 });
 
-test("están las guías del contenido inicial del spec", async () => {
-  const c = await import("./index.js");
-  const palabras = c.guias.map((g) => g.palabra);
-  for (const p of ["CLAUDE", "RESEÑA", "RECICLA", "COMPETENCIA", "EDITOR", "FICHA", "CALENDARIO", "CLIENTE", "DICTA", "FORMULA", "PRECIO"])
-    assert.ok(palabras.includes(p), `falta ${p}`);
-});
-
-test("las tarjetas del catálogo no llevan el contenido completo de las guías", async () => {
-  const c = await import("./index.js");
-  assert.equal(c.tarjetasGuias.length, c.guias.length);
-  for (const t of c.tarjetasGuias) {
-    assert.equal(t.secciones, undefined, `la tarjeta ${t.slug} trae secciones`);
-    for (const campo of ["slug", "tipo", "tiempo", "palabra", "titulo", "resumen", "publicos"]) assert.ok(t[campo], `${t.slug} sin ${campo}`);
-  }
-});
-
 test("lo gratis no revela los programas ni el método de los productos", async () => {
   const c = await import("./index.js");
-  const prohibidas = /ffmpeg|whisper|python|node\.?js|hyperframes|nvidia|claude code|tarjeta de video|\[TEXTO\]|\[ANIM\]/i;
+  const { PROHIBIDAS } = await import("../lib/recursos/esquema.js");
   const textos = [
-    ...c.guias.map((g) => [`guía ${g.slug}`, JSON.stringify(g)]),
     ...c.productos.map((p) => [`producto ${p.slug}`, JSON.stringify(p)]),
     ...c.publicos.map((p) => [`público ${p.slug}`, JSON.stringify(p)]),
   ];
   for (const [donde, texto] of textos) {
-    const m = texto.match(prohibidas);
+    const m = texto.match(PROHIBIDAS);
     assert.equal(m, null, `${donde} menciona «${m?.[0]}»`);
   }
-  const editor = c.guiaPorSlug("editor");
-  assert.ok(!editor.secciones.some((s) => s.bloques.some((b) => b.prompt)), "la guía EDITOR no debe regalar el prompt de edición");
 });
