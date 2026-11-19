@@ -36,7 +36,9 @@ export async function POST(req) {
   try {
     const nombre = pathname.split("/").pop();
     const r = await convertir(await bajar(pathname), nombre);
-    console.log(`[ahorra] ${r.tipo} ${r.paginas ?? "-"} pág ${Date.now() - inicio} ms`);
+    console.log(`[ahorra] ${r.tipo} ${r.paginas ?? "-"} pág ${Date.now() - inicio} ms${r.escaneado ? " escaneado" : ""}`);
+    // Un escaneado no tiene texto que sacar: no se cobra.
+    if (r.escaneado) return json({ ...r, saldo: Number(await conRedis((x) => devolver(x, correo))) });
     return json({ ...r, saldo: g.saldo });
   } catch (e) {
     await conRedis((r) => devolver(r, correo));
