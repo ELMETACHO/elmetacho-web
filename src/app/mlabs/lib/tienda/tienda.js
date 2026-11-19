@@ -27,7 +27,7 @@ export const precioDe = (p, moneda) => {
 };
 
 export const sePuedeComprar = (p, modo) =>
-  Boolean(modo) && p?.estado === "disponible" && MONEDAS.every((m) => precioDe(p, m)) && Boolean(p.archivo) && (!p.soloPruebas || modo === "pruebas");
+  Boolean(modo) && p?.estado === "disponible" && MONEDAS.every((m) => precioDe(p, m)) && (Boolean(p.archivo) || p.creditos > 0) && (!p.soloPruebas || modo === "pruebas");
 
 export function formatoMoneda(valor, moneda) {
   if (!(valor > 0)) return null;
@@ -70,6 +70,7 @@ export function nuevoPedido({ id, producto, moneda, nombre, correo, ahora, modo 
   return {
     id, slug: producto.slug, nombre_producto: producto.nombre, moneda, monto: precioDe(producto, moneda),
     nombre: String(nombre ?? "").trim().slice(0, 80), correo: String(correo ?? "").trim().toLowerCase().slice(0, 120),
+    creditos: producto.creditos > 0 ? producto.creditos : null,
     estado: "pendiente", modo, creado: new Date(ahora).toISOString(),
   };
 }
@@ -79,7 +80,7 @@ export const correoValido = (c) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(c
 /**
  * Confirma un pago (lo llama el webhook y también la página de resultado tras consultar a Bold). Idempotente.
  * pago = { referencia, total, moneda, estado: "APPROVED"|"REJECTED"|…, idBold, correo? }
- * almacen = { leerPedido(id), guardarPedido(p), registrarComprador(p) }
+ * almacen = { leerPedido(id), guardarPedido(p), registrarComprador(p), sumarCreditos?(correo, n) }
  */
 export async function confirmarPago(pago, { almacen, ahora, avisar = async () => {} }) {
   if (!esPedidoId(pago.referencia)) return { estado: "ajeno" };   // pagos de /pagar u otros: no son de la tienda
@@ -99,6 +100,8 @@ export async function confirmarPago(pago, { almacen, ahora, avisar = async () =>
   const pagado = { ...p, estado: "pagado", pagado: new Date(ahora).toISOString(), id_bold: pago.idBold ?? null };
   await almacen.guardarPedido(pagado);
   await almacen.registrarComprador(pagado);
+  // Paquetes de Ahorra: el pago suma archivos al correo del pedido (no hay archivo que entregar).
+  if (p.creditos > 0) await almacen.sumarCreditos(p.correo, p.creditos);
   await avisar(`💰 MLABS tienda${p.modo === "pruebas" ? " (PRUEBA)" : ""}: ${p.nombre_producto}\n${p.monto} ${p.moneda}\n${p.correo}\nPedido: ${p.id}`);
   return { estado: "pagado", pedido: pagado };
 }

@@ -51,7 +51,7 @@ export async function contenidoGuias() {
     tarjetasGuias: guias.map(aTarjeta),
     indiceBusqueda: crearIndice([
       ...guias.map((g) => ({ ...aTarjeta(g), href: `/recursos/${g.slug}` })),
-      ...productos.filter((p) => !p.soloPruebas).map((p) => ({ href: `/productos/${p.slug}`, titulo: p.nombre, tipo: "producto", resumen: p.promesa })),
+      ...productos.filter((p) => !p.soloPruebas && !p.oculto).map((p) => ({ href: `/productos/${p.slug}`, titulo: p.nombre, tipo: "producto", resumen: p.promesa })),
     ]),
   };
 }

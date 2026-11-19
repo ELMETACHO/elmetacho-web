@@ -23,7 +23,7 @@ function cargarBold() {
 }
 
 // Compra de un producto con precio fijo. La moneda viene del país (Vercel) y se puede cambiar a mano (cookie).
-export default function Comprar({ slug, nombre, precios, monedaInicial, prueba }) {
+export default function Comprar({ slug, nombre, precios, monedaInicial, prueba, correoInicial = "" }) {
   const [moneda, setMoneda] = useState(monedaInicial);
   const [estado, setEstado] = useState("listo");
   const [error, setError] = useState("");
@@ -78,7 +78,7 @@ export default function Comprar({ slug, nombre, precios, monedaInicial, prueba }
         <label><span className="m-meta">Nombre</span>
           <input name="nombre" required autoComplete="name" className="m-campo" /></label>
         <label><span className="m-meta">Correo (para el comprobante)</span>
-          <input name="correo" type="email" required autoComplete="email" inputMode="email" className="m-campo" /></label>
+          <input name="correo" type="email" required autoComplete="email" inputMode="email" className="m-campo" defaultValue={correoInicial} /></label>
         <input name="empresa_web" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
         <label style={{ display: "flex", gap: 10, fontSize: 14.5, lineHeight: 1.4, color: "var(--m-gris)" }}>
           <input type="checkbox" name="acepta" required style={{ width: 20, height: 20, flex: "none", accentColor: "var(--m-rojo)" }} />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { upload } from "@vercel/blob/client";
 import FormularioLead from "../FormularioLead";
+import Comprar from "./Comprar";
 
 const ACEPTA = ".pdf,.docx,.xlsx,.pptx,.html,.htm";
 const n = (v) => new Intl.NumberFormat("es-CO").format(v);
@@ -54,7 +55,7 @@ function Comparacion({ r }) {
   );
 }
 
-export default function Ahorra({ sesionInicial, saldoInicial, carpeta: carpetaInicial }) {
+export default function Ahorra({ sesionInicial, saldoInicial, carpeta: carpetaInicial, paquete }) {
   const [sesion, setSesion] = useState(sesionInicial);
   const [carpeta, setCarpeta] = useState(carpetaInicial);
   const [saldo, setSaldo] = useState(saldoInicial);
@@ -127,10 +128,19 @@ export default function Ahorra({ sesionInicial, saldoInicial, carpeta: carpetaIn
       )}
 
       {saldo <= 0 && (
-        <section className="m-caja" style={{ marginTop: 0 }}>
-          <div className="m-grande" style={{ fontSize: 24 }}>Más archivos: muy pronto</div>
-          <small>Vamos a abrir paquetes de pago único (sin suscripción). Déjanos tu WhatsApp y te avisamos primero, con el precio.</small>
-          <FormularioLead origen="markitdown-paquete" boton="Avísame" pedirMensaje={false} mensajeOk="Listo. Te avisamos primero cuando abran los paquetes." />
+        <section id="paquete" className="m-caja" style={{ marginTop: 0 }}>
+          {paquete.comprable ? (
+            <>
+              <p style={{ margin: "0 0 4px", fontWeight: 750, fontSize: 19 }}>{paquete.archivos} archivos más · pago único, no vencen</p>
+              <Comprar slug={paquete.slug} nombre={`${paquete.archivos} archivos`} precios={paquete.precios} monedaInicial={paquete.moneda} prueba={paquete.prueba} correoInicial={sesion} />
+            </>
+          ) : (
+            <>
+              <div className="m-grande" style={{ fontSize: 24 }}>{paquete.archivos} archivos por {paquete.textoPrecio}</div>
+              <small>Pago único, no vencen. Abrimos los pagos muy pronto: déjanos tu WhatsApp y te avisamos primero.</small>
+              <FormularioLead origen="markitdown-paquete" boton="Avísame" pedirMensaje={false} mensajeOk="Listo. Te avisamos primero cuando abran los pagos." />
+            </>
+          )}
         </section>
       )}
     </div>

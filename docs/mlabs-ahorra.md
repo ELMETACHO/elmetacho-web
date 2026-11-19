@@ -29,14 +29,16 @@ Es la versión «sin instalar nada» del reel L01 («Comenta AHORRA»). La perso
 - Un cron diario (`/api/ahorra/limpiar`) borra lo que quedó subido hace más de 1 hora sin convertir.
 - No se guarda el contenido.
 
-## Paquetes de pago único (APAGADOS)
-- **Dónde:** `src/app/mlabs/contenido/ahorra.js`. Las propuestas son 30 archivos por COP 9.900 / US$3 y 100 por COP 19.900 / US$5, con `aprobado: false`.
-- **Mientras no se aprueben:** al acabarse los gratis se muestra «Más archivos: muy pronto», con un lead `markitdown-paquete`. No se cobra.
-- **Para encenderlos:**
-  1. Oscar aprueba el precio.
-  2. Se crean como productos de la tienda, con `creditos: N`.
-  3. Al pagarse, `confirmarPago` suma créditos al correo del pedido con `sumar()` de `lib/ahorra/creditos.js`, en vez de entregar un archivo.
-  4. Se enciende con `MLABS_TIENDA` (ver `docs/mlabs-tienda.md`).
+## Paquete de pago único (precio aprobado el 2026-11-18; cobro APAGADO)
+- **Nombre y frase:** «Ahorra» y «Convierte tus archivos para Claude y cualquier IA, y gasta menos», en `src/app/mlabs/contenido/ahorra.js`. Se cambian ahí, sin tocar el resto.
+- **Paquete:** **50 archivos por COP 14.900 / US$4**, pago único y sin vencimiento (Oscar: «Sí. con 50 archivos por 14.900»).
+- **Producto:** `ahorra-50` en `productos.js`, con `creditos: 50`, oculto del catálogo. Cada archivo cuenta 1; cada uno de hasta 20 MB y 300 páginas. Los escaneados no se cobran.
+- **Mientras la tienda esté apagada:** al acabarse los gratis se ve «50 archivos por $14.900 COP (US$4)», con un lead `markitdown-paquete`.
+- **Con la tienda encendida** (`MLABS_TIENDA` + llaves de Bold):
+  - Aparece «Comprar» con el correo de la sesión.
+  - Al confirmarse el pago, `confirmarPago` suma 50 archivos a ese correo. Si nunca usó los gratis, primero se le dan sus 3.
+  - `/compra` muestra «Se sumaron 50 archivos» y, debajo, el **Kit Edita con Claude**.
+- **Sin IA:** la conversión no usa ningún modelo de IA ni OCR.
 
 ## Costo en Vercel
 - **Por conversión:** una invocación de unos 0,3–2 s con ≈130 MB de RAM, una subida a Blob y una descarga del mismo archivo, que se borra enseguida.

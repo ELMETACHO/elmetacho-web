@@ -22,7 +22,7 @@ Contacto: WhatsApp +57 320 264 6716 · contacto@elmetacho.com
 ${guias.map((g) => `- [${g.titulo}](${base}/recursos/${g.slug}): ${g.resumen}`).join("\n")}
 
 ## Productos (muy pronto)
-${productos.filter((p) => !p.soloPruebas).map((p) => `- [${p.nombre}](${base}/productos/${p.slug}): ${p.promesa}`).join("\n")}
+${productos.filter((p) => !p.soloPruebas && !p.oculto).map((p) => `- [${p.nombre}](${base}/productos/${p.slug}): ${p.promesa}`).join("\n")}
 
 ## Por público
 ${publicos.map((p) => `- [${p.titulo}](${base}/para/${p.slug}): ${p.intro}`).join("\n")}

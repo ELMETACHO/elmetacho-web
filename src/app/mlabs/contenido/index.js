@@ -22,4 +22,4 @@ export const edicionPorSlug = (slug) => ediciones.find((e) => e.slug === slug);
 export const enlaceNovedad = (n) => `${n.edicion === edicionesRecientes[0]?.slug ? "/novedades" : `/novedades/${n.edicion}`}#${n.slug}`;
 
 // Lo que se muestra al público: el producto de prueba solo existe en modo de pruebas de la tienda.
-export const productosVisibles = (modo) => productos.filter((p) => !p.soloPruebas || modo === "pruebas");
+export const productosVisibles = (modo) => productos.filter((p) => !p.oculto && (!p.soloPruebas || modo === "pruebas"));
