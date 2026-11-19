@@ -1,5 +1,5 @@
 // convertir.js — archivo → Markdown limpio para pasárselo a Claude (herramienta AHORRA de mlabs.elmetacho.com).
-// Librerías de Node (no es MarkItDown de Microsoft: ese no cabe en una función de Vercel, ver docs/mlabs-ahorra.md).
+// Librerías de Node, sin modelos de IA ni OCR (ver docs/mlabs-ahorra.md).
 //   PDF: unpdf (pdf.js) · DOCX: mammoth → turndown · XLSX: exceljs · PPTX: jszip (texto de cada diapositiva) · HTML: turndown
 import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";

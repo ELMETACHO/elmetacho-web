@@ -134,7 +134,7 @@ export const productos = [
     portada: "rojo",
     oculto: true,
     creditos: 50,
-    promesa: "50 conversiones más en Ahorra: tus archivos a texto limpio para Claude y cualquier IA. Pago único, no vence.",
+    promesa: "50 conversiones más en Ahorra: tus archivos a texto limpio para Claude, ChatGPT, Gemini y más. Pago único, no vence.",
     paraQuien: ["Quien ya usó sus 3 archivos gratis y quiere seguir convirtiendo."],
     noEsPara: ["PDF escaneados: sin texto no hay nada que convertir (y no se cobran)."],
     queIncluye: ["50 archivos de hasta 20 MB y 300 páginas cada uno.", "Sin vencimiento.", "Se suman al correo con el que compras."],

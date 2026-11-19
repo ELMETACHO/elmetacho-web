@@ -4,7 +4,7 @@
 // tienda se encienda (MLABS_TIENDA + llaves de Bold) se muestra con su precio y «Muy pronto».
 export const AHORRA = {
   nombre: "Ahorra",
-  frase: "Convierte tus archivos para Claude y cualquier IA, y gasta menos",
+  frase: "Convierte tus archivos para Claude, ChatGPT, Gemini y más, y gasta menos",
   palabra: "AHORRA",
   paquete: "ahorra-50",
 };

@@ -2,7 +2,6 @@ import { cookies, headers } from "next/headers";
 import { MlabsHeader, MlabsFooter } from "../MlabsMarco";
 import Portada from "../componentes/Portada";
 import Ahorra from "../componentes/Ahorra";
-import Copiar from "../recursos/[slug]/Copiar";
 import { COOKIE, carpeta, leerSesion, saldoDe } from "../lib/ahorra/creditos.js";
 import { secreto } from "../lib/ahorra/servidor.js";
 import { conRedis } from "../../admin/lib/instagram/conexion.js";
@@ -12,7 +11,7 @@ import { formatoMoneda, modoTienda, monedaPara, sePuedeComprar, COOKIE_MONEDA } 
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: { absolute: `${AHORRA.nombre}: tu PDF a texto limpio para Claude · MLABS` },
+  title: { absolute: `${AHORRA.nombre}: tu PDF a texto limpio para Claude, ChatGPT, Gemini y más · MLABS` },
   description: `${AHORRA.frase}. PDF, Word, Excel, PowerPoint o HTML a Markdown limpio. 3 archivos gratis.`,
   alternates: { canonical: "https://mlabs.elmetacho.com/ahorra" },
 };
@@ -21,7 +20,6 @@ const preguntas = [
   { q: "¿Por qué gasto menos tokens?", a: "Cuando le pasas un PDF a Claude, cada página cuenta dos veces: el texto y una imagen de la página. Con texto limpio solo cuenta el texto, sin la imagen ni el formato." },
   { q: "¿Qué pasa con mi archivo?", a: "Se sube a un almacenamiento privado, se convierte y se borra en ese mismo momento. No guardamos el contenido: solo tu correo y cuántos archivos llevas." },
   { q: "¿Sirve con PDF escaneados?", a: "No. Un escaneado es una foto de cada página; sin OCR no hay texto que sacar. Te avisamos cuando pase." },
-  { q: "¿Es MarkItDown de Microsoft?", a: "No. Hace lo mismo que enseñamos en el video con MarkItDown (licencia MIT), pero con otras librerías, para que no tengas que instalar nada. No tenemos relación con Microsoft." },
   { q: "¿Y si se me acaban los 3 gratis?", a: "Hay un paquete de 50 archivos por $14.900 COP (US$4), pago único y sin vencimiento. Cada archivo cuenta 1, de hasta 20 MB y 300 páginas. Los PDF escaneados no se cobran." },
   { q: "¿Usan IA para convertir?", a: "No. La conversión saca el texto que ya tiene el archivo, sin modelos de IA ni OCR. Por eso es rápida y barata." },
 ];
@@ -55,28 +53,9 @@ export default async function Pagina() {
             <ul>
               <li>Escribe tu correo: tienes 3 archivos gratis.</li>
               <li>Sube un PDF, Word, Excel, PowerPoint o HTML de hasta 20 MB.</li>
-              <li>Copia el texto o descárgalo como .md y pégalo en Claude.</li>
+              <li>Copia el texto o descárgalo como .md y pégalo en Claude, ChatGPT, Gemini o la que uses.</li>
               <li>¿Quieres más? 50 archivos por $14.900 COP (US$4), pago único.</li>
             </ul>
-          </section>
-          <section id="instalar">
-            <h2>¿Prefieres hacerlo tú? Instálalo así</h2>
-            <p>Es lo que enseñamos en el reel: MarkItDown, una herramienta gratis de Microsoft (licencia MIT), en tu computador.</p>
-            <ul>
-              <li>Instala Python 3.10 o más nuevo desde python.org.</li>
-              <li>Abre la terminal y pega esto:</li>
-            </ul>
-            <div className="m-prompt">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><b style={{ fontSize: 14, color: "var(--m-gris)" }}>Instalar</b><Copiar texto={'pip install "markitdown[pdf,docx,xlsx,pptx]"'} /></div>
-              {'pip install "markitdown[pdf,docx,xlsx,pptx]"'}
-            </div>
-            <ul><li>Convierte tu archivo (cambia el nombre por el tuyo):</li></ul>
-            <div className="m-prompt">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><b style={{ fontSize: 14, color: "var(--m-gris)" }}>Convertir</b><Copiar texto="markitdown informe.pdf -o informe.md" /></div>
-              markitdown informe.pdf -o informe.md
-            </div>
-            <ul><li>Pásale a Claude el archivo <b>informe.md</b> en vez del PDF.</li></ul>
-            <p className="m-meta">No tenemos relación con Microsoft. Si no quieres instalar nada, usa la herramienta de arriba.</p>
           </section>
           <section className="m-faq">
             <h2>Preguntas</h2>
