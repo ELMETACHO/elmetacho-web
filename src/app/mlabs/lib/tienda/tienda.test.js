@@ -133,3 +133,17 @@ test("evento del webhook → pago", () => {
   assert.deepEqual(pagoDeEvento(ev), { referencia: ID, total: 69000, moneda: "COP", estado: "APPROVED", idBold: "T5", correo: "a@b.co" });
   assert.equal(pagoDeEvento({ type: "VOID_APPROVED", data: {} }), null);
 });
+
+test("paquete de créditos (Ahorra): se vende sin archivo y al pagarse suma los archivos al correo", async () => {
+  const paquete = { slug: "ahorra-50", nombre: "Ahorra · 50", estado: "disponible", precios: { COP: 14900, USD: 4 }, creditos: 50, archivo: null };
+  assert.equal(sePuedeComprar(paquete, "real"), true);
+  assert.equal(sePuedeComprar(paquete, null), false);
+  const p = nuevoPedido({ id: ID, producto: paquete, moneda: "COP", nombre: "Ana", correo: "Ana@x.co", ahora: 1763300000000, modo: "real" });
+  assert.deepEqual([p.monto, p.creditos], [14900, 50]);
+  const m = memoria([p]);
+  const sumados = [];
+  m.deps.almacen.sumarCreditos = async (correo, n) => void sumados.push([correo, n]);
+  await confirmarPago({ referencia: ID, total: 14900, moneda: "COP", estado: "APPROVED" }, m.deps);
+  await confirmarPago({ referencia: ID, total: 14900, moneda: "COP", estado: "APPROVED" }, m.deps);   // repetido: no suma otra vez
+  assert.deepEqual(sumados, [["ana@x.co", 50]]);
+});

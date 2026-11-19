@@ -1,8 +1,10 @@
-// AHORRA (mlabs.elmetacho.com/ahorra): archivo → Markdown limpio para Claude. 3 archivos gratis por correo.
-// Paquetes de pago único: los precios los aprueba Oscar. Mientras `aprobado` sea false, se muestran como «Muy pronto»
-// (sin precio) y dejan un lead "markitdown-paquete". Al aprobarlos se conectan con la tienda Bold (docs/mlabs-ahorra.md).
-export const PALABRA_AHORRA = "AHORRA";
-export const paquetes = [
-  { id: "ahorra-30", archivos: 30, precios: { COP: 9900, USD: 3 }, aprobado: false },
-  { id: "ahorra-100", archivos: 100, precios: { COP: 19900, USD: 5 }, aprobado: false },
-];
+// Ahorra (mlabs.elmetacho.com/ahorra): archivo → Markdown limpio para Claude. Nombre y frase se cambian aquí, sin
+// tocar el resto del código. Precio del paquete aprobado por Oscar el 2026-11-18: 50 archivos por COP 14.900 / US$4,
+// pago único y sin vencimiento. Se vende como producto de la tienda (`ahorra-50` en productos.js); hasta que la
+// tienda se encienda (MLABS_TIENDA + llaves de Bold) se muestra con su precio y «Muy pronto».
+export const AHORRA = {
+  nombre: "Ahorra",
+  frase: "Convierte tus archivos para Claude y cualquier IA, y gasta menos",
+  palabra: "AHORRA",
+  paquete: "ahorra-50",
+};

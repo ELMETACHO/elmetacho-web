@@ -2,6 +2,8 @@ import Link from "next/link";
 import { MlabsHeader, MlabsFooter, MLABS_WHATSAPP } from "../MlabsMarco";
 import { esPedidoId, tokenEntrega, ENTREGA_DIAS, formatoMoneda } from "../lib/tienda/tienda.js";
 import { confirmarConBold } from "../lib/tienda/servidor.js";
+import { productoPorSlug } from "../contenido/index.js";
+import { SiguientePaso } from "../componentes/TarjetaProducto";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +20,7 @@ export default async function Compra({ searchParams }) {
     try { r = await confirmarConBold(pedido); } catch { r = { estado: "error" }; }
   }
   const p = r.pedido;
-  const link = r.estado === "pagado" ? linkDescarga(p.id) : null;
+  const link = r.estado === "pagado" && !p.creditos ? linkDescarga(p.id) : null;
 
   return (
     <main>
@@ -28,6 +30,13 @@ export default async function Compra({ searchParams }) {
           <>
             <h1 style={{ marginTop: 0 }}>¡Listo, {p.nombre || "ya es tuyo"}!</h1>
             <p className="m-resumen">Pagaste {formatoMoneda(p.monto, p.moneda)} por {p.nombre_producto}.{p.modo === "pruebas" ? " (Compra de prueba: no se cobró nada.)" : ""}</p>
+            {p.creditos ? (
+              <div className="m-caja">
+                <div className="m-grande">Se sumaron {p.creditos} archivos</div>
+                <small>Quedaron en tu cuenta de Ahorra con el correo {p.correo}. No vencen.</small>
+                <Link href="/ahorra" className="m-boton m-boton-primario m-boton-ancho">Convertir un archivo</Link>
+              </div>
+            ) : (
             <div className="m-caja">
               <div className="m-grande">Descárgalo aquí</div>
               <small>El link vale {ENTREGA_DIAS} días. Guárdalo o descárgalo ya.</small>
@@ -37,6 +46,8 @@ export default async function Compra({ searchParams }) {
                 <li>Si algo no funciona, escríbenos por <a href={MLABS_WHATSAPP}>WhatsApp</a> con tu número de pedido.</li>
               </ul>
             </div>
+            )}
+            {p.creditos && productoPorSlug("edita-con-claude") && <SiguientePaso producto={productoPorSlug("edita-con-claude")} />}
           </>
         ) : r.estado === "pendiente" ? (
           <>

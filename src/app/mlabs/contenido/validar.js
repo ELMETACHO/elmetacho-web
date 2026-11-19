@@ -53,7 +53,7 @@ export function validarContenido({ guias, productos, novedades, publicos, edicio
     // Tienda (2026-11-16): «disponible» exige precio fijo en COP y en USD (enteros) y el archivo de entrega en Blob.
     if (p.estado === "disponible" && !(Number.isInteger(p.precios?.COP) && p.precios.COP > 0 && Number.isInteger(p.precios?.USD) && p.precios.USD > 0))
       e.push(`${id}: disponible sin precio en COP y USD`);
-    if (p.estado === "disponible" && !p.archivo) e.push(`${id}: disponible sin archivo de entrega`);
+    if (p.estado === "disponible" && !p.archivo && !(p.creditos > 0)) e.push(`${id}: disponible sin archivo de entrega ni créditos`);
     if (!["COP", "USD"].includes(p.moneda)) e.push(`${id}: moneda inválida (${p.moneda})`);
     if (!Array.isArray(p.faq)) e.push(`${id}: faq debe ser una lista`);
   }

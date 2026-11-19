@@ -15,7 +15,7 @@ export async function GET() {
     { u: "/novedades", f: edicionesRecientes[0]?.fecha },
     ...edicionesRecientes.slice(1).map((e) => ({ u: `/novedades/${e.slug}`, f: e.fecha })),
     ...guias.map((g) => ({ u: `/recursos/${g.slug}`, f: g.actualizado })),
-    ...productos.filter((p) => !p.soloPruebas).map((p) => ({ u: `/productos/${p.slug}` })),
+    ...productos.filter((p) => !p.soloPruebas && !p.oculto).map((p) => ({ u: `/productos/${p.slug}` })),
     ...publicos.map((p) => ({ u: `/para/${p.slug}` })),
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls

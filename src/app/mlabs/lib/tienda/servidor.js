@@ -2,6 +2,7 @@
 import { issueSignedToken, presignUrl } from "@vercel/blob";
 import { conRedis } from "../../../admin/lib/instagram/conexion.js";
 import { confirmarPago } from "./tienda.js";
+import { claveSaldo, GRATIS } from "../ahorra/creditos.js";
 
 const clavePedido = (id) => `mlabs:tienda:pedido:${id}`;
 export const COMPRADORES = "mlabs:tienda:compradores";
@@ -14,6 +15,8 @@ export const almacenTienda = (r) => ({
   // Bold reintenta: cada evento se procesa una sola vez (30 días).
   eventoNuevo: async (id) => Boolean(await r.set(`mlabs:bold:evento:${id}`, "1", { NX: true, EX: 60 * 60 * 24 * 30 })),
   olvidarEvento: (id) => r.del(`mlabs:bold:evento:${id}`),
+  // Si la persona nunca usó los gratis, primero recibe sus 3 y luego el paquete.
+  sumarCreditos: async (correo, n) => { await r.set(claveSaldo(correo), String(GRATIS), { NX: true }); await r.incrBy(claveSaldo(correo), n); },
 });
 
 export async function avisarTelegram(texto) {
