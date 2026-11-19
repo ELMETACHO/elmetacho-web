@@ -33,13 +33,19 @@ export async function POST(req) {
     return json({ error: g.error, sinSaldo: Boolean(g.sinSaldo) }, g.sinSaldo ? 402 : 429);
   }
   const inicio = Date.now();
+  const cpu0 = process.cpuUsage();
   try {
     const nombre = pathname.split("/").pop();
-    const r = await convertir(await bajar(pathname), nombre);
+    const buf = await bajar(pathname);
+    const tBajar = Date.now() - inicio;
+    const r = await convertir(buf, nombre);
     console.log(`[ahorra] ${r.tipo} ${r.paginas ?? "-"} pág ${Date.now() - inicio} ms${r.escaneado ? " escaneado" : ""}`);
     // Un escaneado no tiene texto que sacar: no se cobra.
-    if (r.escaneado) return json({ ...r, saldo: Number(await conRedis((x) => devolver(x, correo))) });
-    return json({ ...r, saldo: g.saldo });
+    // Medición del costo (Server-Timing): CPU real de la función, memoria del proceso y tiempos de cada paso.
+    const c = process.cpuUsage(cpu0);
+    const medida = { "server-timing": `bajar;dur=${tBajar}, convertir;dur=${Date.now() - inicio - tBajar}, cpu;dur=${Math.round((c.user + c.system) / 1000)}, rss;desc="${Math.round(process.memoryUsage().rss / 1e6)}MB", bytes;desc="${buf.byteLength}"` };
+    if (r.escaneado) return json({ ...r, saldo: Number(await conRedis((x) => devolver(x, correo))) }, 200, medida);
+    return json({ ...r, saldo: g.saldo }, 200, medida);
   } catch (e) {
     await conRedis((r) => devolver(r, correo));
     const usuario = e instanceof ErrorUsuario;
