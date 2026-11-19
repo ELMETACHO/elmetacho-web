@@ -94,7 +94,7 @@ export default function Ahorra({ sesionInicial, saldoInicial, carpeta: carpetaIn
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <div className="m-etiquetas" style={{ margin: 0 }}>
-        <span className={saldo > 0 ? "m-verde" : undefined}>{saldo > 0 ? `Te quedan ${saldo} ${saldo === 1 ? "archivo" : "archivos"}` : "Sin archivos disponibles"}</span>
+        <span className={saldo > 0 ? "m-verde" : undefined}>{saldo > 0 ? (saldo === 1 ? "Te queda 1 archivo" : `Te quedan ${saldo} archivos`) : "Sin archivos disponibles"}</span>
         <span className="m-verde">Se borra al convertir</span>
       </div>
 
@@ -111,13 +111,18 @@ export default function Ahorra({ sesionInicial, saldoInicial, carpeta: carpetaIn
 
       {r && (
         <section className="m-caja" style={{ marginTop: 0, display: "grid", gap: 14 }}>
-          {r.escaneado && <p className="m-ojo" style={{ margin: 0 }}><strong>Ojo: </strong>este PDF parece escaneado (son fotos de las páginas). Sin OCR no se puede sacar el texto; prueba con el original digital.</p>}
+          {r.escaneado ? (
+            <p className="m-ojo" style={{ margin: 0 }}><strong>Ojo: </strong>este PDF parece escaneado (son fotos de las páginas). Sin OCR no se puede sacar el texto; prueba con el original digital. No se descontó tu archivo.</p>
+          ) : (
+            <>
           <Comparacion r={r} />
           <div style={{ display: "flex", gap: 8 }}>
             <button type="button" onClick={copiar} className="m-boton m-boton-primario" style={{ flex: 1 }}>{copiado ? "¡Copiado!" : "Copiar texto"}</button>
-            <button type="button" onClick={descargar} className="m-boton m-boton-suave" style={{ flex: 1 }}>Descargar .md</button>
+            <button type="button" onClick={descargar} className="m-boton m-boton-suave" style={{ flex: 1 }}>Descargar</button>
           </div>
           <textarea readOnly value={r.markdown.slice(0, 200000)} aria-label="Texto en Markdown" style={{ width: "100%", minHeight: 260, borderRadius: 14, border: "1.5px solid var(--m-borde)", padding: 12, font: "14px/1.5 ui-monospace, Consolas, monospace" }} />
+            </>
+          )}
         </section>
       )}
 
