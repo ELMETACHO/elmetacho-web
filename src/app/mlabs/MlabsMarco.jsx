@@ -23,6 +23,7 @@ export function MlabsHeader() {
             <ul>
               <li><Link href="/recursos">Guías gratis</Link></li>
               <li><Link href="/#productos">Productos</Link></li>
+              <li><Link href="/ahorra">AHORRA: tu PDF a texto para Claude</Link></li>
               <li><Link href="/novedades">Novedades de IA</Link></li>
               <li><Link href="/automatizar">Responde comentarios por DM</Link></li>
               <li><Link href="/#contacto">Que lo montemos por ti</Link></li>

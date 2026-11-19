@@ -125,6 +125,18 @@ export default async function Mlabs() {
         </div>
       </section>
 
+      {/* HERRAMIENTA AHORRA */}
+      <section className="m-seccion">
+        <div className="m-ancho">
+          <Link href="/ahorra" className="m-oscuro" style={{ display: "grid", gap: 6, textDecoration: "none" }}>
+            <span className="m-chip" style={{ background: "rgba(255,255,255,.14)" }}>Herramienta gratis</span>
+            <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15 }}>AHORRA: pásale a Claude texto, no PDF</span>
+            <span style={{ color: "#c9ced6" }}>Convierte tu archivo a Markdown limpio y mira cuántos tokens te ahorras. 3 archivos gratis.</span>
+            <span className="m-boton m-boton-primario" style={{ marginTop: 8, justifySelf: "start" }}>Probar gratis</span>
+          </Link>
+        </div>
+      </section>
+
       {/* PRODUCTOS */}
       <section id="productos" className="m-seccion" style={{ scrollMarginTop: 64 }}>
         <div className="m-ancho">
