@@ -12,8 +12,12 @@ export const enlaceRecurso = (slug) => `${BASE}/recursos/${slug}`;
 const tok = (s) => normalizar(s).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
 // Crea o actualiza (por palabra) la regla del recurso; conserva id y estado de una regla existente.
-export function reglaConRecurso(disparadores, g, regla = {}, nuevoId) {
-  const link = enlaceRecurso(g.slug);
+export const reglaConRecurso = (disparadores, g, regla = {}, nuevoId) =>
+  reglaConLink(disparadores, { palabra: g.palabra, titulo: g.titulo, link: enlaceRecurso(g.slug) }, regla, nuevoId);
+
+// Regla palabra → link (cualquier página de mlabs, p. ej. /ahorra). Mismo upsert por palabra.
+export function reglaConLink(disparadores, g, regla = {}, nuevoId) {
+  const link = g.link;
   const i = disparadores.findIndex((d) => tok(d.palabra) === tok(g.palabra));
   const previa = i >= 0 ? disparadores[i] : null;
   const d = {
@@ -67,4 +71,19 @@ export async function listarRecursos({ almacen, contexto }) {
     status: 200,
     body: { recursos: todos.map((g) => ({ slug: g.slug, palabra: g.palabra, titulo: g.titulo, origen: enRedis.has(g.slug) ? "redis" : "codigo" })) },
   };
+}
+
+// PUT /admin/api/pc/palabras: una regla suelta (sin recurso), solo hacia páginas de mlabs y solo en @metacholabs.
+export async function guardarPalabra(cuerpo, { almacen, nuevoId }) {
+  const cuenta = cuerpo?.cuenta ?? CUENTA_LABS;
+  if (cuenta !== CUENTA_LABS) return { status: 403, body: { error: `Solo se crean reglas para @metacholabs (${CUENTA_LABS}).` } };
+  const palabra = String(cuerpo?.palabra ?? "").trim();
+  const link = String(cuerpo?.link ?? "");
+  if (!palabra) return { status: 400, body: { error: "Falta la palabra." } };
+  if (!link.startsWith(`${BASE}/`)) return { status: 400, body: { error: `El link debe ser una página de ${BASE}.` } };
+  const actuales = await almacen.leerDisparadores(cuenta);
+  const v = validarDisparadores(reglaConLink(actuales, { palabra, link, titulo: palabra }, cuerpo.regla ?? {}, nuevoId), nuevoId);
+  if (v.errores.length) return { status: 400, body: { error: v.errores.join(" ") } };
+  await almacen.guardarDisparadores(cuenta, v.disparadores);
+  return { status: 200, body: { ok: true, regla: v.disparadores.find((d) => tok(d.palabra) === tok(palabra)) } };
 }

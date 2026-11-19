@@ -95,3 +95,14 @@ test("listar indica si cada recurso viene de Redis o del código", async () => {
   const r = await listarRecursos({ almacen: m.almacen, contexto });
   assert.deepEqual(r.body.recursos.map((x) => `${x.slug}:${x.origen}`), ["skills:redis", "resena:codigo"]);
 });
+
+test("palabra suelta → página de mlabs (p. ej. /ahorra): upsert, candado y solo links de mlabs", async () => {
+  const { guardarPalabra } = await import("./api.js");
+  const m = memoria([{ id: "z", palabra: "Ahorra", respuesta_publica: "Va", mensaje_dm: "Toma", link: "https://mlabs.elmetacho.com/recursos/x", pedir_seguir: true, activa: true }]);
+  const r = await guardarPalabra({ palabra: "AHORRA", link: "https://mlabs.elmetacho.com/ahorra" }, { almacen: m.almacen, nuevoId });
+  assert.equal(r.status, 200);
+  assert.equal(m.disp[CUENTA_LABS].length, 1);
+  assert.deepEqual([r.body.regla.id, r.body.regla.link, r.body.regla.pedir_seguir], ["z", "https://mlabs.elmetacho.com/ahorra", true]);
+  assert.equal((await guardarPalabra({ palabra: "X", link: "https://otro.com/a" }, { almacen: m.almacen, nuevoId })).status, 400);
+  assert.equal((await guardarPalabra({ palabra: "X", link: "https://mlabs.elmetacho.com/a", cuenta: "1" }, { almacen: m.almacen, nuevoId })).status, 403);
+});
