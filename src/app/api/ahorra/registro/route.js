@@ -1,4 +1,4 @@
-// POST /api/ahorra/registro — correo → 3 archivos gratis (una vez por correo) + lead origen "markitdown" + cookie firmada.
+// POST /api/ahorra/registro — correo → 3 archivos gratis (una vez por correo) + lead origen "ahorra" + cookie firmada.
 import { conRedis } from "../../../admin/lib/instagram/conexion.js";
 import { COOKIE, cookieSesion, correoValido, normalizarCorreo, registrar } from "../../../mlabs/lib/ahorra/creditos.js";
 import { ipDe, json, secreto } from "../../../mlabs/lib/ahorra/servidor.js";
@@ -18,11 +18,11 @@ export async function POST(req) {
 
   const r = await conRedis(async (r) => {
     const x = await registrar(r, correo, ipDe(req));
-    if (x.nuevo) await r.lPush("mlabs:leads", JSON.stringify({ nombre, telefono: "", correo, mensaje: "", origen: "markitdown", creado: new Date().toISOString() }));
+    if (x.nuevo) await r.lPush("mlabs:leads", JSON.stringify({ nombre, telefono: "", correo, mensaje: "", origen: "ahorra", creado: new Date().toISOString() }));
     return x;
   });
   if (r.error) return json({ error: r.error }, 429);
-  if (r.nuevo) await avisarTelegram(`🟥 Nuevo lead MLABS (markitdown)\n\n👤 ${nombre}\n✉️ ${correo}`);
+  if (r.nuevo) await avisarTelegram(`🟥 Nuevo lead MLABS (ahorra)\n\n👤 ${nombre}\n✉️ ${correo}`);
   const cookie = `${COOKIE}=${encodeURIComponent(cookieSesion(correo, secreto()))}; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax`;
   return json({ ok: true, saldo: r.saldo, correo }, 200, { "set-cookie": cookie });
 }

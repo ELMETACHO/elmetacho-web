@@ -138,7 +138,7 @@ export default function Ahorra({ sesionInicial, saldoInicial, carpeta: carpetaIn
             <>
               <div className="m-grande" style={{ fontSize: 24 }}>{paquete.archivos} archivos por {paquete.textoPrecio}</div>
               <small>Pago único, no vencen. Abrimos los pagos muy pronto: déjanos tu WhatsApp y te avisamos primero.</small>
-              <FormularioLead origen="markitdown-paquete" boton="Avísame" pedirMensaje={false} mensajeOk="Listo. Te avisamos primero cuando abran los pagos." />
+              <FormularioLead origen="ahorra-paquete" boton="Avísame" pedirMensaje={false} mensajeOk="Listo. Te avisamos primero cuando abran los pagos." />
             </>
           )}
         </section>
