@@ -40,9 +40,22 @@ Es la versión «sin instalar nada» del reel L01 («Comenta AHORRA»). La perso
   - `/compra` muestra «Se sumaron 50 archivos» y, debajo, el **Kit Edita con Claude**.
 - **Sin IA:** la conversión no usa ningún modelo de IA ni OCR.
 
-## Costo en Vercel
-- **Por conversión:** una invocación de unos 0,3–2 s con ≈130 MB de RAM, una subida a Blob y una descarga del mismo archivo, que se borra enseguida.
-- **Para 1.000 conversiones al mes de 2 MB:**
-  - Unos 2 GB de transferencia de Blob y muy poco cómputo.
-  - Queda dentro de lo incluido en el plan Pro.
-  - Las cifras exactas de facturación se leen en el panel de Vercel tras unos días de uso.
+## Costo real en Vercel (medido en producción el 2026-11-18, región iad1)
+- **Cómo se midió:** con la cabecera `Server-Timing` de `/api/ahorra/convertir`, que da la CPU de la función, la memoria del proceso y los tiempos.
+- **Precios Pro** (docs de Vercel, 2026-11-18):
+  - Active CPU: $0,128 por hora.
+  - Memoria aprovisionada: $0,0106 por GB-hora.
+  - Invocaciones: $0,60 por millón.
+  - Blob: subida (operación avanzada) ≈$4,50–5,00 por millón; lectura (simple) ≈$0,35–0,40 por millón; **borrar es gratis**.
+  - El plan Pro trae $20 de crédito al mes.
+
+| PDF | Función (bajar + convertir) | CPU activa | Memoria del proceso | Costo aprox. por archivo |
+|---|---|---|---|---|
+| 20 págs., 370 KB | 0,93 s | 0,97 s | 187 MB | ≈ US$0,000046 |
+| 100 págs., 3,9 MB | 1,12 s | 1,19 s | 247 MB | ≈ US$0,000055 |
+
+- **De dónde sale el costo por archivo:** CPU ≈$0,00004 + memoria ≈$0,000006, calculada con la memoria por defecto de 2 GB (no verificada: revisarla en Settings › Functions) + 2 invocaciones (token de subida y conversión) ≈$0,0000012 + 1 subida a Blob ≈$0,000005 + 1 lectura ≈$0,0000004.
+- **A escala:** **≈US$0,05 por cada 1.000 archivos**. Un paquete de 50 cuesta ≈US$0,003 (unos COP 11), contra COP 14.900 de precio, sin contar la comisión de Bold.
+- **Sin IA:** la conversión no usa ningún modelo de IA ni OCR. Es lo que la mantiene así de barata.
+- **Fuera de la cuenta:** el Redis (llamadas mínimas por archivo) y la página `/ahorra` misma (una invocación por visita).
+
