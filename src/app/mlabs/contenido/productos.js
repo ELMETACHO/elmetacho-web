@@ -687,8 +687,8 @@ export const productos = [
       "Quien busca fotos de personas famosas o marcas."
     ],
     "queIncluye": [
-      "Entre 200 y 300 recortes: cielos, manos, ojos, celulares, plantas, animales, edificios y objetos vintage.",
-      "Una carpeta por tipo, en alta calidad y en un solo .zip.",
+      "311 recortes en 14 carpetas: animales, cielo y espacio, comida, manos, plantas, edificios, objetos, tecnología, vehículos y más.",
+      "En alta calidad, en un solo .zip de 125 MB, con la licencia de cada recorte.",
       "De uso libre, también comercial.",
       "Claude los anima cuadro a cuadro con Street Collage."
     ],
@@ -699,7 +699,7 @@ export const productos = [
     "planes": [
       {
         "nombre": "Pack completo",
-        "detalle": "200–300 recortes",
+        "detalle": "311 recortes",
         "COP": 59000,
         "lanzamiento": null
       }
