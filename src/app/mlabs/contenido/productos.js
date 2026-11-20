@@ -161,6 +161,570 @@ export const productos = [
       { q: "¿Cuánto espacio voy a recuperar?", a: "Depende de tu PC. En un computador de uso diario es normal encontrar decenas de gigas en temporales y cachés." },
     ],
   },
+  // Productos 4–13 del catálogo (Oscar pidió el 20-nov que salgan todos con los precios sugeridos). Preventa hasta tener kit probado.
+  {
+    "slug": "talking-head-pro",
+    "nombre": "Studio · Talking Head Pro",
+    "etiqueta": "Kit",
+    "palabraPortada": "STUDIO",
+    "portada": "negro",
+    "promesa": "Tú hablas y el estudio edita: quita silencios y tropiezos, se queda con la toma buena, subtítulos con tu texto exacto, zoom a tu cara y tu look de color.",
+    "paraQuien": [
+      "Quien graba a cámara y se equivoca, repite y hace pausas.",
+      "Creadores y negocios que publican todos los días."
+    ],
+    "noEsPara": [
+      "Quien busca videos animados sin su cara (para eso está la Fábrica de Videos)."
+    ],
+    "queIncluye": [
+      "Corte limpio: silencios y respiraciones fuera, sin comerse palabras.",
+      "Detector de tropiezos: si repites una frase, se queda la buena.",
+      "Subtítulos con tu texto exacto, sin errores de transcripción.",
+      "Zoom a tu cara en lo importante.",
+      "Looks de color propios.",
+      "Incluye el Pack Subtítulos y Tipos (12 estilos y más de 25 tipografías).",
+      "Reto de 5 días y guías PDF."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Computador con Windows 10/11 o Mac."
+    ],
+    "planes": [
+      {
+        "nombre": "Kit completo",
+        "detalle": "Incluye el Pack Subtítulos y Tipos",
+        "COP": 149000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
+  {
+    "slug": "pack-subtitulos",
+    "nombre": "Pack Subtítulos y Tipos",
+    "etiqueta": "Pack",
+    "palabraPortada": "SUBS",
+    "portada": "rojo",
+    "promesa": "12 estilos de subtítulos y más de 25 tipografías libres para uso comercial. Le dices a Claude el estilo y listo.",
+    "paraQuien": [
+      "Quien quiere que sus videos no se vean todos iguales.",
+      "Quien ya edita con Claude y quiere más estilos."
+    ],
+    "noEsPara": [
+      "Quien busca editar en una app del celular."
+    ],
+    "queIncluye": [
+      "Caja negra, rebote, palabra clave gigante, máquina de escribir, resaltador y karaoke.",
+      "Neón, sticker, serif de revista, texto detrás de ti, arco y documental.",
+      "Más de 25 tipografías libres para uso comercial, probadas en vertical.",
+      "Guía PDF con ejemplos de cada estilo."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Computador con Windows 10/11 o Mac."
+    ],
+    "planes": [
+      {
+        "nombre": "Pack completo",
+        "detalle": "12 estilos + 25 tipografías",
+        "COP": 49000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Viene en Talking Head Pro?",
+        "a": "Sí. Si compras Talking Head Pro, este pack ya va incluido."
+      },
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
+  {
+    "slug": "studio-estilos",
+    "nombre": "Studio · Estilos",
+    "etiqueta": "Kit",
+    "palabraPortada": "ESTILOS",
+    "portada": "rojo",
+    "promesa": "La misma toma, cinco estilos: Pop Sky, Trailer Mode, Street Collage, Zoom Pack y Cabezón. Le dices el nombre del estilo y Claude arma el video.",
+    "paraQuien": [
+      "Creadores que quieren un estilo propio y reconocible.",
+      "Quien vende por palabra clave en los comentarios."
+    ],
+    "noEsPara": [
+      "Quien busca plantillas para una app del celular."
+    ],
+    "queIncluye": [
+      "Pop Sky: textos que saltan sobre color y un celular que escribe tu palabra clave.",
+      "Trailer Mode: como el tráiler de una película.",
+      "Street Collage: recortes de papel animados cuadro a cuadro.",
+      "Zoom Pack: cortes y acercamientos al ritmo de tu voz.",
+      "Cabezón: un muñeco con tu cara que explica contigo.",
+      "Sonido de cine, música libre de derechos y tipografías en cada estilo."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Computador con Windows 10/11 o Mac."
+    ],
+    "planes": [
+      {
+        "nombre": "1 estilo",
+        "detalle": "el que elijas",
+        "COP": 99000,
+        "lanzamiento": null
+      },
+      {
+        "nombre": "Los 5 estilos",
+        "detalle": "Pop Sky + Trailer + Collage + Zoom + Cabezón",
+        "COP": 299000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
+  {
+    "slug": "radar-viral",
+    "nombre": "Radar Viral",
+    "etiqueta": "Herramienta",
+    "palabraPortada": "RADAR",
+    "portada": "negro",
+    "promesa": "Cada semana te trae las ideas que ya funcionaron en tu nicho, las reescribe con tu estilo y un juez las califica antes de que grabes.",
+    "paraQuien": [
+      "Creadores que no saben qué publicar.",
+      "Quien ya tiene la Fábrica de Videos y quiere temas probados."
+    ],
+    "noEsPara": [
+      "Quien busca una promesa de viral: esto te ayuda a dejar de adivinar."
+    ],
+    "queIncluye": [
+      "Busca los videos que sacaron muchas más vistas de lo normal en su cuenta.",
+      "Reescribe cada idea con tu forma de hablar.",
+      "El juez viral: retención, compartidos y monetización antes de grabar.",
+      "Tu estilo aprendido de 3 de tus videos.",
+      "Guías PDF y prompts listos."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Una cuenta del servicio de búsqueda de videos (te enseñamos a crearla; tiene plan gratis)."
+    ],
+    "planes": [
+      {
+        "nombre": "Kit completo",
+        "detalle": "Radar + juez + guías",
+        "COP": 69000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
+  {
+    "slug": "seo-piloto-automatico",
+    "nombre": "SEO en Piloto Automático",
+    "etiqueta": "Herramienta",
+    "palabraPortada": "SEO",
+    "portada": "negro",
+    "promesa": "Cada día Claude le hace un chequeo a tu página web, te deja el informe en español y el arreglo listo para que lo apruebes.",
+    "paraQuien": [
+      "Negocios con página web propia.",
+      "Quien no tiene tiempo de revisar su sitio."
+    ],
+    "noEsPara": [
+      "Quien busca el primer lugar en Google garantizado: nadie lo puede prometer."
+    ],
+    "queIncluye": [
+      "Revisión diaria: que cada página abra y tenga título, descripción y textos en las imágenes.",
+      "Avisa a los buscadores cuando cambias algo.",
+      "Arreglos listos para que tú los apruebes: nada se cambia sin ti.",
+      "Una idea de guía nueva cada semana para atraer gente.",
+      "Historial de informes en español."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Una tienda o página web propia (con su código)."
+    ],
+    "planes": [
+      {
+        "nombre": "Kit completo",
+        "detalle": "Revisión diaria + informes + guías",
+        "COP": 79000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
+  {
+    "slug": "tienda-segura",
+    "nombre": "Tienda Segura",
+    "etiqueta": "Guía + herramientas",
+    "palabraPortada": "SEGURA",
+    "portada": "rojo",
+    "promesa": "Las cinco bases de seguridad que tu tienda en línea tiene que tener. Claude revisa tu proyecto y las monta contigo, una por una.",
+    "paraQuien": [
+      "Quien vende por internet con su propia tienda.",
+      "Quien no sabe si su tienda es segura."
+    ],
+    "noEsPara": [
+      "Quien vende solo por redes o por una plataforma que no deja tocar el código."
+    ],
+    "queIncluye": [
+      "Límite de intentos: que nadie pruebe mil contraseñas.",
+      "Pagos que no se cobran dos veces con el doble clic.",
+      "El precio lo confirma tu servidor, no el navegador.",
+      "Enlaces firmados que no se pueden falsificar.",
+      "Cabeceras de seguridad.",
+      "Guía PDF y checklist."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Una tienda o página web propia (con su código)."
+    ],
+    "planes": [
+      {
+        "nombre": "Tienda Segura",
+        "detalle": "las 5 bases",
+        "COP": 69000,
+        "lanzamiento": null
+      },
+      {
+        "nombre": "Segura + Rápida",
+        "detalle": "con Tienda Rápida",
+        "COP": 99000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
+  {
+    "slug": "tienda-rapida",
+    "nombre": "Tienda Rápida",
+    "etiqueta": "Guía + herramientas",
+    "palabraPortada": "RÁPIDA",
+    "portada": "negro",
+    "promesa": "Tu tienda abre rápido en el celular: imágenes livianas, del tamaño justo y solo lo que se ve. Medido antes y después.",
+    "paraQuien": [
+      "Quien tiene una tienda que tarda en abrir.",
+      "Quien vende con muchas fotos."
+    ],
+    "noEsPara": [
+      "Quien vende solo por redes."
+    ],
+    "queIncluye": [
+      "Imágenes en formato liviano y del tamaño exacto de cada pantalla.",
+      "Carga solo lo que se ve.",
+      "Medición antes y después, con números.",
+      "Guía PDF."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Una tienda o página web propia (con su código)."
+    ],
+    "planes": [
+      {
+        "nombre": "Tienda Rápida",
+        "detalle": "imágenes y carga",
+        "COP": 49000,
+        "lanzamiento": null
+      },
+      {
+        "nombre": "Segura + Rápida",
+        "detalle": "con Tienda Segura",
+        "COP": 99000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
+  {
+    "slug": "equipo-de-agentes",
+    "nombre": "Tu Equipo de Agentes",
+    "etiqueta": "Kit",
+    "palabraPortada": "EQUIPO",
+    "portada": "negro",
+    "promesa": "Un director, una de finanzas y uno de marketing que te dejan un informe cada mañana. Agentes de Claude con reglas duras: nada se gasta ni se publica sin ti.",
+    "paraQuien": [
+      "Dueños de negocio que no tienen tiempo de mirar todo.",
+      "Quien ya usa Claude y quiere orden."
+    ],
+    "noEsPara": [
+      "Quien busca que los agentes vendan solos: te dejan todo pensado, tú decides."
+    ],
+    "queIncluye": [
+      "Plantillas y textos de cada agente.",
+      "Bandeja de mensajes entre agentes y tablero semanal.",
+      "Reglas duras: no gastan, no publican y no tocan tus datos sin permiso.",
+      "Cómo programarlos para que corran solos.",
+      "Guías PDF."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Computador con Windows 10/11 o Mac."
+    ],
+    "planes": [
+      {
+        "nombre": "Kit completo",
+        "detalle": "3 agentes + tablero + guías",
+        "COP": 119000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
+  {
+    "slug": "embajadores-con-comision",
+    "nombre": "Embajadores con Comisión",
+    "etiqueta": "Guía + herramientas",
+    "palabraPortada": "EMBAJADORES",
+    "portada": "rojo",
+    "promesa": "Tus clientes te venden con su propio enlace y ganan una comisión. Todo queda anotado: quién trajo qué, cuánto se pagó y cuándo.",
+    "paraQuien": [
+      "Tiendas en línea con clientes felices.",
+      "Quien quiere vender más sin pagar publicidad."
+    ],
+    "noEsPara": [
+      "Quien vende solo por redes o por una plataforma que no deja tocar el código."
+    ],
+    "queIncluye": [
+      "Enlace propio para cada embajador.",
+      "Comisión que se suma sola en cada venta.",
+      "Panel del embajador y libro de comisiones.",
+      "Cómo fijar una comisión que no se coma tu ganancia.",
+      "Guía PDF."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Una tienda o página web propia (con su código)."
+    ],
+    "planes": [
+      {
+        "nombre": "Kit completo",
+        "detalle": "Programa de embajadores + guías",
+        "COP": 99000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
+  {
+    "slug": "pack-collage",
+    "nombre": "Pack Collage",
+    "etiqueta": "Pack",
+    "palabraPortada": "COLLAGE",
+    "portada": "rojo",
+    "promesa": "Quinientos recortes con borde blanco para tus collages, de uso libre también en videos con los que ganas plata.",
+    "paraQuien": [
+      "Creadores que hacen collage o motion graphics.",
+      "Quien usa Street Collage."
+    ],
+    "noEsPara": [
+      "Quien busca fotos de personas famosas o marcas."
+    ],
+    "queIncluye": [
+      "~500 recortes: cielos, manos, ojos, celulares, plantas, animales, edificios y objetos vintage.",
+      "Ordenados por carpeta y en alta calidad.",
+      "De uso libre, también comercial.",
+      "Claude los anima cuadro a cuadro con Street Collage."
+    ],
+    "requisitos": [
+      "Ninguno para usarlos.",
+      "Para animarlos: Studio · Estilos (Street Collage)."
+    ],
+    "planes": [
+      {
+        "nombre": "Pack completo",
+        "detalle": "~500 recortes",
+        "COP": 59000,
+        "lanzamiento": null
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      },
+      {
+        "q": "¿Necesito saber programar?",
+        "a": "No. Pegas un texto en Claude y él hace el trabajo contigo, en español."
+      }
+    ]
+  },
   {
     slug: "creador-de-carruseles",
     nombre: "Creador de carruseles con Claude",
