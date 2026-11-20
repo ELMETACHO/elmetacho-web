@@ -1,34 +1,36 @@
-/* MLABS · diseño C (2026-11-16). Todo color y toda fuente salen de estos tokens: para pasar al ESTILO-LABS-v2
-   (rojo #C20F20, negro #0B0B0B, hueso #F2F0EA, Anton/Rubik Spray Paint) basta con cambiar este bloque. */
+/* MetachoLABS · rediseño «academia» rojo, blanco y negro (rama pruebas, 2026-11-19). Estructura inspirada en
+   converzzo.com: oferta arriba, portada oscura con foto, cursos grandes con portada, recursos gratis en carrusel.
+   Todo color y toda fuente salen de estos tokens. */
 .mlabs {
-  --m-tinta: #0f1217;
-  --m-texto: #2a2f38;
-  --m-gris: #5e6673;
-  --m-borde: #e4e7ec;
-  --m-superficie: #f3f4f6;
+  --m-tinta: #0b0b0b;
+  --m-texto: #2b2b2e;
+  --m-gris: #64646b;
+  --m-borde: #e7e7ea;
+  --m-superficie: #f4f4f5;
   --m-papel: #ffffff;
-  --m-rojo: #e10600;
-  --m-rojo-osc: #b00500;
+  --m-rojo: #d0101f;
+  --m-rojo-osc: #a50c18;
   --m-rojo-suave: #fdecec;
-  --m-acento-oscuro: #ff5a4f; /* rojo legible sobre fondo oscuro */
+  --m-acento-oscuro: #ff4a55; /* rojo legible sobre fondo oscuro */
   --m-amarillo: #ffd23f;
   --m-azul: #1d3bff;
   --m-verde-suave: #e9f7ef;
   --m-verde: #166534;
-  --m-fuente: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --m-fuente-marca: var(--font-archivo), "Arial Black", sans-serif;
-  --m-radio: 20px;
+  --m-fuente: var(--font-manrope), -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --m-fuente-marca: var(--font-manrope), "Arial Black", sans-serif;
+  --m-fuente-tapa: var(--font-anton), Impact, "Arial Narrow", sans-serif;
+  --m-radio: 18px;
 
   font-family: var(--m-fuente);
   color: var(--m-tinta);
   background: var(--m-papel);
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
 .mlabs :focus-visible { outline: 3px solid var(--m-rojo); outline-offset: 2px; }
-.m-marca { font-family: var(--m-fuente-marca); font-stretch: 125%; font-weight: 900; letter-spacing: -0.02em; }
+.m-marca { font-family: var(--m-fuente-marca); font-weight: 800; letter-spacing: -0.04em; }
 .m-ancho { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
 .m-lectura { max-width: 680px; margin: 0 auto; padding: 0 16px; }
 
@@ -67,14 +69,14 @@
 .m-portada-amarillo { background: var(--m-amarillo); color: var(--m-tinta); }
 .m-portada-azul { background: var(--m-azul); }
 .m-portada-claro { background: var(--m-superficie); color: var(--m-tinta); }
-.m-palabra { font-family: var(--m-fuente-marca); font-stretch: 125%; font-weight: 900; line-height: 0.92; letter-spacing: -0.03em;
+.m-palabra { font-family: var(--m-fuente-tapa); font-weight: 400; line-height: 0.92; letter-spacing: -0.03em;
   white-space: nowrap; font-size: min(76px, calc((100cqw - 4px) / (var(--largo, 6) * 0.98))); }
 .m-chip { align-self: flex-start; display: inline-flex; align-items: center; min-height: 28px; padding: 0 11px; border-radius: 999px;
   font-size: 14px; font-weight: 650; background: rgba(255, 255, 255, 0.2); }
 .m-portada-amarillo .m-chip, .m-portada-claro .m-chip { background: rgba(15, 18, 23, 0.08); }
 
 /* Portada de inicio (oscura) */
-.m-heroe { background: var(--m-tinta); color: #fff; padding: 92px 0 28px; }
+.m-heroe { background: var(--m-tinta); color: #fff; padding: 36px 0 28px; }
 .m-heroe h1 { font-size: clamp(34px, 7vw, 60px); line-height: 1.06; letter-spacing: -0.03em; font-weight: 800; max-width: 17ch; margin: 0; }
 .m-heroe h1 span { color: var(--m-acento-oscuro); }
 .m-heroe p { color: #c9ced6; font-size: 18px; line-height: 1.5; margin: 14px 0 20px; max-width: 46ch; }
@@ -153,7 +155,7 @@
 .m-compra .m-boton { min-height: 44px; padding: 0 18px; font-size: 16px; }
 
 /* Lectura tipo post */
-.m-post { padding-top: 84px; padding-bottom: 48px; }
+.m-post { padding-top: 28px; padding-bottom: 48px; }
 .m-migas { font-size: 14.5px; color: var(--m-gris); margin-bottom: 12px; }
 .m-migas a { color: inherit; }
 .m-post h1 { font-size: clamp(28px, 6vw, 44px); line-height: 1.12; letter-spacing: -0.025em; font-weight: 800; margin: 16px 0 0; }

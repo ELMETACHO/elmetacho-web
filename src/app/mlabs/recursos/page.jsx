@@ -1,34 +1,52 @@
+import Link from "next/link";
 import { MlabsHeader, MlabsFooter } from "../MlabsMarco";
-import Catalogo from "../componentes/Catalogo";
 import Buscador from "../componentes/Buscador";
-import { publicos } from "../contenido/index.js";
+import TarjetaCurso from "../componentes/TarjetaCurso";
 import { contenidoGuias } from "../contenido/recursos.js";
+import { vistaRecurso } from "../contenido/academia.js";
 
 export const revalidate = 300;
 
 export const metadata = {
-  title: { absolute: "Guías gratis · MLABS by El Metacho" },
-  description: "Prompts y guías paso a paso de los videos de Metacho Labs para usar la IA en tu marca.",
+  title: { absolute: "Recursos gratis · MetachoLABS" },
+  description: "Guías cortas y gratis para usar Claude, ChatGPT, Gemini y más en tu contenido y tu negocio.",
   alternates: { canonical: "https://mlabs.elmetacho.com/recursos" },
-  openGraph: {
-    type: "website", locale: "es_CO", siteName: "MLABS by El Metacho", url: "https://mlabs.elmetacho.com/recursos",
-    title: "Guías gratis · MLABS by El Metacho",
-    description: "Prompts y guías paso a paso de los videos de Metacho Labs para usar la IA en tu marca.",
-    images: [{ url: "https://mlabs.elmetacho.com/videos/gps.jpg", width: 540, height: 960 }],
-  },
 };
 
 export default async function Recursos() {
-  const { tarjetasGuias, indiceBusqueda } = await contenidoGuias();
+  const { guias, indiceBusqueda } = await contenidoGuias();
   return (
     <main>
       <MlabsHeader />
-      <div className="m-ancho m-post">
-        <h1 style={{ marginTop: 0 }}>Guías gratis</h1>
-        <p className="m-resumen" style={{ marginBottom: 16 }}>Escribe la palabra que comentaste en el reel o filtra por lo que te interesa.</p>
-        <Buscador indice={indiceBusqueda} id="buscar-recursos" />
-        <Catalogo guias={tarjetasGuias} publicos={publicos} />
-      </div>
+      <section className="l-seccion">
+        <div className="l-ancho">
+          <p className="l-migas"><Link href="/">Inicio</Link> / Recursos gratis</p>
+          <div className="l-cabeza" style={{ marginTop: 10 }}>
+            <div>
+              <h2>Recursos gratis</h2>
+              <p>{guias.length} guías cortas. ¿Viste un reel? Escribe la palabra que comentaste.</p>
+            </div>
+          </div>
+          <div style={{ maxWidth: 560, marginBottom: 24 }}>
+            <Buscador indice={indiceBusqueda} id="buscar-recursos" />
+          </div>
+          <div className="l-rejilla">
+            {guias.map((g, i) => (
+              <TarjetaCurso
+                key={g.slug}
+                href={`/recursos/${g.slug}`}
+                vista={vistaRecurso(g, i)}
+                titulo={g.titulo}
+                resumen={g.resumen}
+                chips={[{ texto: "Gratis", clase: "l-chip-verde" }, { texto: `${g.tiempo} min` }]}
+                precio="Gratis"
+                nota="Con tu correo"
+                boton="Ver"
+              />
+            ))}
+          </div>
+        </div>
+      </section>
       <MlabsFooter />
     </main>
   );

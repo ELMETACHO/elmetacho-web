@@ -7,13 +7,16 @@ import { combinarRecursos, erroresRecurso } from "../lib/recursos/esquema.js";
 import { crearIndice } from "../lib/buscar.js";
 import { conRedis } from "../../admin/lib/instagram/conexion.js";
 
-export const CLAVE_RECURSOS = "mlabs:recursos";
+// Rama «pruebas»: las guías pulidas viven en una copia aparte (mlabs:recursos-v2) y pisan a las de producción
+// (mlabs:recursos) solo en esta rama. Producción no lee ni escribe la copia. Al pasar a producción: copiar v2 → v1.
+export const CLAVE_PRODUCCION = "mlabs:recursos";
+export const CLAVE_RECURSOS = "mlabs:recursos-v2";
 export const REVALIDAR_S = 300;
 
 const contexto = { slugsPublicos: new Set(publicos.map((p) => p.slug)), slugsProductos: new Set(productos.map((p) => p.slug)) };
 
-export async function leerRecursosRedis(r) {
-  const h = await r.hGetAll(CLAVE_RECURSOS);
+export async function leerRecursosRedis(r, clave = CLAVE_RECURSOS) {
+  const h = await r.hGetAll(clave);
   const lista = [];
   for (const [slug, v] of Object.entries(h ?? {})) {
     try {
@@ -33,10 +36,16 @@ export async function leerRecursosRedis(r) {
 // mostrando la última versión buena en vez de una página vacía, y un build sin Redis no se publica.
 export const obtenerGuias = cache(async () => {
   if (!urlRedisDirecta(process.env)) {
+    // Solo en local: MLABS_GUIAS_LOCAL=<carpeta con <slug>.json> permite ver las guías sin Redis.
+    if (process.env.MLABS_GUIAS_LOCAL) {
+      const { readdirSync, readFileSync } = await import("node:fs");
+      const d = process.env.MLABS_GUIAS_LOCAL;
+      return readdirSync(d).filter((f) => f.endsWith(".json")).map((f) => JSON.parse(readFileSync(`${d}/${f}`, "utf8")).recurso);
+    }
     console.warn("[mlabs] sin KV_REDIS_URL: las guías salen vacías (solo en local)");
     return [];
   }
-  return combinarRecursos([], await conRedis(leerRecursosRedis));
+  return conRedis(async (r) => combinarRecursos(await leerRecursosRedis(r, CLAVE_PRODUCCION), await leerRecursosRedis(r, CLAVE_RECURSOS)));
 });
 
 // Solo lo que muestra una tarjeta: el catálogo es componente de cliente y no debe cargar el texto de las guías.

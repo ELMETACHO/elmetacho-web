@@ -1,4 +1,4 @@
-import { Anton, Archivo } from "next/font/google";
+import { Anton, Archivo, Manrope } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ESTILO_DESBLOQUEADO } from "./mlabs/lib/desbloqueo.js";
@@ -6,6 +6,8 @@ import { ESTILO_DESBLOQUEADO } from "./mlabs/lib/desbloqueo.js";
 // Anton = carteles de El Metacho; Archivo (con eje de ancho) = textos y titulares expandidos de MLABS
 const anton = Anton({ weight: "400", subsets: ["latin"], variable: "--font-anton", display: "swap" });
 const archivo = Archivo({ subsets: ["latin"], axes: ["wdth"], variable: "--font-archivo", display: "swap" });
+// Manrope = letra de MetachoLABS (rediseño «academia», rama pruebas)
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
 const siteUrl = "https://www.elmetacho.com";
 const description =
@@ -59,7 +61,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es" className={`h-full scroll-smooth antialiased ${anton.variable} ${archivo.variable}`}>
+    <html lang="es" className={`h-full scroll-smooth antialiased ${anton.variable} ${archivo.variable} ${manrope.variable}`}>
       <head>
         {/* Guías de MLABS: si ya dejó su correo, muestra el contenido antes de pintar (sin parpadeo del formulario) */}
         <script dangerouslySetInnerHTML={{ __html: ESTILO_DESBLOQUEADO }} />
