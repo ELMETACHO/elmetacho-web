@@ -7,6 +7,7 @@ import Tapa from "../../componentes/Tapa";
 import TarjetaCurso from "../../componentes/TarjetaCurso";
 import Instructor from "../../componentes/Instructor";
 import Comprar from "../../componentes/Comprar";
+import PaginaCollage from "../../componentes/PaginaCollage";
 import { productos, productoPorSlug } from "../../contenido/index.js";
 import { CURSOS, ORDEN_CURSOS } from "../../contenido/academia.js";
 import { COOKIE_MONEDA, formatoMoneda, modoTienda, monedaPara, sePuedeComprar } from "../../lib/tienda/tienda.js";
@@ -77,6 +78,27 @@ export default async function Producto({ params }) {
       </ul>
     </div>
   );
+
+  const barra = (
+    <div className="l-barra-movil">
+      <div className="l-ancho">
+        <div><b>{comprable ? formatoMoneda(p.precios[moneda], moneda) : p.planes?.length ? formatoMoneda(Math.min(...p.planes.map((x) => x.lanzamiento ?? x.COP)), "COP") : "Muy pronto"}</b><small>{p.nombre}</small></div>
+        <a href={comprable ? "#comprar" : "#apartar"} className="l-btn l-btn-rojo">{comprable ? "Comprar" : "Apártalo"}</a>
+      </div>
+    </div>
+  );
+
+  // Pack Collage: página propia con recursos gráficos del pack (pedido de Oscar, 20-nov).
+  if (p.slug === "pack-collage") {
+    return (
+      <main>
+        <MlabsHeader />
+        <PaginaCollage p={p} caja={caja(false)} cajaMovil={caja(true)} />
+        {barra}
+        <MlabsFooter />
+      </main>
+    );
+  }
 
   return (
     <main>
