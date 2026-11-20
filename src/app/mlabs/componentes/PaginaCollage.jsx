@@ -88,7 +88,13 @@ export default function PaginaCollage({ p, caja, cajaMovil }) {
 
       <div className="l-ancho l-pagina c-cuerpo">
         <div className="l-col">
-          <div className="l-caja-compra l-solo-movil c-caja" style={{ position: "static" }}>{cajaMovil}</div>
+          <div className="l-caja-compra l-solo-movil c-caja" style={{ position: "relative", backgroundImage: `url(${R}/fondos/fondo-04-papel-crema.webp)` }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`${R}/stickers/globo-nuevo.webp`} alt="" aria-hidden="true" className="c-caja-sticker" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`${R}/stickers/estrella-amarillo.webp`} alt="" aria-hidden="true" className="c-caja-sticker c-caja-sticker-2" />
+            {cajaMovil}
+          </div>
 
           {/* USOS */}
           <section className="c-bloque">
@@ -168,6 +174,8 @@ export default function PaginaCollage({ p, caja, cajaMovil }) {
         <aside className="l-caja-compra l-solo-ancho c-caja" style={{ flexDirection: "column", backgroundImage: `url(${R}/fondos/fondo-04-papel-crema.webp)` }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={`${R}/stickers/globo-nuevo.webp`} alt="" aria-hidden="true" className="c-caja-sticker" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`${R}/stickers/estrella-amarillo.webp`} alt="" aria-hidden="true" className="c-caja-sticker c-caja-sticker-2" />
           {caja}
         </aside>
       </div>
