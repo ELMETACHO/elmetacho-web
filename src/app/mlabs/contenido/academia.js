@@ -22,7 +22,7 @@ export const CURSOS = {
   "pc-piloto-automatico": { foto: FOTOS.heroe, tono: "negro", tapa: "Tu PC trabaja *mientras duermes*", categoria: "Automatización", nivel: "Intermedio" },
   "pc-liviano": { foto: FOTOS.gafas, tono: "negro", tapa: "Libera *gigas* en minutos", categoria: "Tu computador", nivel: "Principiante" },
   "talking-head-pro": { foto: FOTOS.marco, tono: "negro", tapa: "Tú hablas, *el estudio edita*", categoria: "Edición de video", nivel: "Intermedio" },
-  "pack-subtitulos": { foto: FOTOS.gafas, tono: "rojo", tapa: "*12 estilos* de subtítulos", categoria: "Edición de video", nivel: "Principiante" },
+  "pack-subtitulos": { foto: FOTOS.gafas, tono: "rojo", tapa: "*13 estilos* de subtítulos", categoria: "Edición de video", nivel: "Principiante" },
   "studio-estilos": { foto: FOTOS.heroe, tono: "rojo", tapa: "Una toma, *5 estilos*", categoria: "Edición de video", nivel: "Intermedio" },
   "radar-viral": { foto: FOTOS.gafas, tono: "negro", tapa: "Ideas que *ya funcionaron*", categoria: "Contenido con IA", nivel: "Principiante" },
   "seo-piloto-automatico": { foto: FOTOS.marco, tono: "negro", tapa: "SEO en *piloto automático*", categoria: "Tu negocio", nivel: "Intermedio" },

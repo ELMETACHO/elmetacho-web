@@ -224,7 +224,7 @@ export const productos = [
     "etiqueta": "Pack",
     "palabraPortada": "SUBS",
     "portada": "rojo",
-    "promesa": "12 estilos de subtítulos y más de 25 tipografías libres para uso comercial. Le dices a Claude el estilo y listo.",
+    "promesa": "13 estilos de subtítulos y más de 25 tipografías libres para uso comercial. Le dices a Claude el estilo y listo.",
     "paraQuien": [
       "Quien quiere que sus videos no se vean todos iguales.",
       "Quien ya edita con Claude y quiere más estilos."
@@ -235,6 +235,7 @@ export const productos = [
     "queIncluye": [
       "Caja negra, rebote, palabra clave gigante, máquina de escribir, resaltador y karaoke.",
       "Neón, sticker, serif de revista, texto detrás de ti, arco y documental.",
+      "Nuevo: letras recortadas de revista que se mueven sutilmente.",
       "Más de 25 tipografías libres para uso comercial, probadas en vertical.",
       "Guía PDF con ejemplos de cada estilo."
     ],
@@ -245,7 +246,7 @@ export const productos = [
     "planes": [
       {
         "nombre": "Pack completo",
-        "detalle": "12 estilos + 25 tipografías",
+        "detalle": "13 estilos + 25 tipografías",
         "COP": 49000,
         "lanzamiento": null
       }
