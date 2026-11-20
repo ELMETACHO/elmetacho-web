@@ -207,3 +207,13 @@
 .l-sube-2 { animation-delay: .08s; }
 .l-sube-3 { animation-delay: .16s; }
 @media (prefers-reduced-motion: reduce) { .l-heroe::before, .l-heroe::after, .l-flota, .l-sube { animation: none !important; } }
+
+/* Planes de un producto en preventa (Fábrica de Videos) */
+.l-planes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.l-planes li { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid #e6e6e6; border-radius: 12px; }
+.l-planes li::before { display: none; }
+.l-planes span { display: grid; gap: 2px; }
+.l-planes span:last-child { text-align: right; }
+.l-planes small { color: #666; font-size: 13px; }
+.l-planes s { color: #999; font-size: 13px; }
+.l-planes b { font-size: 16px; }

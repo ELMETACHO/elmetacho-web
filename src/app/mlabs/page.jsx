@@ -26,6 +26,7 @@ function datosCurso(slug, modo) {
   if (!p || !v) return null;
   const esAhorra = slug === "ahorra-50";
   const comprable = sePuedeComprar(p, modo);
+  const desde = !comprable && p.planes?.length ? Math.min(...p.planes.map((x) => x.lanzamiento ?? x.COP)) : null;
   return {
     slug,
     href: v.slugPagina ?? `/productos/${slug}`,
@@ -33,8 +34,8 @@ function datosCurso(slug, modo) {
     titulo: v.titulo ?? p.nombre,
     resumen: p.promesa,
     chips: [{ texto: v.categoria, clase: "l-chip-rojo" }, { texto: v.nivel }],
-    precio: esAhorra || comprable ? formatoMoneda(p.precios.COP, "COP") : "Muy pronto",
-    nota: esAhorra ? "50 archivos · los 3 primeros gratis" : comprable ? `o ${formatoMoneda(p.precios.USD, "USD")}` : "Apártalo gratis",
+    precio: esAhorra || comprable ? formatoMoneda(p.precios.COP, "COP") : desde ? `Desde ${formatoMoneda(desde, "COP")}` : "Muy pronto",
+    nota: esAhorra ? "50 archivos · los 3 primeros gratis" : comprable ? `o ${formatoMoneda(p.precios.USD, "USD")}` : desde ? "Precio de lanzamiento · pago único" : "Apártalo gratis",
     boton: esAhorra ? "Probar gratis" : "Ver curso",
   };
 }

@@ -51,8 +51,25 @@ export default async function Producto({ params }) {
     <div id={id ? "comprar" : undefined}><Comprar slug={p.slug} nombre={p.nombre} precios={p.precios} monedaInicial={moneda} prueba={modo === "pruebas"} /></div>
   ) : (
     <div id={id ? "apartar" : undefined} style={{ display: "grid", gap: 10 }}>
-      <div className="l-grande">Muy pronto</div>
-      <small>Apártalo gratis y te avisamos primero cuando abra, con el precio de lanzamiento.</small>
+      {p.planes?.length ? (
+        <>
+          <div className="l-grande">Pago único</div>
+          <ul className="l-planes">
+            {p.planes.map((x) => (
+              <li key={x.nombre}>
+                <span><b>{x.nombre}</b><small>{x.detalle}</small></span>
+                <span>{x.lanzamiento ? <><s>{formatoMoneda(x.COP, "COP")}</s><b>{formatoMoneda(x.lanzamiento, "COP")}</b></> : <b>{formatoMoneda(x.COP, "COP")}</b>}</span>
+              </li>
+            ))}
+          </ul>
+          <small>Abre muy pronto. Apártalo y te avisamos primero, con el precio de lanzamiento.</small>
+        </>
+      ) : (
+        <>
+          <div className="l-grande">Muy pronto</div>
+          <small>Apártalo gratis y te avisamos primero cuando abra, con el precio de lanzamiento.</small>
+        </>
+      )}
       <FormularioLead origen={`preventa-${p.slug}`} boton="Apartarlo" pedirMensaje={false} mensajeOk="Listo, quedó apartado. Te avisamos primero cuando abra." />
       <ul>
         <li>Sin pagar nada hoy</li>
