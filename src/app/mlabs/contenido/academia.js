@@ -30,7 +30,7 @@ export const CURSOS = {
   "tienda-rapida": { foto: FOTOS.gafas, tono: "negro", tapa: "Tu tienda *rápida*", categoria: "Tu negocio", nivel: "Intermedio" },
   "equipo-de-agentes": { foto: FOTOS.marco, tono: "negro", tapa: "Tu equipo *de agentes*", categoria: "Automatización", nivel: "Intermedio" },
   "embajadores-con-comision": { foto: FOTOS.heroe, tono: "rojo", tapa: "Clientes que *te venden*", categoria: "Tu negocio", nivel: "Intermedio" },
-  "pack-collage": { foto: FOTOS.gafas, tono: "rojo", tapa: "*500* recortes", categoria: "Recursos", nivel: "Principiante" },
+  "pack-collage": { foto: FOTOS.gafas, tono: "rojo", tapa: "Recortes *sin reclamos*", categoria: "Recursos", nivel: "Principiante" },
   "creador-de-carruseles": { foto: FOTOS.marco, tono: "rojo", tapa: "Carruseles *en minutos*", categoria: "Contenido", nivel: "Principiante" },
 };
 export const ORDEN_CURSOS = ["fabrica-de-videos", "edita-con-claude", "ahorra-50", "talking-head-pro", "studio-estilos", "radar-viral", "pc-piloto-automatico", "pc-liviano", "equipo-de-agentes", "seo-piloto-automatico", "tienda-segura", "tienda-rapida", "embajadores-con-comision", "pack-subtitulos", "pack-collage", "creador-de-carruseles"];

@@ -678,7 +678,7 @@ export const productos = [
     "etiqueta": "Pack",
     "palabraPortada": "COLLAGE",
     "portada": "rojo",
-    "promesa": "Quinientos recortes con borde blanco para tus collages, de uso libre también en videos con los que ganas plata.",
+    "promesa": "Cientos de recortes con borde blanco para tus collages, de uso libre también en videos con los que ganas plata.",
     "paraQuien": [
       "Creadores que hacen collage o motion graphics.",
       "Quien usa Street Collage."
@@ -687,8 +687,8 @@ export const productos = [
       "Quien busca fotos de personas famosas o marcas."
     ],
     "queIncluye": [
-      "~500 recortes: cielos, manos, ojos, celulares, plantas, animales, edificios y objetos vintage.",
-      "Ordenados por carpeta y en alta calidad.",
+      "Entre 200 y 300 recortes: cielos, manos, ojos, celulares, plantas, animales, edificios y objetos vintage.",
+      "Una carpeta por tipo, en alta calidad y en un solo .zip.",
       "De uso libre, también comercial.",
       "Claude los anima cuadro a cuadro con Street Collage."
     ],
@@ -699,7 +699,7 @@ export const productos = [
     "planes": [
       {
         "nombre": "Pack completo",
-        "detalle": "~500 recortes",
+        "detalle": "200–300 recortes",
         "COP": 59000,
         "lanzamiento": null
       }
