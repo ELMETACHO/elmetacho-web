@@ -20,9 +20,10 @@ export const CURSOS = {
   "edita-con-claude": { foto: FOTOS.marco, tono: "negro", tapa: "Edita tus videos *con Claude*", categoria: "Edición de video", nivel: "Principiante" },
   "ahorra-50": { foto: FOTOS.gafas, tono: "rojo", tapa: "Gasta menos *tokens*", categoria: "Herramienta", nivel: "Principiante", slugPagina: "/ahorra", titulo: "Ahorra: tus archivos a texto para Claude, ChatGPT, Gemini y más" },
   "pc-piloto-automatico": { foto: FOTOS.heroe, tono: "negro", tapa: "Tu PC trabaja *mientras duermes*", categoria: "Automatización", nivel: "Intermedio" },
+  "pc-liviano": { foto: FOTOS.gafas, tono: "negro", tapa: "Libera *gigas* en minutos", categoria: "Tu computador", nivel: "Principiante" },
   "creador-de-carruseles": { foto: FOTOS.marco, tono: "rojo", tapa: "Carruseles *en minutos*", categoria: "Contenido", nivel: "Principiante" },
 };
-export const ORDEN_CURSOS = ["fabrica-de-videos", "edita-con-claude", "ahorra-50", "pc-piloto-automatico", "creador-de-carruseles"];
+export const ORDEN_CURSOS = ["fabrica-de-videos", "edita-con-claude", "ahorra-50", "pc-piloto-automatico", "pc-liviano", "creador-de-carruseles"];
 
 const CATEGORIA_TIPO = { guia: "Guía paso a paso", prompt: "Prompt listo", "mini-curso": "Mini curso" };
 const ROTA = [

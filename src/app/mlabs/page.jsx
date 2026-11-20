@@ -34,8 +34,8 @@ function datosCurso(slug, modo) {
     titulo: v.titulo ?? p.nombre,
     resumen: p.promesa,
     chips: [{ texto: v.categoria, clase: "l-chip-rojo" }, { texto: v.nivel }],
-    precio: esAhorra || comprable ? formatoMoneda(p.precios.COP, "COP") : desde ? `Desde ${formatoMoneda(desde, "COP")}` : "Muy pronto",
-    nota: esAhorra ? "50 archivos · los 3 primeros gratis" : comprable ? `o ${formatoMoneda(p.precios.USD, "USD")}` : desde ? "Precio de lanzamiento · pago único" : "Apártalo gratis",
+    precio: esAhorra || comprable ? formatoMoneda(p.precios.COP, "COP") : desde ? `${p.planes.length > 1 ? "Desde " : ""}${formatoMoneda(desde, "COP")}` : "Muy pronto",
+    nota: esAhorra ? "50 archivos · los 3 primeros gratis" : comprable ? `o ${formatoMoneda(p.precios.USD, "USD")}` : desde ? (p.planes.some((x) => x.lanzamiento) ? "Precio de lanzamiento · pago único" : "Pago único") : "Apártalo gratis",
     boton: esAhorra ? "Probar gratis" : "Ver curso",
   };
 }
