@@ -52,6 +52,10 @@
 .l-flota-2 { right: 0; top: 0; rotate: 7deg; animation-delay: -2.5s; }
 .l-flota-3 { left: 2%; bottom: 4%; rotate: 5deg; animation-delay: -4.5s; }
 @keyframes l-flotar { to { translate: 0 -12px; } }
+/* Tarjetas que rotan: todas apiladas en la misma celda; solo la activa se ve (fundido + leve zoom) */
+.l-rota { display: grid; }
+.l-rota > div { grid-area: 1 / 1; opacity: 0; transform: scale(.96); transition: opacity .55s ease, transform .55s cubic-bezier(.23,1,.32,1); }
+.l-rota > div.l-rota-activa { opacity: 1; transform: none; }
 .l-cifras { position: absolute; right: 0; bottom: 0; z-index: 2; width: 216px; padding: 6px 16px; border-radius: 18px;
   background: rgba(20,20,22,.62); backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
 .l-cifras div { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.12); }

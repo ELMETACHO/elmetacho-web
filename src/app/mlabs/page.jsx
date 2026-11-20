@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { MlabsHeader, MlabsFooter, MLABS_WHATSAPP } from "./MlabsMarco";
-import Tapa from "./componentes/Tapa";
 import TarjetaCurso from "./componentes/TarjetaCurso";
 import Carrusel from "./componentes/Carrusel";
+import TarjetasRotan from "./componentes/TarjetasRotan";
 import { productoPorSlug } from "./contenido/index.js";
 import { contenidoGuias } from "./contenido/recursos.js";
-import { CIFRAS, CURSOS, FOTOS, ORDEN_CURSOS, vistaRecurso } from "./contenido/academia.js";
+import { CIFRAS, CURSOS, FOTOS, ORDEN_CURSOS, TARJETAS_HEROE, vistaRecurso } from "./contenido/academia.js";
 import { formatoMoneda, modoTienda, sePuedeComprar } from "./lib/tienda/tienda.js";
 
 // Rediseño «academia» (rama pruebas): estructura tipo converzzo.com en rojo, blanco y negro.
@@ -69,11 +69,7 @@ export default async function Inicio() {
           </div>
           <div className="l-escena" aria-hidden="true">
             <div className="l-foto" style={{ backgroundImage: `url(${FOTOS.heroe})` }} />
-            {cursos.slice(0, 3).map((c, i) => (
-              <div key={c.slug} className={`l-flota l-flota-${i + 1}`}>
-                <Tapa foto={c.vista.foto} titulo={c.vista.tapa} tono={c.vista.tono} prioridad />
-              </div>
-            ))}
+            <TarjetasRotan items={TARJETAS_HEROE} />
             <div className="l-cifras">
               {CIFRAS.map((c) => (
                 <div key={c.valor}><b>{c.valor}</b><span>{c.texto}</span></div>

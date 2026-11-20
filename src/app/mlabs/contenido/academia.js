@@ -35,3 +35,16 @@ export const vistaRecurso = (g, i) => ({
   categoria: CATEGORIA_TIPO[g.tipo] ?? "Guía",
   nivel: "Principiante",
 });
+
+// Tarjetas que rotan sobre la foto de la portada (temas de MetachoLABS). *Asteriscos* = color de acento.
+export const TARJETAS_HEROE = [
+  { foto: FOTOS.marco, tono: "negro", tapa: "Edita con *Claude*" },
+  { foto: FOTOS.gafas, tono: "rojo", tapa: "Gasta menos *tokens*" },
+  { foto: FOTOS.heroe, tono: "negro", tapa: "Tu PC trabaja *mientras duermes*" },
+  { foto: FOTOS.marco, tono: "rojo", tapa: "Carruseles *en minutos*" },
+  { foto: FOTOS.gafas, tono: "negro", tapa: "Guías *gratis*" },
+  { foto: FOTOS.heroe, tono: "rojo", tapa: "Contenido *con IA*" },
+  { foto: FOTOS.marco, tono: "negro", tapa: "Automatiza *tu negocio*" },
+  { foto: FOTOS.gafas, tono: "rojo", tapa: "Videos *que se hacen solos*" },
+  { foto: FOTOS.heroe, tono: "negro", tapa: "Prompts *listos*" },
+];
