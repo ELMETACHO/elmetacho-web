@@ -678,7 +678,7 @@ export const productos = [
     "etiqueta": "Pack",
     "palabraPortada": "COLLAGE",
     "portada": "rojo",
-    "promesa": "Cientos de recortes con borde blanco para tus collages, de uso libre también en videos con los que ganas plata.",
+    "promesa": "Todo para tus collages: 311 recortes, letras de revista, fondos de papel y stickers. De uso libre, también en videos con los que ganas plata.",
     "paraQuien": [
       "Creadores que hacen collage o motion graphics.",
       "Quien usa Street Collage."
@@ -687,10 +687,10 @@ export const productos = [
       "Quien busca fotos de personas famosas o marcas."
     ],
     "queIncluye": [
-      "311 recortes en 14 carpetas: animales, cielo y espacio, comida, manos, plantas, edificios, objetos, tecnología, vehículos y más.",
-      "En alta calidad, en un solo .zip de 125 MB, con la licencia de cada recorte.",
-      "De uso libre, también comercial.",
-      "Claude los anima cuadro a cuadro con Street Collage."
+      "311 recortes en 14 carpetas (animales, cielo, comida, manos, plantas, edificios, objetos, tecnología y más), con borde y sin borde.",
+      "Abecedario de letras de revista: 192 letras, números y signos en 4 versiones.",
+      "19 fondos de papel, kraft, periódico y cuaderno, y 37 stickers con textos en español.",
+      "De uso libre, también comercial, con la licencia de cada archivo. Ejemplos animados incluidos."
     ],
     "requisitos": [
       "Ninguno para usarlos.",
@@ -699,7 +699,7 @@ export const productos = [
     "planes": [
       {
         "nombre": "Pack completo",
-        "detalle": "311 recortes",
+        "detalle": "Recortes + letras + fondos + stickers",
         "COP": 59000,
         "lanzamiento": null
       }
