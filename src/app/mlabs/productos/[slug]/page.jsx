@@ -8,6 +8,10 @@ import TarjetaCurso from "../../componentes/TarjetaCurso";
 import Instructor from "../../componentes/Instructor";
 import Comprar from "../../componentes/Comprar";
 import PaginaCollage from "../../componentes/PaginaCollage";
+import Escena from "../../componentes/Escenas";
+
+// Productos con vitrina animada propia (componentes/Escenas.jsx).
+const CON_ESCENA = new Set(["fabrica-de-videos", "edita-con-claude", "talking-head-pro", "pack-subtitulos", "studio-estilos", "radar-viral", "pc-piloto-automatico", "pc-liviano", "equipo-de-agentes", "seo-piloto-automatico", "tienda-segura", "tienda-rapida", "embajadores-con-comision"]);
 import { productos, productoPorSlug } from "../../contenido/index.js";
 import { CURSOS, ORDEN_CURSOS } from "../../contenido/academia.js";
 import { COOKIE_MONEDA, formatoMoneda, modoTienda, monedaPara, sePuedeComprar } from "../../lib/tienda/tienda.js";
@@ -107,7 +111,7 @@ export default async function Producto({ params }) {
         <div className="l-col">
           <div>
             <p className="l-migas"><Link href="/">Inicio</Link> / <Link href="/#cursos">Cursos</Link> / {p.nombre}</p>
-            <div style={{ marginTop: 12 }}><Tapa foto={v.foto} titulo={v.tapa} kicker={v.categoria} tono={v.tono} prioridad /></div>
+            <div style={{ marginTop: 12 }}>{CON_ESCENA.has(p.slug) ? <Escena slug={p.slug} /> : <Tapa foto={v.foto} titulo={v.tapa} kicker={v.categoria} tono={v.tono} prioridad />}</div>
             <div className="l-chips" style={{ marginTop: 16 }}>
               <span className="l-chip l-chip-rojo">{v.categoria}</span>
               <span className="l-chip">{v.nivel}</span>
@@ -167,12 +171,7 @@ export default async function Producto({ params }) {
 
         <aside className="l-caja-compra l-solo-ancho" style={{ flexDirection: "column" }}>{caja(false)}</aside>
       </div>
-      <div className="l-barra-movil">
-        <div className="l-ancho">
-          <div><b>{comprable ? formatoMoneda(p.precios[moneda], moneda) : "Muy pronto"}</b><small>{p.nombre}</small></div>
-          <a href={comprable ? "#comprar" : "#apartar"} className="l-btn l-btn-rojo">{comprable ? "Comprar" : "Apártalo"}</a>
-        </div>
-      </div>
+      {barra}
       <MlabsFooter />
     </main>
   );

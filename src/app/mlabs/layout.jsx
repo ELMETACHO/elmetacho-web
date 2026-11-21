@@ -1,5 +1,6 @@
 import "./mlabs.css";
 import "./academia.css";
+import "./vitrinas.css";
 
 
 // Metadatos por defecto de mlabs.elmetacho.com: sin esto, las páginas que no traen su propio openGraph heredan el de
