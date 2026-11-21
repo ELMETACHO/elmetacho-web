@@ -726,6 +726,220 @@ export const productos = [
       }
     ]
   },
+  // Packs de animación (sesión de animación, 20/21-nov; Oscar pidió cargarlos con su página).
+  {
+    "slug": "pack-multiverso",
+    "nombre": "Pack Multiverso",
+    "etiqueta": "Pack",
+    "palabraPortada": "MULTIVERSO",
+    "portada": "negro",
+    "promesa": "Le cuentas a Claude tu tema y te devuelve una animación vertical en 10 estilos: holograma, neón, papel recortado, maqueta, plano técnico, visión térmica, pixel, tiza, acuarela o plastilina.",
+    "paraQuien": [
+      "Emprendedores que anuncian algo: apertura, lanzamiento u oferta.",
+      "Creadores que quieren un gancho visual distinto.",
+      "Profes y marcas personales."
+    ],
+    "noEsPara": [
+      "No anima tu cara ni fotos reales: los protagonistas son dibujos simples hechos en código.",
+      "No pone música."
+    ],
+    "queIncluye": [
+      "10 estilos de animación sobre la misma historia, que se adapta a cualquier tema.",
+      "Un muestrario de 16 s que encadena tus 10 versiones con lista y barra de colores.",
+      "10 prompts listos + la fórmula para pedir los tuyos.",
+      "2 guías PDF: tu primera animación y prompts que salen bien."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Computador con Windows 10/11 o Mac.",
+      "Internet la primera vez (Claude instala lo que falte, con tu permiso)."
+    ],
+    "planes": [
+      {
+        "nombre": "Pack Multiverso",
+        "detalle": "10 estilos + muestrario",
+        "COP": 59000,
+        "lanzamiento": 45000
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Necesito saber animar o programar?",
+        "a": "No. Le escribes a Claude lo que quieres, en español."
+      },
+      {
+        "q": "¿Qué plan de Claude necesito?",
+        "a": "Claude Pro o superior."
+      },
+      {
+        "q": "¿Puedo usar los videos para clientes?",
+        "a": "Sí. Lo que no puedes es revender o regalar las plantillas."
+      },
+      {
+        "q": "¿Funciona en Mac?",
+        "a": "Sí, en Windows 10/11 y en Mac."
+      },
+      {
+        "q": "¿Puedo usar mis colores?",
+        "a": "Sí: le das los códigos o le dices «rojo y negro»."
+      },
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      }
+    ]
+  },
+  {
+    "slug": "caja-de-motion",
+    "nombre": "Caja de Motion",
+    "etiqueta": "Pack",
+    "palabraPortada": "MOTION",
+    "portada": "negro",
+    "promesa": "24 animaciones cortas con tus textos, cifras y colores: mapas, titulares, gráficas, pantallas y partículas. Cuatro segundos verticales para pegar en tu edición.",
+    "paraQuien": [
+      "Creadores de contenido educativo y de negocios.",
+      "Agencias y editores que entregan muchos videos y necesitan gráficos rápido."
+    ],
+    "noEsPara": [
+      "No edita tu video completo: te da la pieza animada para que la pongas donde quieras."
+    ],
+    "queIncluye": [
+      "24 plantillas: Ruta Trazada, Portada, Ciudad de Barras, Globo Conectado, Calendario Tachado, Ticket que Imprime, Iceberg, Lluvia de Notificaciones, Reloj Neón y 15 más.",
+      "Claude te recomienda cuál usar según lo que quieres contar.",
+      "24 prompts listos.",
+      "2 guías PDF."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Computador con Windows 10/11 o Mac.",
+      "Internet la primera vez (Claude instala lo que falte, con tu permiso)."
+    ],
+    "planes": [
+      {
+        "nombre": "Caja de Motion",
+        "detalle": "24 animaciones con tus datos",
+        "COP": 79000,
+        "lanzamiento": 59000
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Necesito saber animar o programar?",
+        "a": "No. Le escribes a Claude lo que quieres, en español."
+      },
+      {
+        "q": "¿Qué plan de Claude necesito?",
+        "a": "Claude Pro o superior."
+      },
+      {
+        "q": "¿Puedo usar los videos para clientes?",
+        "a": "Sí. Lo que no puedes es revender o regalar las plantillas."
+      },
+      {
+        "q": "¿Funciona en Mac?",
+        "a": "Sí, en Windows 10/11 y en Mac."
+      },
+      {
+        "q": "¿Puedo usar mis colores?",
+        "a": "Sí: le das los códigos o le dices «rojo y negro»."
+      },
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      }
+    ]
+  },
+  {
+    "slug": "estudio-animacion",
+    "nombre": "Estudio de Animación",
+    "etiqueta": "Pack",
+    "palabraPortada": "ANIMA",
+    "portada": "negro",
+    "promesa": "Los dos packs juntos: 10 estilos de animación y 24 animaciones con tus datos. Gráficos de agencia, hechos por ti con Claude.",
+    "paraQuien": [
+      "Quien quiere que todos sus videos tengan gráficos de agencia.",
+      "Creadores, agencias y marcas que publican seguido."
+    ],
+    "noEsPara": [
+      "No anima tu cara ni fotos reales.",
+      "No pone música ni edita el video completo."
+    ],
+    "queIncluye": [
+      "Pack Multiverso: 10 estilos + muestrario.",
+      "Caja de Motion: 24 animaciones con tus datos.",
+      "34 prompts listos.",
+      "4 guías PDF."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Computador con Windows 10/11 o Mac.",
+      "Internet la primera vez (Claude instala lo que falte, con tu permiso)."
+    ],
+    "planes": [
+      {
+        "nombre": "Los 2 packs",
+        "detalle": "Multiverso + Caja de Motion",
+        "COP": 109000,
+        "lanzamiento": 89000
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Necesito saber animar o programar?",
+        "a": "No. Le escribes a Claude lo que quieres, en español."
+      },
+      {
+        "q": "¿Qué plan de Claude necesito?",
+        "a": "Claude Pro o superior."
+      },
+      {
+        "q": "¿Puedo usar los videos para clientes?",
+        "a": "Sí. Lo que no puedes es revender o regalar las plantillas."
+      },
+      {
+        "q": "¿Funciona en Mac?",
+        "a": "Sí, en Windows 10/11 y en Mac."
+      },
+      {
+        "q": "¿Puedo usar mis colores?",
+        "a": "Sí: le das los códigos o le dices «rojo y negro»."
+      },
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      }
+    ]
+  },
   {
     slug: "creador-de-carruseles",
     nombre: "Creador de carruseles con Claude",

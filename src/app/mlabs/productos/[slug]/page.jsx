@@ -8,6 +8,7 @@ import TarjetaCurso from "../../componentes/TarjetaCurso";
 import Instructor from "../../componentes/Instructor";
 import Comprar from "../../componentes/Comprar";
 import PaginaCollage from "../../componentes/PaginaCollage";
+import PaginaAnimacion from "../../componentes/PaginaAnimacion";
 import Escena from "../../componentes/Escenas";
 
 // Productos con vitrina animada propia (componentes/Escenas.jsx).
@@ -91,6 +92,18 @@ export default async function Producto({ params }) {
       </div>
     </div>
   );
+
+  // Packs de animación: página propia con las animaciones reales del pack.
+  if (["pack-multiverso", "caja-de-motion", "estudio-animacion"].includes(p.slug)) {
+    return (
+      <main>
+        <MlabsHeader />
+        <PaginaAnimacion p={p} caja={caja(false)} cajaMovil={caja(true)} migas={<p className="l-migas"><Link href="/">Inicio</Link> / <Link href="/#cursos">Cursos</Link> / {p.nombre}</p>} />
+        {barra}
+        <MlabsFooter />
+      </main>
+    );
+  }
 
   // Pack Collage: página propia con recursos gráficos del pack (pedido de Oscar, 20-nov).
   if (p.slug === "pack-collage") {
