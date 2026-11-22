@@ -970,14 +970,11 @@ export const productos = [
         "lanzamiento": 39000
       }
     ],
-    "estado": "preventa",
+    "estado": "disponible",
     "precioLanzamiento": null,
     "precio": null,
-    "precios": {
-      "COP": null,
-      "USD": null
-    },
-    "archivo": null,
+    "precios": { "COP": 39000, "USD": 10 },
+    "archivo": "mlabs/productos/corte-limpio/Corte-Limpio-v1.0.zip",
     "moneda": "COP",
     "fechaEstimada": null,
     "faq": [
