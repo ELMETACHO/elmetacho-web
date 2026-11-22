@@ -931,6 +931,78 @@ export const productos = [
       }
     ]
   },
+  // Corte Limpio (Oscar, 22-nov): el método de silencios y retomas de LABS como producto propio.
+  {
+    "slug": "corte-limpio",
+    "nombre": "Corte Limpio",
+    "etiqueta": "Herramienta",
+    "palabraPortada": "CORTE",
+    "portada": "rojo",
+    "promesa": "Grabas hablando a cámara, con pausas, errores y tomas repetidas. Claude te devuelve el video limpio: sin silencios ni tomas de aire, con tu último intento de cada frase y cortes en J o en L que no se notan.",
+    "paraQuien": [
+      "Quien graba a cámara y se equivoca, repite y hace pausas.",
+      "Creadores que pierden horas cortando silencios a mano.",
+      "Editores que quieren el primer corte listo en minutos."
+    ],
+    "noEsPara": [
+      "Quien busca efectos, subtítulos o música: esto hace el corte (para lo demás está Talking Head Pro).",
+      "Videos sin voz."
+    ],
+    "queIncluye": [
+      "Transcripción palabra por palabra en tu PC, en cualquier computador.",
+      "Detector de retomas: de cada frase repetida se queda tu último intento.",
+      "Fuera falsos arranques, muletillas sueltas y las órdenes «Oye Claude, voy de nuevo».",
+      "Bordes precisos por el audio: sin toma de aire al empezar y sin comerse la «s» al final.",
+      "Cortes en J, en L o rectos, con fundidos que no suenan.",
+      "Revisión tramo por tramo para encontrar tropiezos antes de entregarte.",
+      "2 guías PDF: tu primer video limpio y cómo grabar para que se corte solo."
+    ],
+    "requisitos": [
+      "Plan Pro de Claude o superior.",
+      "Computador con Windows 10/11 o Mac.",
+      "Internet la primera vez (Claude instala lo que falte, con tu permiso)."
+    ],
+    "planes": [
+      {
+        "nombre": "Corte Limpio",
+        "detalle": "kit completo + 2 guías PDF",
+        "COP": 49000,
+        "lanzamiento": 39000
+      }
+    ],
+    "estado": "preventa",
+    "precioLanzamiento": null,
+    "precio": null,
+    "precios": {
+      "COP": null,
+      "USD": null
+    },
+    "archivo": null,
+    "moneda": "COP",
+    "fechaEstimada": null,
+    "faq": [
+      {
+        "q": "¿Mis videos se suben a internet?",
+        "a": "No. Todo corre en tu computador y el original nunca se toca."
+      },
+      {
+        "q": "¿Necesito un computador potente?",
+        "a": "No. En un computador potente va más rápido; en uno normal tarda un poco más, pero funciona igual."
+      },
+      {
+        "q": "¿Qué es un corte en J o en L?",
+        "a": "En J, tu voz entra un instante antes que la imagen; en L, la imagen cambia primero y tu voz termina encima. Así el salto entre frases no se nota."
+      },
+      {
+        "q": "¿Y si quita una frase que yo quería?",
+        "a": "Te muestra qué se queda y qué se quita antes de cortar. Le dices «devuelve la frase que dice…» y listo."
+      },
+      {
+        "q": "¿Es pago único?",
+        "a": "Sí. Pagas una vez y es tuyo. Tienes 7 días de garantía."
+      }
+    ]
+  },
   {
     slug: "creador-de-carruseles",
     nombre: "Creador de carruseles con Claude",

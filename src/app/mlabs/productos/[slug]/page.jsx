@@ -12,7 +12,7 @@ import PaginaAnimacion from "../../componentes/PaginaAnimacion";
 import Escena from "../../componentes/Escenas";
 
 // Productos con vitrina animada propia (componentes/Escenas.jsx).
-const CON_ESCENA = new Set(["fabrica-de-videos", "edita-con-claude", "talking-head-pro", "pack-subtitulos", "studio-estilos", "radar-viral", "pc-piloto-automatico", "pc-liviano", "equipo-de-agentes", "seo-piloto-automatico", "tienda-segura", "tienda-rapida", "embajadores-con-comision"]);
+const CON_ESCENA = new Set(["corte-limpio", "fabrica-de-videos", "edita-con-claude", "talking-head-pro", "pack-subtitulos", "studio-estilos", "radar-viral", "pc-piloto-automatico", "pc-liviano", "equipo-de-agentes", "seo-piloto-automatico", "tienda-segura", "tienda-rapida", "embajadores-con-comision"]);
 import { productos, productoPorSlug } from "../../contenido/index.js";
 import { CURSOS, ORDEN_CURSOS } from "../../contenido/academia.js";
 import { COOKIE_MONEDA, formatoMoneda, modoTienda, monedaPara, sePuedeComprar } from "../../lib/tienda/tienda.js";

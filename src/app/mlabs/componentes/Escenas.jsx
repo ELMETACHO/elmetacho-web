@@ -343,7 +343,42 @@ function Embajadores() {
   );
 }
 
+/* ---------- Corte Limpio: retomas, silencios y corte en J/L ---------- */
+const TOMAS = [
+  ["0:01", "Estás haciendo las cosas mal con tu… eh…", "x", "falso arranque"],
+  ["0:05", "Estás haciendo las cosas mal con tu IA y ni siquiera lo sabías.", "ok", "último intento"],
+  ["0:10", "Te explico porque seguram… no, otra vez.", "x", "retoma"],
+  ["0:14", "Te explico, porque seguramente haces esto.", "ok", "último intento"],
+];
+function CorteLimpio() {
+  const modo = useCiclo(2, 3200);
+  return (
+    <div className="v-escena v-corte">
+      <div className="v-corte-izq">
+        <small>Lo que dijiste</small>
+        <ul className="v-corte-tomas">
+          {TOMAS.map(([t, x, e, por], k) => (
+            <li key={k} className={e === "x" ? "v-c-sale" : "v-c-queda"} style={{ animationDelay: `${0.3 + k * 0.45}s` }}>
+              <span>{t}</span><p>{x}<em>{por}</em></p>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="v-corte-der">
+        <div className="v-corte-cifra"><b><Contador desde={164.8} hasta={55.7} ms={2600} formato={(v) => `${Math.floor(v / 60)}:${String(Math.round(v % 60)).padStart(2, "0")}`} /></b><span>de 2:45 a 0:56 · solo lo bueno</span></div>
+        <LineaTiempo />
+        <div className={`v-pistas ${modo ? "v-pistas-l" : ""}`} aria-hidden="true">
+          <div className="v-pista"><i>V</i><span className="v-clip a" /><span className="v-clip b" /></div>
+          <div className="v-pista v-pista-audio"><i>A</i><span className="v-clip a" /><span className="v-clip b" /></div>
+        </div>
+        <div className="v-corte-modo"><b>{modo ? "Corte en L" : "Corte en J"}</b><span>{modo ? "la imagen cambia primero, tu voz termina encima" : "tu voz entra un instante antes que la imagen"}</span></div>
+      </div>
+    </div>
+  );
+}
+
 const ESCENAS = {
+  "corte-limpio": CorteLimpio,
   "fabrica-de-videos": Fabrica,
   "edita-con-claude": Edita,
   "talking-head-pro": TalkingHead,
