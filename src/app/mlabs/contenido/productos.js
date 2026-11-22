@@ -27,11 +27,11 @@ export const productos = [
     ],
     requisitos: ["Plan Pro de Claude o superior.", "Computador con Windows 10/11 o Mac.", "Te guiamos si algo no arranca."],
     planes: [{ nombre: "Kit completo", detalle: "7 habilidades + 3 guías PDF", COP: 69000, lanzamiento: 55000 }],
-    estado: "preventa",
+    estado: "disponible",
     precioLanzamiento: null,
     precio: null,
-    precios: { COP: null, USD: null },   // los pone Oscar; con los dos y el archivo, estado: "disponible"
-    archivo: null,                        // pathname en Vercel Blob privado, p. ej. "mlabs/productos/<slug>/<archivo>.zip"
+    precios: { "COP": 55000, "USD": 15 },   // precio de lanzamiento (cobro real solo con MLABS_TIENDA=real)
+    archivo: "mlabs/productos/edita-con-claude/Kit-Edita-con-Claude-v1.1.zip",   // subido a Vercel Blob privado el 22-nov
     moneda: "COP",
     fechaEstimada: null,
     faq: [
@@ -112,11 +112,11 @@ export const productos = [
     ],
     requisitos: ["App de escritorio de Claude con tareas programadas.", "Computador con Windows 10/11 (probado) o Mac."],
     planes: [{ nombre: "Kit completo", detalle: "Windows y Mac + 2 guías PDF", COP: 45000, lanzamiento: null }],
-    estado: "preventa",
+    estado: "disponible",
     precioLanzamiento: null,
     precio: null,
-    precios: { COP: null, USD: null },   // los pone Oscar; con los dos y el archivo, estado: "disponible"
-    archivo: null,                        // pathname en Vercel Blob privado, p. ej. "mlabs/productos/<slug>/<archivo>.zip"
+    precios: { "COP": 45000, "USD": 12 },   // precio de lanzamiento (cobro real solo con MLABS_TIENDA=real)
+    archivo: "mlabs/productos/pc-piloto-automatico/PC-Piloto-Automatico-v1.1.zip",   // subido a Vercel Blob privado el 22-nov
     moneda: "COP",
     fechaEstimada: null,
     faq: [
@@ -148,11 +148,11 @@ export const productos = [
     ],
     requisitos: ["Plan Pro de Claude o superior.", "Computador con Windows 10/11 (probado) o Mac."],
     planes: [{ nombre: "Kit completo", detalle: "Herramientas + 2 guías PDF", COP: 29900, lanzamiento: null }],
-    estado: "preventa",
+    estado: "disponible",
     precioLanzamiento: null,
     precio: null,
-    precios: { COP: null, USD: null },
-    archivo: null,
+    precios: { "COP": 29900, "USD": 8 },
+    archivo: "mlabs/productos/pc-liviano/PC-Liviano-v1.0.zip",
     moneda: "COP",
     fechaEstimada: null,
     faq: [
@@ -705,14 +705,11 @@ export const productos = [
         "lanzamiento": null
       }
     ],
-    "estado": "preventa",
+    "estado": "disponible",
     "precioLanzamiento": null,
     "precio": null,
-    "precios": {
-      "COP": null,
-      "USD": null
-    },
-    "archivo": null,
+    "precios": { "COP": 59000, "USD": 15 },
+    "archivo": "mlabs/productos/pack-collage/Pack-Collage-v1.1.zip",
     "moneda": "COP",
     "fechaEstimada": null,
     "faq": [
@@ -762,14 +759,11 @@ export const productos = [
         "lanzamiento": 45000
       }
     ],
-    "estado": "preventa",
+    "estado": "disponible",
     "precioLanzamiento": null,
     "precio": null,
-    "precios": {
-      "COP": null,
-      "USD": null
-    },
-    "archivo": null,
+    "precios": { "COP": 45000, "USD": 12 },
+    "archivo": "mlabs/productos/pack-multiverso/Pack-Multiverso-v1.0.zip",
     "moneda": "COP",
     "fechaEstimada": null,
     "faq": [
@@ -832,14 +826,11 @@ export const productos = [
         "lanzamiento": 59000
       }
     ],
-    "estado": "preventa",
+    "estado": "disponible",
     "precioLanzamiento": null,
     "precio": null,
-    "precios": {
-      "COP": null,
-      "USD": null
-    },
-    "archivo": null,
+    "precios": { "COP": 59000, "USD": 15 },
+    "archivo": "mlabs/productos/caja-de-motion/Caja-de-Motion-v1.0.zip",
     "moneda": "COP",
     "fechaEstimada": null,
     "faq": [
@@ -964,7 +955,7 @@ export const productos = [
     estado: "preventa",
     precioLanzamiento: null,
     precio: null,
-    precios: { COP: null, USD: null },   // los pone Oscar; con los dos y el archivo, estado: "disponible"
+    precios: { COP: null, USD: null },   // precio de lanzamiento (cobro real solo con MLABS_TIENDA=real)
     archivo: null,                        // pathname en Vercel Blob privado, p. ej. "mlabs/productos/<slug>/<archivo>.zip"
     moneda: "COP",
     fechaEstimada: null,
